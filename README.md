@@ -323,6 +323,15 @@ Command-line options read by the game (after `--`):
 
 ---
 
+## Version
+
+The version is `application/config/version` in `project.godot` and is shown
+at the bottom of the main menu. While the game is a prototype, **every build
+bumps the last number** (0.1.1, 0.1.2, 0.1.3, ...). What changed in each build
+is listed in [CHANGELOG.md](CHANGELOG.md).
+
+---
+
 ## Credits
 
 * Code and pixel art: Badger-soft
