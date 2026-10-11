@@ -170,6 +170,17 @@ wins-losses-draws with knockouts, e.g. `22-3-1 (14 KO)`:
 Records appear on the name plates and in the tale of the tape, and are
 updated after every fight for the rest of the session.
 
+### Nicknames
+
+Between 40% and 50% of each division has a nickname, and no two boxers in
+the game share one. About half come from a pool that suits the boxer's style
+(a Counter puncher might be "The Mongoose", an Evasive boxer "Zigzag"), about
+a third from one that suits his division ("Pocket Rocket" at lightweight,
+"The Juggernaut" at heavyweight), and the rest from a general pool that
+includes hometown names such as "The Kumasi Kid". There are 130 in
+`data/world.json`, none longer than 18 characters so they always fit at full
+size, and well-known real boxers' nicknames are left out.
+
 ---
 
 ## Project layout

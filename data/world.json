@@ -206,13 +206,39 @@
 		}
 	},
 
-	"_nickname_comment": "Nicknames are grouped by fighting style so they suit the boxer.",
+	"_nickname_comment": "Nicknames come from three pools: one that suits the boxer's fighting style, one that suits his weight division, and a general pool that includes hometown nicknames ({city} is replaced by his city). Every nickname is used at most once in the game and is at most 18 characters so it fits everywhere at full size. Well-known real boxers' nicknames are avoided.",
 
 	"nicknames": {
-		"BRAWLER": ["Bulldog", "Mad Dog", "The Brawler", "Bonecrusher", "The Pitbull", "Rough House"],
-		"SLUGGER": ["The Hammer", "Wrecking Ball", "Steamroller", "Dynamite", "Thunderfist", "The Bull"],
-		"BOXER":   ["The Professor", "Silk", "Sweet Science", "The Matador", "Hands of Stone", "The Technician"],
-		"COUNTER": ["The Viper", "The Cobra", "The Assassin", "The Sniper", "Ice Man", "The Hitman"],
-		"EVASIVE": ["The Ghost", "The Phantom", "Slick", "Lightning", "The Shadow", "Quicksilver"]
+		"style": {
+			"BRAWLER": ["Bulldog", "The Pitbull", "Rough House", "The Bruiser", "Scrapper", "Junkyard Dog",
+			            "The Grinder", "Brick Wall", "The Mauler", "Hardcase", "The Warhorse", "Rough Diamond",
+			            "The Badger", "Street Fighter"],
+			"SLUGGER": ["The Hammer", "Wrecking Ball", "Steamroller", "Dynamite", "Thunderfist", "The Bull",
+			            "Sledgehammer", "Big Bang", "The Demolisher", "Haymaker", "The Blacksmith", "Cannonball",
+			            "The Pile Driver", "The Anvil", "Shockwave"],
+			"BOXER":   ["The Professor", "Silk", "Sweet Science", "The Matador", "The Technician", "The Architect",
+			            "The Surgeon", "Textbook", "The Maestro", "The Gentleman", "The Scholar", "Smooth Operator",
+			            "The Diplomat", "Clockwork", "The Craftsman"],
+			"COUNTER": ["The Viper", "The Cobra", "The Assassin", "The Sniper", "Ice Man", "Chess Master",
+			            "The Scorpion", "The Spider", "The Trapper", "The Mirror", "The Fox", "The Mongoose",
+			            "Cold Blood", "The Puzzle", "Second Strike"],
+			"EVASIVE": ["The Ghost", "The Phantom", "Slick", "Lightning", "The Shadow", "Quicksilver",
+			            "The Eel", "Smoke", "Mirage", "Rubber Man", "Twinkle Toes", "Whisper",
+			            "The Dancer", "Zigzag", "The Escape Artist"]
+		},
+		"division": {
+			"LIGHTWEIGHT":  ["The Hummingbird", "The Wasp", "Little Thunder", "Pocket Rocket", "The Firecracker",
+			                 "Mosquito", "Jackrabbit", "Sparrow", "The Whippet", "Featherfist", "Spark Plug",
+			                 "Mighty Mite"],
+			"MIDDLEWEIGHT": ["The Panther", "The Jaguar", "Steel", "Cool Hand", "The Wolf", "The Hawk",
+			                 "The Blade", "The Falcon", "Gunslinger", "The Saint", "Razor", "The Duke"],
+			"HEAVYWEIGHT":  ["The Mountain", "Big Ben", "The Giant", "Avalanche", "The Bear", "Tree Trunk",
+			                 "The Colossus", "Earthquake", "The Juggernaut", "Gentle Giant", "The Oak", "The Wall",
+			                 "Mammoth", "The Tower"]
+		},
+		"any": ["The Natural", "Lucky", "The Comeback Kid", "The Machine", "Rocket", "The Outlaw",
+		        "Big Time", "The Showman", "Danger", "Crowd Pleaser", "The Iron Horse", "Rebel",
+		        "The Kingpin", "Sundance", "Hot Shot", "The Phoenix",
+		        "The {city} Kid", "{city} Express"]
 	}
 }

@@ -17,6 +17,13 @@ const MAX_FIGHTS := 50
 ## Share of a roster that gets a nickname (inclusive range).
 const NICKNAME_MIN_SHARE := 0.40
 const NICKNAME_MAX_SHARE := 0.50
+## Longest nickname allowed, so "THE ESCAPE ARTIST" in quotes fits the tale
+## of the tape, name plates and the Boxers table at full size.
+const NICKNAME_MAX_CHARS := 18
+## How often a nickname comes from each pool in world.json: one that suits the
+## boxer's style, one that suits his division, or the general pool (which
+## includes hometown nicknames). An empty pool hands over to the others.
+const NICKNAME_POOL_WEIGHTS := {"style": 0.5, "division": 0.3, "any": 0.2}
 
 ## How each style shifts the six skills away from an average of 0.
 ## Order: power, speed, stamina, chin, strength, intelligence.
@@ -42,9 +49,10 @@ func _init(seed_value: int = -1) -> void:
 
 ## Builds a roster of [param count] unique-looking boxers in [param division].
 ## Between 40% and 50% of them (rounded sensibly) are given a nickname.
-## Surnames in [param avoid_names] (e.g. other divisions' boxers) are skipped.
+## Surnames in [param avoid_names] and nicknames in [param avoid_nicknames]
+## (e.g. other divisions' boxers) are skipped, so both stay unique game-wide.
 func generate_roster(count: int, division: Divisions.Id = Divisions.Id.MIDDLEWEIGHT,
-		avoid_names: Array[String] = []) -> Array[BoxerData]:
+		avoid_names: Array[String] = [], avoid_nicknames: Array[String] = []) -> Array[BoxerData]:
 	var roster: Array[BoxerData] = []
 	var used_trunks: Array[int] = []
 	var used_names: Array[String] = avoid_names.duplicate()
@@ -60,7 +68,7 @@ func generate_roster(count: int, division: Divisions.Id = Divisions.Id.MIDDLEWEI
 		used_names.append(boxer.last_name)
 		roster.append(boxer)
 
-	_assign_nicknames(roster)
+	_assign_nicknames(roster, avoid_nicknames)
 	return roster
 
 
@@ -203,7 +211,7 @@ func _pick_trunks(avoid: Array[int]) -> int:
 	return options[_rng.randi_range(0, options.size() - 1)]
 
 
-func _assign_nicknames(roster: Array[BoxerData]) -> void:
+func _assign_nicknames(roster: Array[BoxerData], avoid: Array[String]) -> void:
 	var n := roster.size()
 	if n == 0:
 		return
@@ -214,18 +222,48 @@ func _assign_nicknames(roster: Array[BoxerData]) -> void:
 
 	var order: Array = range(n)
 	_shuffle(order)
-	var used: Array[String] = []
+	var used: Array[String] = avoid.duplicate()
 	for i in wanted:
 		var boxer: BoxerData = roster[order[i]]
-		var style_key: String = BoxerData.STYLE_NAMES[boxer.style].to_upper()
-		var pool: Array = _world["nicknames"][style_key]
-		var nick: String = _pick(pool)
-		var attempts := 0
-		while used.has(nick) and attempts < 10:
-			nick = _pick(pool)
-			attempts += 1
-		used.append(nick)
-		boxer.nickname = nick
+		boxer.nickname = _pick_nickname(boxer, used)
+		if not boxer.nickname.is_empty():
+			used.append(boxer.nickname)
+
+
+## A nickname nobody in [param used] has, from a pool chosen by
+## NICKNAME_POOL_WEIGHTS. Returns "" only if every pool is used up.
+func _pick_nickname(boxer: BoxerData, used: Array[String]) -> String:
+	var pools := {
+		"style": _nickname_options(_world["nicknames"]["style"][BoxerData.STYLE_NAMES[boxer.style].to_upper()], boxer, used),
+		"division": _nickname_options(_world["nicknames"]["division"][boxer.division_name().to_upper()], boxer, used),
+		"any": _nickname_options(_world["nicknames"]["any"], boxer, used),
+	}
+	var total := 0.0
+	for key in pools:
+		if not (pools[key] as Array).is_empty():
+			total += float(NICKNAME_POOL_WEIGHTS[key])
+	if total <= 0.0:
+		return ""
+	var roll := _rng.randf() * total
+	for key in pools:
+		var options: Array = pools[key]
+		if options.is_empty():
+			continue
+		roll -= float(NICKNAME_POOL_WEIGHTS[key])
+		if roll <= 0.0:
+			return _pick(options)
+	return _pick(pools["any"] if not (pools["any"] as Array).is_empty() else pools["style"])
+
+
+## The nicknames in [param pool] still free for [param boxer]: hometown ones
+## filled in with his city, anything too long or already taken left out.
+func _nickname_options(pool: Array, boxer: BoxerData, used: Array[String]) -> Array:
+	var out: Array = []
+	for entry in pool:
+		var nick := str(entry).replace("{city}", boxer.city)
+		if nick.length() <= NICKNAME_MAX_CHARS and not used.has(nick):
+			out.append(nick)
+	return out
 
 
 func _pick(list: Array) -> Variant:

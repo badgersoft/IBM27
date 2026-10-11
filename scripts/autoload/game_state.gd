@@ -67,18 +67,22 @@ func new_fight() -> void:
 
 
 ## Middleweights are generated first so their roster never changes when other
-## divisions are added; surnames are kept unique across all divisions.
+## divisions are added; surnames and nicknames are kept unique across all
+## divisions.
 func _build_rosters() -> void:
 	rosters.resize(Divisions.count())
 	var order := [Divisions.Id.MIDDLEWEIGHT, Divisions.Id.LIGHTWEIGHT, Divisions.Id.HEAVYWEIGHT]
 	var used_names: Array[String] = []
+	var used_nicknames: Array[String] = []
 	for id in order:
 		var seed_value: int = Divisions.get_division(id)["roster_seed"]
 		if options.has("roster"):
 			seed_value = int(options["roster"]) + id * 2
-		var roster := BoxerGenerator.new(seed_value).generate_roster(ROSTER_SIZE, id, used_names)
+		var roster := BoxerGenerator.new(seed_value).generate_roster(ROSTER_SIZE, id, used_names, used_nicknames)
 		for b in roster:
 			used_names.append(b.last_name)
+			if not b.nickname.is_empty():
+				used_nicknames.append(b.nickname)
 		rosters[id] = roster
 
 
