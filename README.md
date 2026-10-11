@@ -148,6 +148,8 @@ drawn at full resolution so it stays sharp on any screen.
 
 ### Animations included
 
+![Every pose](docs/screenshots/pose_sheet.png)
+
 Guard (gloves up), ready stance (arms at the stomach), relaxed stance, victory,
 move forward, move back, jab, cross, uppercut, hook, body shot, drop to a knee,
 knocked down (then up to a knee and back to the feet), bouncing off the ropes,

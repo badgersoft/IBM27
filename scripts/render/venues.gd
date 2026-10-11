@@ -29,8 +29,8 @@ const LIST: Array = [
 		"post":         [Color("4a4a50"), Color("2c2c30"), Color("6e6e76")],
 		"pads":         [Color("a83434"), Color("3a5aa8"), Color("c8c4b8")],  # red, blue, neutral
 		"crowd": [
-			{"seat_y": 110, "count": 3,  "fill": 1.00, "stand": 1.00, "scale": 1.00, "dim": 0.08, "x_range": [150, 290]},
-			{"seat_y": 110, "count": 5,  "fill": 0.90, "stand": 0.00, "scale": 1.00, "dim": 0.00, "x_range": [104, 324]},
+			{"seat_y": 110, "count":  3, "fill": 1.00, "stand": 1.00, "scale": 1.00, "dim": 0.08, "x_range": [150, 290]},
+			{"seat_y": 110, "count":  5, "fill": 0.90, "stand": 0.00, "scale": 1.00, "dim": 0.00, "x_range": [104, 324]},
 		],
 	},
 	{
@@ -44,9 +44,9 @@ const LIST: Array = [
 		"post":         [Color("8a8e96"), Color("5e626a"), Color("c4c8d0")],
 		"pads":         [Color("c83030"), Color("3060c8"), Color("e8e8e8")],
 		"crowd": [
-			{"seat_y": 88,  "count": 13, "fill": 0.75, "stand": 0.25, "scale": 0.86, "dim": 0.28, "x_range": [64, 360]},
-			{"seat_y": 99,  "count": 13, "fill": 0.70, "stand": 0.10, "scale": 0.93, "dim": 0.14, "x_range": [58, 366]},
-			{"seat_y": 110, "count": 13, "fill": 0.80, "stand": 0.00, "scale": 1.00, "dim": 0.00, "x_range": [52, 372]},
+			{"seat_y":  88, "count": 13, "fill": 0.75, "stand": 0.25, "scale": 0.86, "dim": 0.28, "x_range": [ 64, 360]},
+			{"seat_y":  99, "count": 13, "fill": 0.70, "stand": 0.10, "scale": 0.93, "dim": 0.14, "x_range": [ 58, 366]},
+			{"seat_y": 110, "count": 13, "fill": 0.80, "stand": 0.00, "scale": 1.00, "dim": 0.00, "x_range": [ 52, 372]},
 		],
 	},
 	{
@@ -60,11 +60,11 @@ const LIST: Array = [
 		"post":         [Color("b8bcc4"), Color("7c8088"), Color("eef0f4")],
 		"pads":         [Color("d82c2c"), Color("2c5ce0"), Color("f4f4f4")],
 		"crowd": [
-			{"seat_y": 66,  "count": 34, "fill": 0.85, "stand": 0.05, "scale": 0.76, "dim": 0.50, "x_range": [6, 418]},
-			{"seat_y": 77,  "count": 33, "fill": 0.88, "stand": 0.05, "scale": 0.81, "dim": 0.40, "x_range": [8, 416]},
-			{"seat_y": 88,  "count": 32, "fill": 0.90, "stand": 0.06, "scale": 0.87, "dim": 0.30, "x_range": [10, 414]},
-			{"seat_y": 99,  "count": 31, "fill": 0.92, "stand": 0.06, "scale": 0.93, "dim": 0.18, "x_range": [12, 412]},
-			{"seat_y": 110, "count": 30, "fill": 0.95, "stand": 0.04, "scale": 1.00, "dim": 0.06, "x_range": [14, 410]},
+			{"seat_y":  66, "count": 34, "fill": 0.85, "stand": 0.05, "scale": 0.76, "dim": 0.50, "x_range": [  6, 418]},
+			{"seat_y":  77, "count": 33, "fill": 0.88, "stand": 0.05, "scale": 0.81, "dim": 0.40, "x_range": [  8, 416]},
+			{"seat_y":  88, "count": 32, "fill": 0.90, "stand": 0.06, "scale": 0.87, "dim": 0.30, "x_range": [ 10, 414]},
+			{"seat_y":  99, "count": 31, "fill": 0.92, "stand": 0.06, "scale": 0.93, "dim": 0.18, "x_range": [ 12, 412]},
+			{"seat_y": 110, "count": 30, "fill": 0.95, "stand": 0.04, "scale": 1.00, "dim": 0.06, "x_range": [ 14, 410]},
 		],
 	},
 ]
