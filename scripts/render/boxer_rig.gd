@@ -17,6 +17,9 @@ extends Node2D
 const ANIM_FPS := 20.0
 ## Far-side limbs are drawn this much darker to suggest depth.
 const FAR_DARKEN := 0.22
+## How far down the near upper arm (0 - 1) the arm blends into the shoulder
+## before its outline and shading begin.
+const SHOULDER_BLEND := 0.35
 
 ## Emitted when a non-looping animation reaches its last step.
 signal animation_finished(anim_name: String)
@@ -155,14 +158,17 @@ func _draw() -> void:
 	if data == null:
 		return
 	var j := BoxerSkeleton.solve(_pose, _h, _bulk)
+	# Painter's order, far side first. Everything on the far side of the body
+	# (rear leg, rear arm AND its glove) is drawn before the torso and head, so
+	# the body hides it and only the parts that reach past the body show.
 	_draw_shadow(j)
 	_draw_leg(j, "rear", true)
 	_draw_arm(j, "rear", true)
+	_draw_glove(j, "rear", true)
 	_draw_leg(j, "lead", false)
 	_draw_torso(j)
 	_draw_trunks(j)
 	_draw_head(j)
-	_draw_glove(j, "rear", true)
 	_draw_arm(j, "lead", false)
 	_draw_glove(j, "lead", false)
 
@@ -206,7 +212,28 @@ func _draw_arm(j: Dictionary, side: String, far: bool) -> void:
 	var elbow: Vector2 = j["elbow_" + side]
 	var glove: Vector2 = j["glove_" + side]
 	var skin := _tones(_skin, far)
-	_chain([shoulder, elbow, glove], [_h * 0.066 * _bulk, _h * 0.056 * _bulk], skin)
+	var upper_w := _h * 0.066 * _bulk
+	var fore_w := _h * 0.056 * _bulk
+	if far:
+		# The far shoulder is hidden behind the torso, so a full outline is fine.
+		_chain([shoulder, elbow, glove], [upper_w, fore_w], skin)
+		return
+
+	# Near arm: it grows out of the shoulder rather than being pinned on. The
+	# outline and the shading only start part way down the upper arm, and a
+	# rounded deltoid in the chest's own skin tone covers the joint.
+	var outline_from := shoulder.lerp(elbow, SHOULDER_BLEND)
+	draw_line(outline_from, elbow, Palette.OUTLINE, upper_w + 2.0)
+	_capsule_outline(elbow, glove, fore_w)
+	_capsule_fill(shoulder, elbow, upper_w, skin[0])
+	_capsule_fill(elbow, glove, fore_w, skin[0])
+	_shade(outline_from, elbow, upper_w, skin)
+	_shade(elbow, glove, fore_w, skin)
+	draw_circle(shoulder, upper_w * 0.62, skin[0])
+	var up := (elbow - shoulder).normalized().orthogonal()
+	if up.y > 0.0:
+		up = -up
+	draw_line(shoulder + up * upper_w * 0.25, outline_from + up * upper_w * 0.22, skin[2], 1.0)
 
 
 func _draw_glove(j: Dictionary, side: String, far: bool) -> void:
@@ -423,14 +450,16 @@ func _chain(points: Array, widths: Array, tones: Array) -> void:
 	for i in widths.size():
 		_capsule_fill(points[i], points[i + 1], widths[i], tones[0])
 	for i in widths.size():
-		var a: Vector2 = points[i]
-		var b: Vector2 = points[i + 1]
-		var normal := (b - a).normalized().orthogonal()
-		if normal.y > 0.0:
-			normal = -normal   # Highlight on the upper side, shadow underneath.
-		var w: float = widths[i]
-		draw_line(a - normal * w * 0.30, b - normal * w * 0.30, tones[1], maxf(w * 0.30, 1.0))
-		draw_line(a + normal * w * 0.22, b + normal * w * 0.22, tones[2], 1.0)
+		_shade(points[i], points[i + 1], widths[i], tones)
+
+
+## Shadow along the underside of a limb segment and a highlight along the top.
+func _shade(a: Vector2, b: Vector2, w: float, tones: Array) -> void:
+	var normal := (b - a).normalized().orthogonal()
+	if normal.y > 0.0:
+		normal = -normal
+	draw_line(a - normal * w * 0.30, b - normal * w * 0.30, tones[1], maxf(w * 0.30, 1.0))
+	draw_line(a + normal * w * 0.22, b + normal * w * 0.22, tones[2], 1.0)
 
 
 func _capsule_outline(a: Vector2, b: Vector2, width: float) -> void:

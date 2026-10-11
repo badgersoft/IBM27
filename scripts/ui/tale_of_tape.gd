@@ -1,6 +1,6 @@
 class_name TaleOfTape
 extends Control
-## Pre-fight "tale of the tape" comparing the two boxers (1040 x 456).
+## Pre-fight "tale of the tape" comparing the two boxers (1040 x 488).
 ##
 ## Classic layout: red corner values right-aligned against the centre labels,
 ## blue corner values left-aligned, so the eye can run straight across a row.
@@ -9,11 +9,11 @@ extends Control
 signal dismissed
 
 const W := 1040
-const H := 456
+const H := 488
 const PAD := 16
 const VALUE_W := 384
 const LABEL_W := 240
-const TABLE_Y := 80
+const TABLE_Y := 64
 
 var _prompt: Label
 var _blink := 0.0
@@ -24,15 +24,17 @@ func setup(red: BoxerData, blue: BoxerData, venue_id: int, rounds: int) -> void:
 	add_child(UiTheme.panel(0, 0, W, H, Palette.UI_PANEL, Palette.UI_BORDER, 4))
 
 	var title := UiTheme.label("TALE OF THE TAPE", UiTheme.LARGE, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
-	add_child(UiTheme.place(title, 0, 16, W, 32))
+	add_child(UiTheme.place(title, 0, 12, W, UiTheme.LARGE))
 	var bill := "%d ROUNDS  -  MIDDLEWEIGHT  -  %s" % [rounds, Venues.venue_name(venue_id).to_upper()]
-	add_child(UiTheme.place(UiTheme.label(bill, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), 0, 52, W, 12))
+	add_child(UiTheme.place(UiTheme.label(bill, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), 0, 44, W, UiTheme.CAPTION))
 
 	var rows: Array = [
 		["", "RED CORNER", "BLUE CORNER"],
 		["NAME", red.display_name().to_upper(), blue.display_name().to_upper()],
 		["NICKNAME", _nick(red), _nick(blue)],
 		["HOMETOWN", red.hometown().to_upper(), blue.hometown().to_upper()],
+		["AGE", str(red.age), str(blue.age)],
+		["RECORD", red.record_with_kos(), blue.record_with_kos()],
 		["HEIGHT", _height(red), _height(blue)],
 		["WEIGHT", "%d LB" % red.weight_lb, "%d LB" % blue.weight_lb],
 		["STYLE", red.style_name().to_upper(), blue.style_name().to_upper()],
@@ -67,7 +69,7 @@ func setup(red: BoxerData, blue: BoxerData, venue_id: int, rounds: int) -> void:
 		add_child(UiTheme.place(blue_label, PAD + VALUE_W + LABEL_W + PAD, y, VALUE_W - PAD, UiTheme.ROW_H))
 
 	_prompt = UiTheme.label("TAP OR PRESS SPACE TO FIGHT", UiTheme.CAPTION, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
-	add_child(UiTheme.place(_prompt, 0, H - 32, W, 12))
+	add_child(UiTheme.place(_prompt, 0, H - 24, W, UiTheme.CAPTION))
 
 
 func _process(delta: float) -> void:

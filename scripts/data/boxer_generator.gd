@@ -9,6 +9,11 @@ extends RefCounted
 
 const WORLD_PATH := "res://data/world.json"
 
+## Career length limits for the made-up records.
+const MIN_AGE := 20
+const MAX_AGE := 37
+const MAX_FIGHTS := 50
+
 ## Share of a roster that gets a nickname (inclusive range).
 const NICKNAME_MIN_SHARE := 0.40
 const NICKNAME_MAX_SHARE := 0.50
@@ -91,6 +96,9 @@ func generate_boxer(avoid_trunks: Array[int] = []) -> BoxerData:
 	b.intelligence = _roll_skill(bias[5])
 	b.recovery     = _roll_skill(0)
 
+	# --- Career record (placeholder) ------------------------------------------------
+	_roll_record(b)
+
 	# --- Condition ---------------------------------------------------------------
 	# Fitter boxers (stamina) with a higher pain threshold (strength, chin) start
 	# a little healthier. Nobody starts at a perfect 100.
@@ -103,6 +111,32 @@ func generate_boxer(avoid_trunks: Array[int] = []) -> BoxerData:
 # ----------------------------------------------------------------------------
 #  Helpers
 # ----------------------------------------------------------------------------
+
+## Makes up a believable professional record:
+##  - older boxers have had more fights (about 1.5 - 3.5 a year since turning pro
+##    at 18 - 23), never more than MAX_FIGHTS;
+##  - better boxers (higher average skill) win a bigger share;
+##  - draws are rare;
+##  - harder punchers finish more of their wins inside the distance.
+func _roll_record(b: BoxerData) -> void:
+	b.age = _rng.randi_range(MIN_AGE, MAX_AGE)
+	var pro_debut := _rng.randi_range(18, 23)
+	var years := maxi(b.age - pro_debut, 0)
+	# Even the youngest prospect has a handful of pro fights behind him.
+	var fights := clampi(roundi(years * _rng.randf_range(1.5, 3.5)) + _rng.randi_range(3, 5), 3, MAX_FIGHTS)
+
+	var skill := ((b.power + b.speed + b.stamina + b.chin + b.strength + b.intelligence) / 6.0 - 40.0) / 45.0
+	var win_rate := clampf(0.55 + clampf(skill, 0.0, 1.0) * 0.42 + _rng.randf_range(-0.08, 0.08), 0.40, 0.98)
+	b.draws = 0
+	for i in fights - 3:   # Nobody starts a career with a run of draws.
+		if _rng.randf() < 0.03:
+			b.draws += 1
+	b.wins = clampi(roundi((fights - b.draws) * win_rate), 0, fights - b.draws)
+	b.losses = fights - b.draws - b.wins
+
+	var ko_rate := clampf(0.12 + b.power / 99.0 * 0.65 + _rng.randf_range(-0.08, 0.08), 0.05, 0.92)
+	b.kos = clampi(roundi(b.wins * ko_rate), 0, b.wins)
+
 
 func _load_world() -> Dictionary:
 	var file := FileAccess.open(WORLD_PATH, FileAccess.READ)

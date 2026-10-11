@@ -11,7 +11,9 @@ extends RefCounted
 ##   count   - how many seats in the row
 ##   fill    - chance a seat is taken (0 - 1)
 ##   stand   - chance a spectator is standing
-##   scale   - drawing size of the spectators in that row
+##   scale   - drawing size of the spectators in that row. The gyms are small
+##             rooms, so their few spectators sit close and look bigger; in
+##             the hall the crowd is further back and smaller.
 ##   dim     - how much the row is darkened (rows further back are darker)
 ##   x_range - left and right ends of the row in arena pixels
 
@@ -29,8 +31,8 @@ const LIST: Array = [
 		"post":         [Color("4a4a50"), Color("2c2c30"), Color("6e6e76")],
 		"pads":         [Color("a83434"), Color("3a5aa8"), Color("c8c4b8")],  # red, blue, neutral
 		"crowd": [
-			{"seat_y": 110, "count":  3, "fill": 1.00, "stand": 1.00, "scale": 1.00, "dim": 0.08, "x_range": [150, 290]},
-			{"seat_y": 110, "count":  5, "fill": 0.90, "stand": 0.00, "scale": 1.00, "dim": 0.00, "x_range": [104, 324]},
+			{"seat_y": 110, "count":  3, "fill": 1.00, "stand": 1.00, "scale": 1.70, "dim": 0.08, "x_range": [148, 292]},
+			{"seat_y": 110, "count":  5, "fill": 0.90, "stand": 0.00, "scale": 1.75, "dim": 0.00, "x_range": [108, 320]},
 		],
 	},
 	{
@@ -44,9 +46,9 @@ const LIST: Array = [
 		"post":         [Color("8a8e96"), Color("5e626a"), Color("c4c8d0")],
 		"pads":         [Color("c83030"), Color("3060c8"), Color("e8e8e8")],
 		"crowd": [
-			{"seat_y":  88, "count": 13, "fill": 0.75, "stand": 0.25, "scale": 0.86, "dim": 0.28, "x_range": [ 64, 360]},
-			{"seat_y":  99, "count": 13, "fill": 0.70, "stand": 0.10, "scale": 0.93, "dim": 0.14, "x_range": [ 58, 366]},
-			{"seat_y": 110, "count": 13, "fill": 0.80, "stand": 0.00, "scale": 1.00, "dim": 0.00, "x_range": [ 52, 372]},
+			{"seat_y":  84, "count": 10, "fill": 0.75, "stand": 0.20, "scale": 1.20, "dim": 0.24, "x_range": [ 70, 354]},
+			{"seat_y":  97, "count": 10, "fill": 0.70, "stand": 0.10, "scale": 1.32, "dim": 0.12, "x_range": [ 62, 362]},
+			{"seat_y": 110, "count":  9, "fill": 0.80, "stand": 0.00, "scale": 1.45, "dim": 0.00, "x_range": [ 56, 368]},
 		],
 	},
 	{

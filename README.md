@@ -84,6 +84,19 @@ Each boxer starts with health a little below 100, set by his fitness (stamina,
 strength and chin). A `recovery` stat is already stored for future builds,
 where injuries will carry over between fights.
 
+### Records (placeholders for now)
+
+Every boxer has an age (20-37) and a made-up professional record, shown as
+wins-losses-draws with knockouts, e.g. `22-3-1 (14 KO)`:
+
+* Older boxers have had more fights (about 1.5-3.5 a year since turning pro),
+  never more than 50.
+* Better all-round boxers win a bigger share; draws are rare.
+* Harder punchers finish more of their wins by knockout.
+
+Records appear on the name plates and in the tale of the tape, and are
+updated after every fight for the rest of the session.
+
 ---
 
 ## Project layout

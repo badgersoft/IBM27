@@ -1,14 +1,14 @@
 class_name Nameplate
 extends Control
-## Boxer name plate shown above the ring (480 x 48).
+## Boxer name plate shown above the ring (456 x 48).
 ##
 ##   |#| MARCUS JOHNSON                          <- name, BODY size
-##   |#| "THE HAMMER"   CHICAGO, USA             <- caption size
+##   |#| "THE HAMMER"   22-3-1 (14 KO)           <- caption size
 ##
 ## The red corner's plate reads from the left with its colour stripe on the
 ## left; the blue corner's plate is the mirror image.
 
-const W := 480
+const W := 456
 const H := 48
 const STRIPE := 8
 const PAD := 16
@@ -37,16 +37,16 @@ func setup(boxer: BoxerData, corner: int) -> void:
 	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(UiTheme.place(line, text_x, 30, text_w, 12))
 	var nick := UiTheme.label("", UiTheme.CAPTION, Palette.UI_GOLD)
-	var town := UiTheme.label(boxer.hometown().to_upper(), UiTheme.CAPTION, Palette.UI_TEXT_DIM)
+	var record := UiTheme.label(boxer.record_with_kos(), UiTheme.CAPTION, Palette.UI_TEXT_DIM)
 	nick.clip_text = false
-	town.clip_text = false
+	record.clip_text = false
 	if not boxer.nickname.is_empty():
 		nick.text = "\"%s\"" % boxer.nickname.to_upper()
 	# Keep the nickname nearest the stripe on both plates.
 	if left_side:
 		line.add_child(nick)
-		line.add_child(town)
+		line.add_child(record)
 	else:
-		line.add_child(town)
+		line.add_child(record)
 		line.add_child(nick)
 	nick.visible = not nick.text.is_empty()

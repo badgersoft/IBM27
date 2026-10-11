@@ -218,6 +218,7 @@ func _on_knocked_down(_corner: int) -> void:
 
 
 func _on_fight_finished(result: Dictionary) -> void:
+	_update_records(result)
 	view.arena.excitement = 1.0
 	if result["method"] in ["KO", "TKO"]:
 		_show_banner(ResultPanel.METHOD_TITLES[result["method"]], RESULT_DELAY, Palette.UI_GOLD)
@@ -225,6 +226,17 @@ func _on_fight_finished(result: Dictionary) -> void:
 	else:
 		_show_banner("FINAL BELL", RESULT_DELAY, Palette.UI_TEXT)
 	_result_clock = 0.0
+
+
+## Adds this fight to both boxers' records (kept for the rest of the session).
+func _update_records(result: Dictionary) -> void:
+	var winner: int = result["winner"]
+	var by_ko: bool = result["method"] in ["KO", "TKO"]
+	for f in sim.fighters:
+		if winner < 0:
+			f.data.add_result("D", false)
+		else:
+			f.data.add_result("W" if f.corner == winner else "L", by_ko)
 
 
 func _show_result() -> void:

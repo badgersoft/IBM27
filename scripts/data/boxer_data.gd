@@ -33,6 +33,15 @@ const MAX_HEIGHT_CM := 198
 @export var country: String = ""         ## Display name, e.g. "Ireland".
 @export var country_code: String = ""    ## Three letters, e.g. "IRL".
 
+# --- Career ----------------------------------------------------------------
+## Placeholder records for now (made up by BoxerGenerator, then updated after
+## every fight in this session).
+@export_range(18, 40) var age: int = 26
+@export var wins: int = 0
+@export var losses: int = 0
+@export var draws: int = 0
+@export var kos: int = 0                 ## Wins by knockout (counted inside wins).
+
 # --- Body ------------------------------------------------------------------
 @export_range(170, 198) var height_cm: int = 180
 @export_range(154, 160) var weight_lb: int = 157
@@ -78,6 +87,33 @@ func hometown() -> String:
 
 func style_name() -> String:
 	return STYLE_NAMES[style]
+
+
+## "22-3-1"  (wins - losses - draws, the usual boxing order).
+func record() -> String:
+	return "%d-%d-%d" % [wins, losses, draws]
+
+
+## "22-3-1 (14 KO)"
+func record_with_kos() -> String:
+	return "%s (%d KO)" % [record(), kos]
+
+
+func total_fights() -> int:
+	return wins + losses + draws
+
+
+## Adds the result of a fight to the record. [param result] is "W", "L" or "D".
+func add_result(result: String, by_ko: bool) -> void:
+	match result:
+		"W":
+			wins += 1
+			if by_ko:
+				kos += 1
+		"L":
+			losses += 1
+		_:
+			draws += 1
 
 
 ## Average of the six skills - a quick "overall" rating for menus.

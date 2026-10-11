@@ -41,6 +41,8 @@ const FRONT_ROPE_ALPHA := 0.45
 
 const FONT := preload("res://assets/fonts/PressStart2P.woff2")
 const FONT_SIZE := 8
+const GLYPH_H := 7      ## Height of a capital letter at FONT_SIZE.
+const GLYPH_DROP := 2   ## Gap between the bottom of a capital and the baseline.
 
 ## 0 - 1. Raise it when something exciting happens; it fades by itself.
 var excitement := 0.0
@@ -212,6 +214,12 @@ func _draw_spectator(c: CanvasItem, s: Dictionary) -> void:
 		c.draw_circle(head + Vector2(0, 0.5 * k), r * 0.9, skin)
 	else:
 		c.draw_circle(head, r, skin)
+	if k >= 1.2:
+		# Close enough to see a neck and a pair of eyes watching the ring.
+		c.draw_rect(Rect2(x - k, top - 1.0, 2.0 * k, 1.0), skin.darkened(0.2))
+		var eye_y := roundf(head.y + 0.6 * k)
+		c.draw_rect(Rect2(roundf(x - 1.5 * k), eye_y, 1, 1), Palette.darken(Palette.EYE, 0.0))
+		c.draw_rect(Rect2(roundf(x + 1.0 * k), eye_y, 1, 1), Palette.darken(Palette.EYE, 0.0))
 
 	if cheering:
 		var lift := 1.0 + absf(sin(_time * 7.0 + s["phase"])) * 2.0
@@ -305,9 +313,9 @@ func _draw_small_gym_walls(c: CanvasItem) -> void:
 	c.draw_line(Vector2(353, 52), Vector2(365, 42), Color("8aa0b0"), 1.0)
 
 	# "No smoking" sign - a nod to the classic gym backdrop.
-	c.draw_rect(Rect2(96, 17, 88, 14), Color("2a2420"))
-	c.draw_rect(Rect2(97, 18, 86, 12), Color("e8e4d8"))
-	_text(c, "NO SMOKING", Vector2(97, 28), 86, Color("a02020"))
+	c.draw_rect(Rect2(96, 17, 88, 15), Color("2a2420"))
+	c.draw_rect(Rect2(97, 18, 86, 13), Color("e8e4d8"))
+	_text_in(c, "NO SMOKING", Rect2(97, 18, 86, 13), Color("a02020"))
 
 	# Wall clock.
 	c.draw_circle(Vector2(262, 26), 7.0, Color("2a2420"))
@@ -352,10 +360,10 @@ func _draw_city_gym_walls(c: CanvasItem) -> void:
 		c.draw_line(Vector2(wx + 4, 36), Vector2(wx + 10, 29), Color("c8dcec"), 1.0)
 
 	# Club banner.
-	c.draw_rect(Rect2(140, 8, 144, 16), Color("6a1418"))
-	c.draw_rect(Rect2(141, 9, 142, 14), Color("b02028"))
+	c.draw_rect(Rect2(140, 8, 144, 18), Color("6a1418"))
+	c.draw_rect(Rect2(141, 9, 142, 16), Color("b02028"))
 	c.draw_rect(Rect2(141, 9, 142, 1), Color("d04048"))
-	_text(c, "CITY GYM", Vector2(141, 20), 142, Color("f4ecd8"))
+	_text_in(c, "CITY GYM", Rect2(141, 10, 142, 15), Color("f4ecd8"))
 
 	# Two hanging lamps with soft light cones.
 	for lx in [120.0, 304.0]:
@@ -390,11 +398,11 @@ func _draw_hall_walls(c: CanvasItem) -> void:
 		c.draw_circle(Vector2(lx, 19), 5.0, Color(1, 0.95, 0.75, 0.12))
 
 	# A huge banner high up at the back.
-	c.draw_rect(Rect2(124, 26, 176, 18), Color("0c0c14"))
-	c.draw_rect(Rect2(125, 27, 174, 16), Color("1c2a5a"))
+	c.draw_rect(Rect2(124, 26, 176, 19), Color("0c0c14"))
+	c.draw_rect(Rect2(125, 27, 174, 17), Color("1c2a5a"))
 	c.draw_rect(Rect2(125, 27, 174, 1), Color("c8a020"))
-	c.draw_rect(Rect2(125, 42, 174, 1), Color("c8a020"))
-	_text(c, "WORLD TITLE NIGHT", Vector2(125, 39), 174, Color("f0d060"))
+	c.draw_rect(Rect2(125, 43, 174, 1), Color("c8a020"))
+	_text_in(c, "WORLD TITLE NIGHT", Rect2(125, 28, 174, 15), Color("f0d060"))
 
 
 # ============================================================================
@@ -488,14 +496,18 @@ func _draw_apron(c: CanvasItem) -> void:
 			c.draw_rect(Rect2(left, APRON_BOTTOM_Y - 2, rect.size.x, 2), tones[1])
 		Venues.Id.CITY_GYM:
 			c.draw_rect(Rect2(left, CANVAS_FRONT_Y + 2, rect.size.x, 1), Color("f0f0f0"))
-			_text(c, _venue["apron_text"], Vector2(left, CANVAS_FRONT_Y + 13), rect.size.x, Color("f0f0f0"))
+			# Text centred in the cloth between the white trim and the floor.
+			var area := Rect2(left, CANVAS_FRONT_Y + 3, rect.size.x, APRON_BOTTOM_Y - CANVAS_FRONT_Y - 3)
+			_text_in(c, _venue["apron_text"], area, Color("f0f0f0"))
 		Venues.Id.BOXING_HALL:
 			# Skirt folds, gold trim and sponsor text.
 			for x in range(int(left) + 12, int(right), 24):
 				c.draw_rect(Rect2(x, CANVAS_FRONT_Y + 4, 1, rect.size.y - 4), Color("1c2446"))
 			c.draw_rect(Rect2(left, CANVAS_FRONT_Y + 2, rect.size.x, 1), Color("c8a020"))
 			c.draw_rect(Rect2(left, APRON_BOTTOM_Y - 2, rect.size.x, 1), Color("c8a020"))
-			_text(c, _venue["apron_text"], Vector2(left, CANVAS_FRONT_Y + 13), rect.size.x, Color("f0d060"))
+			# Text centred between the two gold trim lines.
+			var area := Rect2(left, CANVAS_FRONT_Y + 3, rect.size.x, APRON_BOTTOM_Y - CANVAS_FRONT_Y - 5)
+			_text_in(c, _venue["apron_text"], area, Color("f0d060"))
 
 	# Floor in front of the ring.
 	var floor_colour := [Color("3a2818"), Color("2a2c34"), Color("08080c")][venue_id] as Color
@@ -561,7 +573,7 @@ func _draw_bubble(c: CanvasItem, text: String, anchor: Vector2, dir: float) -> v
 	c.draw_rect(rect, Color("f8f6ee"))
 	var inner := PackedVector2Array([tail[0] + Vector2(dir, -1), tail[1] + Vector2(-dir, -1), tail[2] + Vector2(0, -2)])
 	c.draw_colored_polygon(inner, Color("f8f6ee"))
-	_text(c, text, Vector2(rect.position.x, rect.end.y - 4), rect.size.x, Color("101010"))
+	_text_in(c, text, rect, Color("101010"))
 
 
 # ============================================================================
@@ -607,8 +619,16 @@ func _draw_rope(c: CanvasItem, a: Vector2, b: Vector2, colour: Color, width: flo
 	c.draw_polyline(points, colour, width)
 
 
-func _text(c: CanvasItem, text: String, baseline_left: Vector2, width: float, colour: Color) -> void:
-	c.draw_string(FONT, baseline_left, text, HORIZONTAL_ALIGNMENT_CENTER, width, FONT_SIZE, colour)
+## Draws [param text] centred both ways inside [param area].
+##
+## At 8 px the pixel font's capitals are GLYPH_H (7) pixels tall and sit
+## GLYPH_DROP (2) pixels above the baseline, so the baseline is placed to give
+## equal space above and below them. Give text areas an odd height (7 + 2n)
+## and the gaps come out exactly equal.
+func _text_in(c: CanvasItem, text: String, area: Rect2, colour: Color) -> void:
+	var gap := floorf((area.size.y - GLYPH_H) / 2.0)
+	var baseline := area.position.y + gap + GLYPH_H + GLYPH_DROP - 1.0
+	c.draw_string(FONT, Vector2(area.position.x, baseline), text, HORIZONTAL_ALIGNMENT_CENTER, area.size.x, FONT_SIZE, colour)
 
 
 func _ellipse(c: CanvasItem, centre: Vector2, rx: float, ry: float, colour: Color) -> void:
