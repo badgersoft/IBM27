@@ -476,23 +476,44 @@ func _keep_apart_during_count(down: Fighter, other: Fighter) -> void:
 #  End of the fight
 # ============================================================================
 
+## Reads the three cards. A boxer needs at least two judges to win:
+##   3-0 unanimous decision, 2-1 split decision, 2-0 with one even = majority.
+## Otherwise it is a draw: 0-0-3 unanimous, 1-0-2 majority, 1-1-1 split.
 func _decision() -> void:
-	var tally := judges.tally()
+	var tally := judges.tally()   # [for red, for blue, even]
 	var winner := -1
-	var method := "DRAW"
-	if tally[0] > tally[1]:
+	if tally[0] >= 2:
 		winner = 0
-	elif tally[1] > tally[0]:
+	elif tally[1] >= 2:
 		winner = 1
+	var method := "DRAW"
+	var detail := ""
 	if winner >= 0:
-		var for_winner: int = tally[winner]
-		if for_winner == 3:
+		if tally[winner] == 3:
 			method = "UD"
 		elif tally[2] > 0:
 			method = "MD"
 		else:
 			method = "SD"
-	_finish(winner, method, "")
+	elif tally[2] == 3:
+		detail = "UNANIMOUS"
+	elif tally[2] == 2:
+		detail = "MAJORITY"
+	else:
+		detail = "SPLIT"
+	_finish(winner, method, detail)
+
+
+## After a decision both boxers wait for the announcer; call this when the
+## winner is read out to start the celebrations. (Stoppages celebrate at once.)
+func announce_winner() -> void:
+	var winner: int = result.get("winner", -1)
+	_finish_timer = 0.0
+	for f in fighters:
+		if winner == f.corner:
+			f.set_state(State.CELEBRATE, "victory")
+		elif winner >= 0:
+			f.set_state(State.DEJECTED, "dejected")
 
 
 func _finish(winner: int, method: String, detail: String) -> void:
@@ -510,15 +531,16 @@ func _finish(winner: int, method: String, detail: String) -> void:
 	}
 	for j in judges.panel.size():
 		result["cards"].append(judges.totals(j))
+	var stoppage := method in ["KO", "TKO"]
 	for f in fighters:
 		f.combo.clear()
-		if winner == f.corner:
+		if not stoppage:
+			f.set_state(State.CORNER, "relaxed")   # Waiting for the verdict.
+		elif winner == f.corner:
 			f.set_state(State.CELEBRATE, "victory")
-		elif winner < 0:
-			f.set_state(State.CORNER, "relaxed")
 		elif not f.is_down():
 			f.set_state(State.DEJECTED, "dejected")
-	if method in ["KO", "TKO"]:
+	if stoppage:
 		bell.emit(5)
 	fight_finished.emit(result)
 

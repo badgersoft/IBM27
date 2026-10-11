@@ -34,6 +34,10 @@ const RING_MAX_X := 366.0
 const CORNER_X := [60.0, 364.0]
 
 const CROWD_FPS := 12.0
+## Floor colour around the ring, per venue.
+const FLOOR_COLOURS: Array[Color] = [Color("3a2818"), Color("2a2c34"), Color("08080c"), Color("050508")]
+## Aisle positions (x) in the tiered venues.
+const AISLES: Array[float] = [110.0, 314.0]
 ## Speech bubbles sit above the tallest boxer's head (which tops out near y 46).
 const BUBBLE_TOP := 24.0
 const BUBBLE_TAIL_Y := 56.0
@@ -54,6 +58,7 @@ var _venue: Dictionary = {}
 var _crowd: Array = []
 var _rope_shake := [0.0, 0.0]
 var _time := 0.0
+var _flash_rng := RandomNumberGenerator.new()
 var _crowd_clock := 0.0
 var _advice_text := ["", ""]   # What each corner man is saying ("" = not shown).
 var _advice_time := [0.0, 0.0]
@@ -149,7 +154,7 @@ func _build_crowd() -> void:
 			if rng.randf() > row["fill"]:
 				continue
 			var x := x_from + spacing * i + rng.randf_range(-1.5, 1.5)
-			if venue_id == Venues.Id.BOXING_HALL and (absf(x - 110.0) < 7.0 or absf(x - 314.0) < 7.0):
+			if _has_aisles() and _in_aisle(x, 7.0):
 				continue   # Leave the aisles clear.
 			_crowd.append({
 				"pos": Vector2(roundf(x), row["seat_y"]),
@@ -174,12 +179,23 @@ func _draw_crowd(c: CanvasItem) -> void:
 		Venues.Id.BOXING_HALL:
 			for row in _venue["crowd"]:
 				_draw_tier(c, row["seat_y"], row["dim"])
+		Venues.Id.GRAND_ARENA:
+			for row in _venue["crowd"]:
+				if row.get("upper", false):
+					_draw_tier(c, row["seat_y"], row["dim"], 7.0, 4.0, 8.0)
+				else:
+					_draw_tier(c, row["seat_y"], row["dim"], 9.0, 6.0, 10.0)
 	for s in _crowd:
 		_draw_spectator(c, s)
-	if venue_id == Venues.Id.BOXING_HALL:
+	if venue_id == Venues.Id.BOXING_HALL or venue_id == Venues.Id.GRAND_ARENA:
 		# Ringside barrier between the front row and the ring.
 		c.draw_rect(Rect2(0, 112, SIZE.x, 6), Color("10101a"))
 		c.draw_rect(Rect2(0, 112, SIZE.x, 1), Color("c8a020"))
+	if venue_id == Venues.Id.GRAND_ARENA:
+		_draw_balcony(c)
+		_draw_camera_flashes(c)
+		_draw_spotlight_beams(c)
+		_draw_big_screen(c)
 
 
 ## A very simple spectator: legs (if standing), shirt, head, hair, and arms
@@ -245,20 +261,84 @@ func _draw_bleacher(c: CanvasItem, y: float, dim: float) -> void:
 	c.draw_rect(Rect2(40, y, 344, 1), wood.lightened(0.2))
 
 
-## Seating tier for the Boxing Hall: a dark riser with red seat backs.
-func _draw_tier(c: CanvasItem, y: float, dim: float) -> void:
-	c.draw_rect(Rect2(0, y, SIZE.x, 11), Palette.darken(Color("221c30"), dim))
+## Seating tier: a dark riser with red seat backs and aisle steps.
+## Rows further away use a lower riser and smaller, closer-packed seats.
+func _draw_tier(c: CanvasItem, y: float, dim: float, riser: float = 11.0,
+		seat_w: float = 7.0, seat_step: float = 12.0) -> void:
+	c.draw_rect(Rect2(0, y, SIZE.x, riser), Palette.darken(Color("221c30"), dim))
 	c.draw_rect(Rect2(0, y, SIZE.x, 1), Palette.darken(Color("3a3048"), dim))
 	var seat := Palette.darken(Color("8a2230"), dim)
+	var seat_h := roundf(seat_w * 0.85)
 	var x := 4.0
 	while x < SIZE.x:
-		if absf(x - 110.0) > 7.0 and absf(x - 314.0) > 7.0:
-			c.draw_rect(Rect2(x, y - 6, 7, 6), seat)
-		x += 12.0
-	# Aisle steps.
-	for aisle_x in [110.0, 314.0]:
-		c.draw_rect(Rect2(aisle_x - 5, y - 6, 10, 17), Palette.darken(Color("2e2638"), dim))
-		c.draw_rect(Rect2(aisle_x - 5, y + 4, 10, 1), Palette.darken(Color("4a4058"), dim))
+		if not _in_aisle(x, 7.0):
+			c.draw_rect(Rect2(x, y - seat_h, seat_w, seat_h), seat)
+		x += seat_step
+	for aisle_x in AISLES:
+		c.draw_rect(Rect2(aisle_x - 5, y - seat_h, 10, riser + seat_h), Palette.darken(Color("2e2638"), dim))
+		c.draw_rect(Rect2(aisle_x - 5, y + riser * 0.4, 10, 1), Palette.darken(Color("4a4058"), dim))
+
+
+func _has_aisles() -> bool:
+	return venue_id == Venues.Id.BOXING_HALL or venue_id == Venues.Id.GRAND_ARENA
+
+
+func _in_aisle(x: float, half_width: float) -> bool:
+	for aisle_x in AISLES:
+		if absf(x - aisle_x) < half_width:
+			return true
+	return false
+
+
+## Grand Arena: the front of the upper tier, with a glowing LED strip.
+func _draw_balcony(c: CanvasItem) -> void:
+	c.draw_rect(Rect2(0, 46, SIZE.x, 9), Color("0c0c12"))
+	c.draw_rect(Rect2(0, 47, SIZE.x, 1), Color("3a3a48"))
+	var glow := 0.75 + 0.25 * sin(_time * 2.0)
+	c.draw_rect(Rect2(0, 49, SIZE.x, 3), Color(0.88, 0.70, 0.24, glow))
+	c.draw_rect(Rect2(0, 54, SIZE.x, 1), Color("1c1c26"))
+
+
+## Grand Arena: a few photographers' flashes popping in the crowd. More
+## flashes when the crowd is excited.
+func _draw_camera_flashes(c: CanvasItem) -> void:
+	var count := 2 + int(excitement * 10.0)
+	for i in count:
+		if _flash_rng.randf() > 0.55:
+			continue
+		var s: Dictionary = _crowd[_flash_rng.randi_range(0, _crowd.size() - 1)]
+		var p: Vector2 = s["pos"] + Vector2(0, -14.0 * s["scale"])
+		c.draw_circle(p, 2.5, Color(1, 1, 1, 0.25))
+		c.draw_rect(Rect2(p.round() - Vector2(1, 1), Vector2(2, 2)), Color(1, 1, 1, 0.95))
+
+
+## Grand Arena: haze beams from the roof lamps down onto the ring.
+func _draw_spotlight_beams(c: CanvasItem) -> void:
+	var targets := [150.0, 212.0, 274.0, 212.0]
+	var lamps := [40.0, 130.0, 294.0, 384.0]
+	for i in lamps.size():
+		var lx: float = lamps[i]
+		var tx: float = targets[i]
+		c.draw_colored_polygon(PackedVector2Array([
+			Vector2(lx - 2, 14), Vector2(lx + 2, 14),
+			Vector2(tx + 34, CANVAS_BACK_Y), Vector2(tx - 34, CANVAS_BACK_Y),
+		]), Color(1, 0.97, 0.85, 0.045))
+
+
+## Grand Arena: the screen hanging over the ring, showing the two corners.
+func _draw_big_screen(c: CanvasItem) -> void:
+	var screen := Rect2(176, 6, 72, 26)
+	for cable_x in [screen.position.x + 8, screen.end.x - 8]:
+		c.draw_line(Vector2(cable_x, 0), Vector2(cable_x, screen.position.y), Color("3a3a44"), 1.0)
+	c.draw_rect(screen.grow(2), Color("1a1a22"))
+	c.draw_rect(screen.grow(1), Color("44444e"))
+	var half := screen.size.x / 2.0
+	c.draw_rect(Rect2(screen.position, Vector2(half, screen.size.y)), Color("8c1a1e"))
+	c.draw_rect(Rect2(screen.position + Vector2(half, 0), Vector2(half, screen.size.y)), Color("1a3a8c"))
+	_text_in(c, "VS", Rect2(screen.position.x, screen.position.y + 2, screen.size.x, 21), Color("f4f4f4"))
+	# Scan lines give it a screen-like sheen.
+	for y in range(int(screen.position.y) + 1, int(screen.end.y), 3):
+		c.draw_rect(Rect2(screen.position.x, y, screen.size.x, 1), Color(0, 0, 0, 0.18))
 
 
 # ============================================================================
@@ -273,8 +353,10 @@ func _draw_static_back(c: CanvasItem) -> void:
 			_draw_city_gym_walls(c)
 		Venues.Id.BOXING_HALL:
 			_draw_hall_walls(c)
+		Venues.Id.GRAND_ARENA:
+			_draw_arena_roof(c)
 	# Floor either side of the ring, under the canvas line.
-	var floor_colour := [Color("3a2818"), Color("2a2c34"), Color("08080c")][venue_id] as Color
+	var floor_colour: Color = FLOOR_COLOURS[venue_id]
 	c.draw_rect(Rect2(0, CANVAS_BACK_Y, SIZE.x, SIZE.y - CANVAS_BACK_Y), floor_colour)
 
 
@@ -377,6 +459,23 @@ func _draw_city_gym_walls(c: CanvasItem) -> void:
 		]), Color(1, 0.95, 0.8, 0.05))
 
 
+## Grand Arena: a huge dark roof with two rows of lighting truss.
+func _draw_arena_roof(c: CanvasItem) -> void:
+	var bands := [Color("060609"), Color("09090e"), Color("0c0c13"), Color("101018")]
+	for i in bands.size():
+		c.draw_rect(Rect2(0, i * 6, SIZE.x, 6), bands[i])
+	c.draw_rect(Rect2(0, 24, SIZE.x, 96), Color("12121c"))
+	for rail_y in [3.0, 9.0]:
+		c.draw_rect(Rect2(0, rail_y, SIZE.x, 1), Color("3a3a48"))
+	for x in range(0, SIZE.x, 6):
+		c.draw_line(Vector2(x, 4), Vector2(x + 3, 9), Color("26262f"), 1.0)
+		c.draw_line(Vector2(x + 3, 9), Vector2(x + 6, 4), Color("26262f"), 1.0)
+	for lx in [40.0, 85.0, 130.0, 294.0, 339.0, 384.0]:
+		c.draw_rect(Rect2(lx - 3, 10, 6, 4), Color("22222a"))
+		c.draw_rect(Rect2(lx - 2, 13, 4, 1), Color("fff6d8"))
+		c.draw_circle(Vector2(lx, 14), 4.0, Color(1, 0.95, 0.8, 0.10))
+
+
 func _draw_hall_walls(c: CanvasItem) -> void:
 	# Dark hall fading up into the roof.
 	var bands := [Color("0b0a12"), Color("0e0c17"), Color("120f1d"), Color("161324"), Color("1a172a")]
@@ -459,6 +558,12 @@ func _draw_canvas(c: CanvasItem) -> void:
 			_ellipse(c, Vector2(212, 130), 44, 7, tones[2])
 			_ellipse(c, Vector2(212, 130), 41, 6, tones[0])
 			_ellipse(c, Vector2(212, 130), 30, 4, Color(tones[2], 0.5))
+		Venues.Id.GRAND_ARENA:
+			# Big gold centre-ring logo on the bright white canvas.
+			_ellipse(c, Vector2(212, 130), 52, 8, Color("c8a020"))
+			_ellipse(c, Vector2(212, 130), 49, 7, tones[0])
+			_ellipse(c, Vector2(212, 130), 36, 5, Color("e0b43c", 0.55))
+			_ellipse(c, Vector2(212, 130), 33, 4, tones[0])
 
 
 # ============================================================================
@@ -499,7 +604,7 @@ func _draw_apron(c: CanvasItem) -> void:
 			# Text centred in the cloth between the white trim and the floor.
 			var area := Rect2(left, CANVAS_FRONT_Y + 3, rect.size.x, APRON_BOTTOM_Y - CANVAS_FRONT_Y - 3)
 			_text_in(c, _venue["apron_text"], area, Color("f0f0f0"))
-		Venues.Id.BOXING_HALL:
+		Venues.Id.BOXING_HALL, Venues.Id.GRAND_ARENA:
 			# Skirt folds, gold trim and sponsor text.
 			for x in range(int(left) + 12, int(right), 24):
 				c.draw_rect(Rect2(x, CANVAS_FRONT_Y + 4, 1, rect.size.y - 4), Color("1c2446"))
@@ -510,7 +615,7 @@ func _draw_apron(c: CanvasItem) -> void:
 			_text_in(c, _venue["apron_text"], area, Color("f0d060"))
 
 	# Floor in front of the ring.
-	var floor_colour := [Color("3a2818"), Color("2a2c34"), Color("08080c")][venue_id] as Color
+	var floor_colour: Color = FLOOR_COLOURS[venue_id]
 	c.draw_rect(Rect2(0, APRON_BOTTOM_Y, SIZE.x, SIZE.y - APRON_BOTTOM_Y), floor_colour)
 	c.draw_rect(Rect2(left, APRON_BOTTOM_Y, rect.size.x, 1), Color(0, 0, 0, 0.5))
 

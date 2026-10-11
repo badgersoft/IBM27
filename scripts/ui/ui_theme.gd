@@ -107,12 +107,16 @@ static func panel(x: float, y: float, w: float, h: float, bg: Color = Palette.UI
 	return p
 
 
-## Shrinks text that would not fit a column to the caption size instead of
-## letting it overflow (keeps tables tidy with unusually long names).
+## Steps text down through the standard sizes until it fits [param width]
+## (keeps tables tidy with unusually long names instead of overflowing).
 static func fit(l: Label, width: float) -> void:
 	var size := l.get_theme_font_size("font_size")
-	if l.text.length() * size > width and size > CAPTION:
-		l.add_theme_font_size_override("font_size", CAPTION)
+	for smaller in [HUGE, TITLE, LARGE, BODY, CAPTION]:
+		if l.text.length() * size <= width:
+			break
+		if smaller < size:
+			size = smaller
+	l.add_theme_font_size_override("font_size", size)
 
 
 ## Gives a Label a dark pixel outline so it reads over the busy arena.

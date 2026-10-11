@@ -7,10 +7,15 @@ extends Node
 ## Command-line options (after "--") are read here too, which is handy for
 ## testing and for the screenshot tool:
 ##   --seed=<n>      fixed random seed for the roster and fight
-##   --venue=<0-2>   force a venue (0 town gym, 1 city gym, 2 boxing hall)
+##   --roster=<n>    use a different starting roster
+##   --venue=<0-3>   force a venue (0 town gym, 1 city gym, 2 boxing hall, 3 grand arena)
 ##   --capture=<png> take a screenshot during the fight and quit (see CaptureTool)
 
 const ROSTER_SIZE := 5
+## The starting roster is the same five boxers every time the game is run
+## (1985, after the original game). Fights and venues are still random.
+## Change this, or pass --roster=<n>, for a different set of boxers.
+const ROSTER_SEED := 1985
 
 var roster: Array[BoxerData] = []
 var red: BoxerData
@@ -30,7 +35,8 @@ func _ready() -> void:
 		_rng.seed = seed_value
 	else:
 		_rng.randomize()
-	roster = BoxerGenerator.new(_rng.randi() % 1000000).generate_roster(ROSTER_SIZE)
+	var roster_seed := int(options.get("roster", ROSTER_SEED))
+	roster = BoxerGenerator.new(roster_seed).generate_roster(ROSTER_SIZE)
 
 
 ## Picks two different boxers from the roster at random, and a venue.

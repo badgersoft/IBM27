@@ -25,6 +25,7 @@ func _initialize() -> void:
 	var rounds_ended := [0, 0, 0, 0]
 	# Judging: how often the official result differs from a neutral card.
 	var judging := {"decisions": 0, "differs": 0, "robbery": 0, "all_agree": 0, "pundit_right": 0, "split_rounds": 0, "rounds": 0}
+	var pundits := {}   # name -> [calls matching a neutral card, fights]
 
 	for n in fights:
 		var gen := BoxerGenerator.new(seed_value * 1000 + n)
@@ -43,6 +44,12 @@ func _initialize() -> void:
 		var r: Dictionary = sim.result
 		if r["method"] in ["UD", "MD", "SD", "DRAW"]:
 			_judging_stats(sim, judging)
+			var pname: String = sim.judges.pundit["name"]
+			var tally: Array = pundits.get(pname, [0, 0])
+			if _winner(sim.judges.pundit_totals()) == _winner(sim.judges.fair_totals()):
+				tally[0] += 1
+			tally[1] += 1
+			pundits[pname] = tally
 		methods[r["method"]] = methods.get(r["method"], 0) + 1
 		rounds_ended[r["round"]] += 1
 		for f in sim.fighters:
@@ -80,6 +87,11 @@ func _initialize() -> void:
 	print("  ...all 3 cards identical %5.1f%%" % (100.0 * judging["all_agree"] / d))
 	print("  ...pundit called it      %5.1f%%" % (100.0 * judging["pundit_right"] / d))
 	print("  Rounds judges split on   %5.1f%%" % (100.0 * judging["split_rounds"] / maxf(judging["rounds"], 1)))
+	print("------------------------------------------")
+	print("  Pundit          same result as a neutral card")
+	for pname in pundits:
+		var p: Array = pundits[pname]
+		print("  %-15s %5.1f%%  (%d fights)" % [pname, 100.0 * p[0] / maxf(p[1], 1), p[1]])
 	print("------------------------------------------")
 	for s in 5:
 		var pct: float = 100.0 * by_style_wins[s] / maxf(by_style_fights[s], 1.0)

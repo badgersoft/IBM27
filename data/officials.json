@@ -1,5 +1,5 @@
 {
-	"_comment": "Ringside officials. Three judges are drawn from this pool for every fight. 'fairness' (1-99) is public: 70+ is FAIR, 40-69 SO-SO, below 40 WILD. 'likes' is SECRET and never shown in game: how much the judge values attacking (coming forward), defence (slipping and blocking), punches landed (clean, quality shots), punches thrown (work rate) and power (damage done). A perfectly neutral judge would be landed 1.0, power 0.6, attack 0.25, defence 0.25, thrown 0.1. All names are invented.",
+	"_comment": "Ringside officials. Three judges are drawn from this pool for every fight. 'fairness' (1-99) decides the PUBLIC band shown before a fight: 70+ is FAIR, 40-69 SO-SO, below 40 WILD (the number itself is never shown). 'likes' is SECRET and never shown in game: how much the judge values attacking (coming forward), defence (slipping and blocking), punches landed (clean, quality shots), punches thrown (work rate) and power (damage done). A perfectly neutral judge would be landed 1.0, power 0.6, attack 0.25, defence 0.25, thrown 0.1. All names are invented.",
 
 	"judges": [
 		{ "name": "Harold Pemberton",   "country": "GBR", "fairness": 91, "likes": { "attack": 0.20, "defence": 0.30, "landed": 1.10, "thrown": 0.05, "power": 0.55 } },
@@ -19,11 +19,12 @@
 		{ "name": "Bernard Lamotte",    "country": "FRA", "fairness": 22, "likes": { "attack": 0.10, "defence": 1.10, "landed": 0.50, "thrown": 0.00, "power": 1.10 } }
 	],
 
-	"_pundit_comment": "One TV pundit sits at ringside each fight and keeps an unofficial card. 'accuracy' (1-99) is how close their card usually is to a fair judge.",
+	"_pundit_comment": "One TV pundit sits at ringside each fight and keeps an unofficial card. 'accuracy' (1-99, SECRET) is how closely their card follows a neutral judge: the best are rarely wrong, the worst make the odd bad call.",
 
 	"pundits": [
-		{ "name": "Eddie Malone",  "accuracy": 84 },
-		{ "name": "Sally Brennan", "accuracy": 88 },
-		{ "name": "Jim Farraday",  "accuracy": 72 }
-	]
-}
+		{ "name": "Sally Brennan",  "accuracy": 92 },
+		{ "name": "Eddie Malone",   "accuracy": 86 },
+		{ "name": "Dennis Wiley",   "accuracy": 82 },
+		{ "name": "Lou Castellini", "accuracy": 78 },
+		{ "name": "Jim Farraday",   "accuracy": 74 }
+	]}

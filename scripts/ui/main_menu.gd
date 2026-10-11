@@ -1,17 +1,18 @@
 extends Control
 ## Main menu: title, a window onto the Boxing Hall with two boxers from the
-## roster squaring up, and a single START button.
+## roster squaring up, and two buttons: START a fight, or look at the BOXERS.
 ##
 ## Vertical rhythm (1280 x 720 frame, all on the 8 px grid):
 ##   y  32  "BADGER-SOFT PRESENTS"          body, dim
 ##   y  64  "INTERNATIONAL BOXING MANAGER"  title
 ##   y 104  "2027"                          96 px, gold
 ##   y 232  arena window                    848 x 336 (arena at x2)
-##   y 600  [ START ]                       320 x 64
+##   y 600  [ START ]  [ BOXERS ]           288 x 64 each, 32 apart
 ##   y 688  version line                    caption
 
 const FRAME_SIZE := Vector2(1280, 720)
-const BUTTON_SIZE := Vector2(320, 64)
+const BUTTON_SIZE := Vector2(288, 64)
+const BUTTON_GAP := 32
 const ARENA_SCALE := 2
 const ARENA_Y := 232
 
@@ -51,12 +52,9 @@ func _ready() -> void:
 	year.clip_text = false
 	frame.add_child(UiTheme.place(year, 0, 104, FRAME_SIZE.x, 96))
 
-	_start = Button.new()
-	_start.text = "START"
-	_start.add_theme_font_size_override("font_size", UiTheme.LARGE)
-	UiTheme.place(_start, (FRAME_SIZE.x - BUTTON_SIZE.x) / 2.0, 600, BUTTON_SIZE.x, BUTTON_SIZE.y)
-	_start.pressed.connect(_on_start)
-	frame.add_child(_start)
+	var left := (FRAME_SIZE.x - BUTTON_SIZE.x * 2 - BUTTON_GAP) / 2.0
+	_start = _menu_button(frame, "START", left, _on_start)
+	_menu_button(frame, "BOXERS", left + BUTTON_SIZE.x + BUTTON_GAP, _on_boxers)
 	_start.grab_focus()
 
 	var version := "VERSION %s  -  PROTOTYPE BUILD  -  2027 BADGER-SOFT" % ProjectSettings.get_setting("application/config/version", "0.1")
@@ -90,6 +88,20 @@ func _build_backdrop(frame: Control) -> void:
 	arena.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	arena.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.add_child(UiTheme.place(arena, x, ARENA_Y, size.x, size.y))
+
+
+func _menu_button(frame: Control, text: String, x: float, action: Callable) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.add_theme_font_size_override("font_size", UiTheme.LARGE)
+	UiTheme.place(b, x, 600, BUTTON_SIZE.x, BUTTON_SIZE.y)
+	b.pressed.connect(action)
+	frame.add_child(b)
+	return b
+
+
+func _on_boxers() -> void:
+	get_tree().change_scene_to_file("res://scenes/roster.tscn")
 
 
 func _on_start() -> void:

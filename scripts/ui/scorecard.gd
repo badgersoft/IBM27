@@ -4,8 +4,8 @@ extends Control
 ##
 ## TODAY'S JUDGES (before the first bell) - who is judging and how fair they are:
 ##   TODAY'S JUDGES
-##   JUDGE               FROM          FAIRNESS
-##   H. PEMBERTON         GBR         91  FAIR
+##   JUDGE                FROM      FAIRNESS
+##   H. PEMBERTON          GBR        FAIR
 ##
 ## PUNDIT (during the fight) - the official cards are secret, so this shows a
 ## ringside TV pundit's unofficial card. The round in progress is the pundit's
@@ -26,14 +26,13 @@ const PAD := 16
 const COL_W := 96                 # Score columns are all the same width.
 const HEADER_Y := 32
 const FIRST_ROW_Y := 48
-## "Today's judges" columns: name, country, fairness number, fairness band.
+## "Today's judges" columns: name, country, fairness band. Only the band
+## (FAIR / SO-SO / WILD) is shown - the number behind it stays hidden.
 const JUDGE_NAME_W := 256
 const COUNTRY_X := 288
 const COUNTRY_W := 64
-const FAIR_NUM_X := 368
-const FAIR_NUM_W := 32
-const FAIR_BAND_X := 416
-const FAIR_BAND_W := 80
+const FAIR_X := 368
+const FAIR_W := 128
 
 var mode: Mode = Mode.JUDGES
 
@@ -71,7 +70,7 @@ func show_judges(judges: Judges) -> void:
 	face.add_child(UiTheme.place(UiTheme.label("TODAY'S JUDGES", UiTheme.CAPTION, Palette.UI_GOLD), PAD, 12, 240, UiTheme.CAPTION))
 	face.add_child(UiTheme.place(UiTheme.label("JUDGE", UiTheme.CAPTION, Palette.UI_TEXT_DIM), PAD, HEADER_Y, JUDGE_NAME_W, UiTheme.CAPTION))
 	face.add_child(UiTheme.place(UiTheme.label("FROM", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), COUNTRY_X, HEADER_Y, COUNTRY_W, UiTheme.CAPTION))
-	face.add_child(UiTheme.place(UiTheme.label("FAIRNESS", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), FAIR_NUM_X, HEADER_Y, FAIR_BAND_X + FAIR_BAND_W - FAIR_NUM_X, UiTheme.CAPTION))
+	face.add_child(UiTheme.place(UiTheme.label("FAIRNESS", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), FAIR_X, HEADER_Y, FAIR_W, UiTheme.CAPTION))
 	for j in judges.panel.size():
 		var judge: Dictionary = judges.panel[j]
 		var fairness := int(judge["fairness"])
@@ -80,9 +79,8 @@ func show_judges(judges: Judges) -> void:
 		UiTheme.fit(name_label, JUDGE_NAME_W)
 		face.add_child(UiTheme.place(name_label, PAD, y, JUDGE_NAME_W, UiTheme.ROW_H))
 		face.add_child(UiTheme.place(UiTheme.label(judge["country"], UiTheme.BODY, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), COUNTRY_X, y, COUNTRY_W, UiTheme.ROW_H))
-		face.add_child(UiTheme.place(UiTheme.label(str(fairness), UiTheme.BODY, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_RIGHT), FAIR_NUM_X, y, FAIR_NUM_W, UiTheme.ROW_H))
-		var band := UiTheme.label(Officials.fairness_label(fairness), UiTheme.BODY, Officials.fairness_color(fairness))
-		face.add_child(UiTheme.place(band, FAIR_BAND_X, y, FAIR_BAND_W, UiTheme.ROW_H))
+		var band := UiTheme.label(Officials.fairness_label(fairness), UiTheme.BODY, Officials.fairness_color(fairness), HORIZONTAL_ALIGNMENT_CENTER)
+		face.add_child(UiTheme.place(band, FAIR_X, y, FAIR_W, UiTheme.ROW_H))
 	_pundit_name.text = str(judges.pundit["name"]).to_upper()
 	for j in judges.panel.size():
 		_official_names[j].text = Officials.surname(judges.panel[j])

@@ -10,7 +10,7 @@ This is the first build. It concentrates on the ring, the boxers and a fight
 that plays itself out logically. There is no human trainer yet: both corners
 are run by the AI.
 
-![Boxing Hall](docs/screenshots/fight_boxing_hall.png)
+![Grand Arena](docs/screenshots/fight_grand_arena.png)
 
 ---
 
@@ -27,6 +27,7 @@ Controls:
 |-----------------------------|----------------------|---------------|
 | Start / choose a button     | Mouse or Enter       | Tap           |
 | Skip the tale of the tape   | Click, Space, Enter  | Tap           |
+| Skip the judges' read-out   | Click, Space, Enter  | Tap           |
 | Back to the main menu       | Esc                  | Back button   |
 
 The project uses the **Compatibility** renderer so the same build runs on
@@ -38,8 +39,8 @@ preset under *Project > Export*.
 
 ## What happens in a fight
 
-* Two of the five randomly generated boxers are picked, and a venue is chosen
-  at random.
+* Two boxers are picked at random from the roster, and one of the four
+  venues (Small Town Gym, City Gym, Boxing Hall, Grand Arena) at random.
 * The **tale of the tape** compares them. Tap, or wait 12 seconds, to ring the
   bell.
 * Three rounds. Each round is **1 minute of real time**, but the clock shows
@@ -51,16 +52,19 @@ preset under *Project > Export*.
   fights the next round.
 * Knockdowns get a count. A boxer may make it to one knee and then stand, or
   stay down. Three knockdowns in one round stops the fight.
-* After three rounds the three judges' cards decide it: unanimous, majority
-  or split decision, or a draw.
+* After three rounds the judges' cards are read out **one at a time**, like a
+  ring announcer ("Judge H. Pemberton scores the bout 29-28 in favour of
+  Johnson..."), then the winner: by unanimous (3-0), split (2-1) or majority
+  (2-0 with one even) decision, or a unanimous, majority or split draw. The
+  winner only starts celebrating when his name is read out.
 
 ### Judges and the ringside pundit
 
 Three judges are drawn for each fight from a pool of 15 in
 `data/officials.json`. Before the first bell the panel under the ring shows
 **today's judges**, with where each is from and their public **fairness**
-rating: FAIR (70+), SO-SO (40-69) or WILD (under 40). Most of the pool is
-fair; a few are not.
+band: FAIR, SO-SO or WILD (the number behind it is never shown). Most of the
+pool is fair; a few are not.
 
 Each judge also has SECRET preferences that are never shown in game: how much
 they value attacking, defence, punches landed, punches thrown and power. On
@@ -69,17 +73,21 @@ round-to-round personal opinion, and a lean towards one boxer that is strongest
 when a boxer comes from the judge's own country.
 
 The official cards are **secret until the final bell**. During the fight the
-panel shows a **TV pundit's unofficial card** instead. The pundit scores like
-a neutral judge with a little error, so it is a good but imperfect guide.
-When the result is announced, the real cards are revealed, each judge's
-fairness is shown beside their card, and the pundit's card sits underneath for
-comparison.
+panel shows a **TV pundit's unofficial card** instead. Five pundits share the
+job, each with a secret accuracy rating: they score like a neutral judge with
+a little error, so the card is a good guide with the occasional bad call. The
+round-by-round official cards replace it once the winner is announced.
 
-Over 400 simulated fights (`tools/simulate_fights.gd`), the three cards were
-identical in only about 30% of decisions, and the judges split on about a third
-of all rounds. About 1 decision in 5 differed from a neutral card (most were
-draws or a different margin), roughly 1 in 25 gave the fight to the wrong boxer
-outright, and the pundit called the right winner about 78% of the time.
+Knockdown rounds are scored the way real judges do it: the boxer who scored the
+knockdown wins the round, 10-8 if he was clearly winning it anyway, otherwise
+10-9, with a point for every extra knockdown.
+
+Over 1,000 simulated fights (`tools/simulate_fights.gd`) the three cards were
+identical in about a third of decisions, the judges split on about a third of
+all rounds, about 1 decision in 9 differed from a neutral card and about 1 in
+20 gave the fight to the wrong boxer outright. Pundits matched a neutral card
+88-94% of the time depending on their accuracy, and draws were about 7% of
+all fights.
 
 ### How the boxers think
 
@@ -111,6 +119,15 @@ Each boxer starts with health a little below 100, set by his fitness (stamina,
 strength and chin). A `recovery` stat is already stored for future builds,
 where injuries will carry over between fights.
 
+### The roster
+
+The game starts with the same five boxers every time (roster seed 1985; pass
+`--roster=<n>` for a different set). **BOXERS** on the main menu lists them in
+a table - age, record, style, height, weight, all six skills and an overall
+rating - with all five lined up in the ring underneath.
+
+![The Boxers](docs/screenshots/boxers.png)
+
 ### Records (placeholders for now)
 
 Every boxer has an age (20-37) and a made-up professional record, shown as
@@ -135,8 +152,9 @@ data/
   officials.json              Judges (fairness, secret likes) and TV pundits
 assets/fonts/                 Press Start 2P pixel font (SIL Open Font License)
 scenes/
-  main_menu.tscn
+  main_menu.tscn              START and BOXERS
   fight.tscn
+  roster.tscn                 The Boxers screen (table + line-up)
   debug/                      Developer tools: pose sheet, venue preview
 scripts/
   autoload/
@@ -219,10 +237,12 @@ Command-line options read by the game (after `--`):
 
 | Option             | Meaning                                                   |
 |--------------------|-----------------------------------------------------------|
-| `--seed=<n>`       | Fixed random seed (same roster and fight every time)      |
-| `--venue=<0-2>`    | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall               |
+| `--seed=<n>`       | Fixed random seed (same match-up and fight every time)    |
+| `--roster=<n>`     | A different starting roster (default 1985)                |
+| `--venue=<0-3>`    | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena |
 | `--capture=<png>`  | Fast-forward, save a screenshot and quit                  |
-| `--show=<moment>`  | What to capture: `menu`, `intro`, `fight`, `break`, `count`, `result` |
+| `--show=<moment>`  | What to capture: `menu`, `roster`, `intro`, `fight`, `break`, `count`, `announce`, `result` |
+| `--wait=<seconds>` | Real seconds to wait before the shot (e.g. mid read-out)  |
 | `--at=<seconds>`   | Earliest real second of round 1 to capture (default 20)   |
 
 ### Code style

@@ -10,8 +10,8 @@ extends RefCounted
 ##     - every round gets a little personal noise (bigger for unfair judges);
 ##     - every fight the judge has a lean towards one boxer, strongest when a
 ##       boxer comes from the judge's own country ("home cooking").
-##  4. Clear share = 10-9; a hair either way = 10-10; each knockdown suffered
-##     costs a point.
+##  4. Clear share = 10-9; a hair either way = 10-10; knockdowns decide the
+##     round for the boxer who scored them (see _ten_point).
 ##
 ## The official cards are SECRET until the final bell. During the fight the
 ## screen shows the pundit's card instead: scored like a neutral judge, with a
@@ -22,7 +22,10 @@ extends RefCounted
 const NEUTRAL_LIKES := {"attack": 0.25, "defence": 0.25, "landed": 1.00, "thrown": 0.10, "power": 0.60}
 
 ## Below this share of the round the round is scored even (10-10).
-const EVEN_ROUND := 0.015
+const EVEN_ROUND := 0.004
+## A knockdown round only goes 10-8 when its scorer also clearly won the rest
+## of the round by at least this share.
+const CLEAR_ROUND := 0.12
 
 ## Round-to-round noise for the fairest (99) and least fair (1) judge.
 const NOISE_FAIREST := 0.03
@@ -30,6 +33,9 @@ const NOISE_WILDEST := 0.16
 ## Per-fight lean: random favouritism and home-country bias at fairness 1.
 const LEAN_RANDOM := 0.08
 const LEAN_HOME := 0.18
+## Round-to-round error for the most (99) and least (1) accurate pundit.
+const PUNDIT_NOISE_BEST := 0.01
+const PUNDIT_NOISE_WORST := 0.30
 
 var rounds: int
 var panel: Array = []          ## The three judges (see Officials).
@@ -70,7 +76,7 @@ func _init(total_rounds: int, judges_panel: Array, pundit_info: Dictionary,
 		_lean.append(unfair * (home * LEAN_HOME + rng.randf_range(-1.0, 1.0) * LEAN_RANDOM))
 		cards.append(_empty_card())
 
-	var pundit_spread := lerpf(NOISE_FAIREST, NOISE_WILDEST * 0.85, 1.0 - float(pundit.get("accuracy", 80)) / 99.0)
+	var pundit_spread := lerpf(PUNDIT_NOISE_BEST, PUNDIT_NOISE_WORST, 1.0 - float(pundit.get("accuracy", 80)) / 99.0)
 	for r in rounds:
 		_pundit_noise.append(rng.randfn(0.0, pundit_spread))
 	pundit_card = _empty_card()
@@ -164,21 +170,25 @@ func _share(likes: Dictionary, red: Fighter, blue: Fighter) -> float:
 
 
 ## Turns a share of the round into a 10-point must score.
+##
+## Knockdowns decide a round the way real judges score them: the boxer who
+## scored more knockdowns wins it - 10-8 if he was clearly winning the round
+## anyway, otherwise 10-9 - and every extra
+## knockdown costs another point. Without knockdowns the share decides it,
+## with a 10-10 only when there is next to nothing in it.
 func _ten_point(share: float, red: Fighter, blue: Fighter) -> Array:
-	var red_points := 10
-	var blue_points := 10
-	if share > EVEN_ROUND:
-		blue_points = 9
-	elif share < -EVEN_ROUND:
-		red_points = 9
-	# Each knockdown suffered costs a point (the 10-8 round).
-	red_points -= red.knockdowns_round
-	blue_points -= blue.knockdowns_round
-	# Keep the round winner on 10 (the "must" in 10-point must).
-	var top := maxi(red_points, blue_points)
-	red_points += 10 - top
-	blue_points += 10 - top
-	return [clampi(red_points, 6, 10), clampi(blue_points, 6, 10)]
+	var kd_margin := blue.knockdowns_round - red.knockdowns_round   # + = red scored more.
+	if kd_margin == 0:
+		if share > EVEN_ROUND:
+			return [10, 9]
+		if share < -EVEN_ROUND:
+			return [9, 10]
+		return [10, 10]
+	var red_scored := kd_margin > 0
+	var also_won_round := share > CLEAR_ROUND if red_scored else share < -CLEAR_ROUND
+	var other := 9 - (absi(kd_margin) - 1) - (1 if also_won_round else 0)
+	other = clampi(other, 6, 9)
+	return [10, other] if red_scored else [other, 10]
 
 
 static func _sum(card: Array) -> Array:

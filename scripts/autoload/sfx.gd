@@ -58,13 +58,19 @@ func punch(power: float) -> void:
 	_play(_punch, lerpf(-12.0, -2.0, p), lerpf(1.25, 0.85, p) * _rng.randf_range(0.95, 1.05))
 
 
+## A light "ting" as each judge's score is read out.
+func reveal() -> void:
+	_play(_bell, -16.0, 2.0)
+
+
 func block() -> void:
 	_play(_block, -10.0, _rng.randf_range(0.95, 1.1))
 
 
 ## Starts the crowd murmur. Bigger venues are louder.
 func crowd_start(venue_id: int) -> void:
-	_crowd_player.volume_db = [-24.0, -19.0, -14.0][clampi(venue_id, 0, 2)]
+	var levels := [-24.0, -19.0, -14.0, -10.0]
+	_crowd_player.volume_db = levels[clampi(venue_id, 0, levels.size() - 1)]
 	if not _crowd_player.playing:
 		_crowd_player.play()
 

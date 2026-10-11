@@ -245,16 +245,31 @@ func _update_records(result: Dictionary) -> void:
 
 func _show_result() -> void:
 	_banner.visible = false
-	# The judges' cards stay secret until now.
-	_scorecard.set_mode(Scorecard.Mode.OFFICIAL)
-	_scorecard.refresh(sim)
 	_result = ResultPanel.new()
 	_result.setup(sim.result, sim.red.data, sim.blue.data, sim.judges)
-	_result.position = (_overlay.size - Vector2(ResultPanel.W, ResultPanel.H)) / 2.0
+	_result.position = ((_overlay.size - _result.size) / 2.0).round()
 	_result.new_fight_pressed.connect(_new_fight)
 	_result.menu_pressed.connect(_go_to_menu)
 	_overlay.add_child(_result)
-	_result.focus_default()
+	if sim.result["method"] in ["KO", "TKO"]:
+		_reveal_official_cards()
+		_result.focus_default()
+	else:
+		# Decisions are read out judge by judge; nothing is revealed early.
+		_result.winner_announced.connect(_on_winner_announced)
+
+
+func _on_winner_announced() -> void:
+	sim.announce_winner()
+	_sync_rigs()
+	view.arena.excitement = 1.0
+	_reveal_official_cards()
+
+
+## The judges' cards stay secret until the result is announced.
+func _reveal_official_cards() -> void:
+	_scorecard.set_mode(Scorecard.Mode.OFFICIAL)
+	_scorecard.refresh(sim)
 
 
 func _new_fight() -> void:
@@ -336,10 +351,15 @@ func _run_capture() -> void:
 		for rig in view.rigs:
 			rig.set_process(false)
 		_refresh_hud()
-		if show == "result" and sim.phase == FightSim.Phase.FINISHED:
+		if show in ["result", "announce"] and sim.phase == FightSim.Phase.FINISHED:
 			_show_result()
+			if show == "result":
+				_result.reveal_all()
+				for rig in view.rigs:
+					rig.set_process(true)   # Let the winner's celebration play.
 
-	await get_tree().create_timer(0.5).timeout
+	# "--wait" lets the decision announcement run for a while before the shot.
+	await get_tree().create_timer(float(GameState.options.get("wait", "0.5"))).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(path)
 	print("Captured ", path)
@@ -352,7 +372,7 @@ func _is_capture_moment(show: String) -> bool:
 			return sim.phase == FightSim.Phase.BREAK and sim.break_time > FightSim.ADVICE_AT + 0.6
 		"count":
 			return sim.phase == FightSim.Phase.COUNT and sim.count_value >= 2
-		"result":
+		"result", "announce":
 			return sim.phase == FightSim.Phase.FINISHED and sim._finish_timer > 1.0
 		_:
 			if sim.phase != FightSim.Phase.ROUND:
