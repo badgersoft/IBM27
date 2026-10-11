@@ -13,9 +13,9 @@ const NAMES:       Array[String] = ["JAB",  "CROSS", "HOOK", "UPPERCUT", "BODY S
 const ANIMS:       Array[String] = ["jab",  "cross", "hook", "uppercut", "body"]
 
 ## Health damage before power, fatigue and luck are applied.
-const DAMAGE:      Array[float] = [0.30,   0.72,   0.82,   0.92,   0.55]
+const DAMAGE:      Array[float] = [0.28,   0.66,   0.76,   0.85,   0.52]
 ## Energy the puncher spends throwing it.
-const ENERGY_COST: Array[float] = [0.30,   0.70,   0.80,   0.90,   0.75]
+const ENERGY_COST: Array[float] = [0.45,   1.05,   1.20,   1.35,   1.10]
 ## How much a clean one rattles the head (feeds into knockdowns).
 const STUN:        Array[float] = [0.35,   1.00,   1.25,   1.45,   0.15]
 ## How much the judges like seeing it land clean.

@@ -109,6 +109,12 @@ func snap_to(anim_name: String) -> void:
 
 
 func _process(delta: float) -> void:
+	advance(delta)
+
+
+## Moves the animation on by [param delta] seconds. Called every frame, but
+## can also be called by hand (the screenshot tool steps rigs manually).
+func advance(delta: float) -> void:
 	if _anim.is_empty():
 		return
 	_time += delta

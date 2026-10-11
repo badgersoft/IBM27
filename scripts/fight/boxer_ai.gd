@@ -83,9 +83,10 @@ func think(me: Fighter, opp: Fighter, round_number: int, dt: float) -> void:
 			return
 
 	# 2. Badly hurt: survive ---------------------------------------------------------
-	if hurt > 0.45:
-		var close := dist < me.height_px * 0.42
-		if close and me.clinch_cooldown <= 0.0 and rng.randf() < 0.25 + intel * 0.45:
+	if hurt > 0.35:
+		var close := dist < me.height_px * 0.50
+		var can_hold := opp.state in [State.IDLE, State.MOVE, State.GUARD, State.PUNCH]
+		if close and can_hold and me.clinch_cooldown <= 0.0 and rng.randf() < 0.30 + intel * 0.45:
 			me.set_state(State.CLINCH, "clinch", 0.0)
 			opp.set_state(State.CLINCH, "clinch", 0.0)
 			me.clinch_cooldown = 7.0
@@ -101,7 +102,7 @@ func think(me: Fighter, opp: Fighter, round_number: int, dt: float) -> void:
 	var aggression := _aggression(me, opp, round_number)
 	var options := _punches_in_range(me, opp)
 	if not options.is_empty():
-		var chance := aggression * 0.85
+		var chance := aggression * 1.0
 		if me.counter_window > 0.0:
 			chance = maxf(chance, 0.55 + intel * 0.35)   # Punish a miss.
 		if rng.randf() < chance:
@@ -155,7 +156,7 @@ func corner_advice(me: Fighter, my_cards: int, opp_cards: int, next_round: int, 
 # ============================================================================
 
 func _think_interval(me: Fighter) -> float:
-	return lerpf(0.45, 0.18, me.skill("speed") / 99.0) * rng.randf_range(0.8, 1.25)
+	return lerpf(0.36, 0.15, me.skill("speed") / 99.0) * rng.randf_range(0.8, 1.25)
 
 
 ## How keen the boxer is to throw right now (0 - 1).

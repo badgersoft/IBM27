@@ -50,9 +50,8 @@ var _crowd: Array = []
 var _rope_shake := [0.0, 0.0]
 var _time := 0.0
 var _crowd_clock := 0.0
-var _corner_man := -1          # Corner currently being talked to (-1 = none).
-var _bubble_text := ""
-var _bubble_time := 0.0
+var _advice_text := ["", ""]   # What each corner man is saying ("" = not shown).
+var _advice_time := [0.0, 0.0]
 
 var _static_back: Node2D
 var _crowd_layer: Node2D
@@ -84,15 +83,14 @@ func shake_ropes(side: int, amount: float = 1.0) -> void:
 
 ## Shows the corner man for [param corner] with a speech bubble.
 func show_corner_advice(corner: int, text: String, seconds: float) -> void:
-	_corner_man = corner
-	_bubble_text = text
-	_bubble_time = seconds
+	_advice_text[corner] = text
+	_advice_time[corner] = seconds
 	_fx.queue_redraw()
 
 
 func hide_corner_advice() -> void:
-	_corner_man = -1
-	_bubble_time = 0.0
+	_advice_text = ["", ""]
+	_advice_time = [0.0, 0.0]
 	_fx.queue_redraw()
 
 
@@ -111,10 +109,12 @@ func _process(delta: float) -> void:
 		_ring_back.queue_redraw()
 		_ring_front.queue_redraw()
 
-	if _bubble_time > 0.0:
-		_bubble_time -= delta
-		if _bubble_time <= 0.0:
-			hide_corner_advice()
+	for corner in 2:
+		if _advice_time[corner] > 0.0:
+			_advice_time[corner] -= delta
+			if _advice_time[corner] <= 0.0:
+				_advice_text[corner] = ""
+				_fx.queue_redraw()
 
 
 func _make_layer(layer_name: String, draw_func: Callable) -> Node2D:
@@ -505,12 +505,13 @@ func _draw_apron(c: CanvasItem) -> void:
 # ============================================================================
 
 func _draw_fx(c: CanvasItem) -> void:
-	if _corner_man < 0:
-		return
-	var dir := 1.0 if _corner_man == 0 else -1.0
-	var x := 13.0 if _corner_man == 0 else SIZE.x - 13.0
-	_draw_corner_man(c, x, dir)
-	_draw_bubble(c, _bubble_text, Vector2(x + dir * 6.0, 92), dir)
+	for corner in 2:
+		if _advice_text[corner].is_empty():
+			continue
+		var dir := 1.0 if corner == 0 else -1.0
+		var x := 13.0 if corner == 0 else SIZE.x - 13.0
+		_draw_corner_man(c, x, dir)
+		_draw_bubble(c, _advice_text[corner], Vector2(x + dir * 6.0, 92), dir)
 
 
 ## The trainer stands on the floor by the corner post, leaning in to talk.

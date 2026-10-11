@@ -16,7 +16,7 @@ const NICKNAME_MAX_SHARE := 0.50
 ## How each style shifts the six skills away from an average of 0.
 ## Order: power, speed, stamina, chin, strength, intelligence.
 const STYLE_BIAS := {
-	BoxerData.Style.BRAWLER: [ 6,  -2,   0,   8,   8,  -6],
+	BoxerData.Style.BRAWLER: [ 8,  -2,   2,  10,  10,  -6],
 	BoxerData.Style.SLUGGER: [12,  -6,  -4,   8,   6,  -8],
 	BoxerData.Style.BOXER:   [-2,   8,   4,  -2,  -2,   8],
 	BoxerData.Style.COUNTER: [ 4,   6,  -2,   0,  -4,  12],
