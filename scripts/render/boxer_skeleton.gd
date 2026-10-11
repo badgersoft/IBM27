@@ -31,13 +31,33 @@ static func pixel_height(height_cm: int) -> float:
 	return height_cm * PIXELS_PER_CM
 
 
-## How wide the boxer is drawn (1.0 = average). Heavier boxers are bulkier and
-## taller boxers at the same weight class look leaner.
-static func bulk_for(height_cm: int, weight_lb: int) -> float:
-	var weight_t := inverse_lerp(BoxerData.MIN_WEIGHT_LB, BoxerData.MAX_WEIGHT_LB, weight_lb)
-	var weight_factor := lerpf(0.92, 1.08, weight_t)
-	var height_factor := sqrt(184.0 / float(height_cm))
-	return weight_factor * height_factor
+## A 157 lb, 184 cm middleweight is the reference build (everything 1.0).
+const REF_LB_PER_CM := 157.0 / 184.0
+
+
+## How a boxer's body is drawn, from his height and weight:
+##   bulk  - torso and shoulder width (1.0 = reference middleweight)
+##   limb  - arm and leg thickness (scales a little less than the torso)
+##   neck  - neck thickness
+##   belly - 0 - 1, how much the stomach pushes out (only the heaviest men)
+##   lean  - true for the light, wiry builds that show their ribs
+##
+## "Mass" is weight per centimetre of height compared with the reference, so a
+## tall, light man looks rangy and a short, heavy one looks stocky. Lighter men
+## (under about 154 lb) also get a slimmer frame so the lightweights read as
+## clearly smaller than the middleweights, and the biggest heavyweights carry
+## some weight around the middle.
+static func build_for(height_cm: int, weight_lb: int) -> Dictionary:
+	var mass := (float(weight_lb) / float(height_cm)) / REF_LB_PER_CM
+	var frame := lerpf(0.90, 1.0, clampf((weight_lb - 130.0) / 24.0, 0.0, 1.0))
+	var bulk := clampf(pow(mass, 1.2) * frame, 0.78, 1.70)
+	return {
+		"bulk": bulk,
+		"limb": clampf(pow(mass, 1.0) * frame, 0.80, 1.50),
+		"neck": clampf(pow(bulk, 1.2), 0.78, 1.80),
+		"belly": clampf((mass - 1.45) / 0.30, 0.0, 1.0),
+		"lean": weight_lb < 145,
+	}
 
 
 ## Computes every joint for [param pose] at pixel height [param h].

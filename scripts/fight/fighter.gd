@@ -151,12 +151,17 @@ func is_down() -> bool:
 
 ## Seconds-long multiplier for animations: fast, fresh boxers punch quicker.
 func punch_duration_scale() -> float:
-	return lerpf(1.30, 0.80, skill("speed") / 99.0)
+	return lerpf(1.30, 0.80, skill("speed") / 99.0) * _division_speed()
 
 
 ## Footwork speed in arena pixels per second.
 func move_speed() -> float:
-	return lerpf(16.0, 28.0, skill("speed") / 99.0) * (0.75 + 0.25 * (1.0 - fatigue()))
+	return lerpf(16.0, 28.0, skill("speed") / 99.0) * (0.75 + 0.25 * (1.0 - fatigue())) / _division_speed()
+
+
+## Heavier divisions move and punch a little slower, lighter ones quicker.
+func _division_speed() -> float:
+	return Divisions.get_division(data.division)["speed_scale"]
 
 
 ## Multiplier on energy use: high stamina boxers tire slower.

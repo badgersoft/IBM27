@@ -2,7 +2,7 @@ extends SceneTree
 ## Balance checker: runs many complete fights with no graphics and prints a
 ## summary, so damage, stamina and AI numbers can be tuned with evidence.
 ##
-##   godot --headless --path . -s tools/simulate_fights.gd -- --fights=200
+##   godot --headless --path . -s tools/simulate_fights.gd -- --fights=200 [--division=0|1|2]
 ##
 ## A fight runs at 60 steps per real second, exactly as in the game.
 
@@ -12,11 +12,14 @@ const STEP := 1.0 / 60.0
 func _initialize() -> void:
 	var fights := 200
 	var seed_value := 1
+	var division := Divisions.Id.MIDDLEWEIGHT
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--fights="):
 			fights = int(arg.trim_prefix("--fights="))
 		elif arg.begins_with("--seed="):
 			seed_value = int(arg.trim_prefix("--seed="))
+		elif arg.begins_with("--division="):
+			division = int(arg.trim_prefix("--division=")) as Divisions.Id
 
 	var methods := {}
 	var by_style_wins := [0, 0, 0, 0, 0]
@@ -29,7 +32,7 @@ func _initialize() -> void:
 
 	for n in fights:
 		var gen := BoxerGenerator.new(seed_value * 1000 + n)
-		var roster := gen.generate_roster(2)
+		var roster := gen.generate_roster(2, division)
 		var sim := FightSim.new(roster[0], roster[1], seed_value * 7919 + n)
 		var clinches := [0]
 		sim.knocked_down.connect(func(_c: int) -> void: totals["knockdowns"] += 1.0)
@@ -65,7 +68,7 @@ func _initialize() -> void:
 
 	var boxers := fights * 2.0
 	print("")
-	print("FIGHTS SIMULATED  %d" % fights)
+	print("FIGHTS SIMULATED  %d   (%s)" % [fights, Divisions.division_name(division).to_upper()])
 	print("------------------------------------------")
 	for m in ["KO", "TKO", "UD", "MD", "SD", "DRAW"]:
 		print("  %-6s %5d   %5.1f%%" % [m, methods.get(m, 0), 100.0 * methods.get(m, 0) / fights])

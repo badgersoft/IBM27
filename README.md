@@ -39,8 +39,9 @@ preset under *Project > Export*.
 
 ## What happens in a fight
 
-* Two boxers are picked at random from the roster, and one of the four
-  venues (Small Town Gym, City Gym, Boxing Hall, Grand Arena) at random.
+* A weight division, two of its boxers and one of the four
+  venues (Small Town Gym, City Gym, Boxing Hall, Grand Arena) are picked at
+  random.
 * The **tale of the tape** compares them. Tap, or wait 12 seconds, to ring the
   bell.
 * Three rounds. Each round is **1 minute of real time**, but the clock shows
@@ -119,14 +120,27 @@ Each boxer starts with health a little below 100, set by his fitness (stamina,
 strength and chin). A `recovery` stat is already stored for future builds,
 where injuries will carry over between fights.
 
-### The roster
+### Weight divisions and the roster
 
-The game starts with the same five boxers every time (roster seed 1985; pass
-`--roster=<n>` for a different set). **BOXERS** on the main menu lists them in
-a table - age, record, style, height, weight, all six skills and an overall
-rating - with all five lined up in the ring underneath.
+There are three divisions, five boxers in each. Every fight is between two
+boxers from the same division (picked at random, like the venue).
 
-![The Boxers](docs/screenshots/boxers.png)
+| Division     | Height       | Weight       | In the ring                                         |
+|--------------|--------------|--------------|-----------------------------------------------------|
+| Lightweight  | 165 - 178 cm | 130 - 136 lb | Quicker, punches a little lighter, fewer knockouts  |
+| Middleweight | 170 - 198 cm | 154 - 160 lb | The baseline                                        |
+| Heavyweight  | 185 - 204 cm | 200 - 290 lb | Slower, hits much harder, far more knockouts        |
+
+Each division's roster is the same every run (seeds 1983, 1985 and 1987 in
+`scripts/data/divisions.gd`; pass `--roster=<n>` for a different set).
+**BOXERS** on the main menu has a tab per division: a table of age, record,
+style, height, weight, all six skills and an overall rating, with the whole
+division lined up in the ring underneath.
+
+Over 300 simulated fights per division, knockouts ended about 15% of
+lightweight fights, 19% of middleweight fights and 33% of heavyweight fights.
+
+![The Boxers](docs/screenshots/boxers_heavyweight.png)
 
 ### Records (placeholders for now)
 
@@ -190,10 +204,12 @@ pose is a few numbers (hip position, lean, glove and foot targets) and
 `boxer_skeleton.gd` solves the elbows and knees with simple two-bone IK. The
 body is then drawn from outlined, three-tone shaded shapes.
 
-* **Height** (170-198 cm) scales the whole figure, at 0.45 px per cm.
-* **Weight** (154-160 lb) and height together set the build: heavier boxers
-  are wider and show more muscle definition, and taller boxers at the same
-  weight look leaner.
+* **Height** scales the whole figure, at 0.45 px per cm.
+* **Weight per centimetre of height** sets the build (`BoxerSkeleton.build_for`):
+  torso width, limb and neck thickness. Lightweights are drawn with a slimmer,
+  wiry frame and visible ribs; heavyweights are broad and thick-limbed, and the
+  heaviest carry a belly and love handles, with the waistband wrapping round.
+  Taller boxers at the same weight look rangier.
 * Skin, hair (and hair style), trunks, boots are colours. Gloves are always
   red or blue by corner, so the two boxers are easy to tell apart.
 
@@ -224,7 +240,7 @@ All of these run from the project folder. `godot` is your Godot 4.7 executable.
 
 ```sh
 # Run 200 fights with no graphics and print the balance summary
-godot --headless --path . -s tools/simulate_fights.gd -- --fights=200
+godot --headless --path . -s tools/simulate_fights.gd -- --fights=200 --division=1
 
 # Every pose and every skin/hair/size combination on one sheet
 godot --path . scenes/debug/pose_sheet.tscn -- --capture=poses.png
@@ -238,7 +254,9 @@ Command-line options read by the game (after `--`):
 | Option             | Meaning                                                   |
 |--------------------|-----------------------------------------------------------|
 | `--seed=<n>`       | Fixed random seed (same match-up and fight every time)    |
-| `--roster=<n>`     | A different starting roster (default 1985)                |
+| `--roster=<n>`     | Different starting rosters                                |
+| `--division=<0-2>` | 0 Lightweight, 1 Middleweight, 2 Heavyweight              |
+| `--tab=<0-2>`      | Which division tab the Boxers screen opens on             |
 | `--venue=<0-3>`    | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena |
 | `--capture=<png>`  | Fast-forward, save a screenshot and quit                  |
 | `--show=<moment>`  | What to capture: `menu`, `roster`, `intro`, `fight`, `break`, `count`, `announce`, `result` |

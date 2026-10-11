@@ -7,19 +7,22 @@ extends Node
 ## Command-line options (after "--") are read here too, which is handy for
 ## testing and for the screenshot tool:
 ##   --seed=<n>      fixed random seed for the roster and fight
-##   --roster=<n>    use a different starting roster
+##   --roster=<n>    use different starting rosters
+##   --division=<0-2> force a division (0 light, 1 middle, 2 heavy)
 ##   --venue=<0-3>   force a venue (0 town gym, 1 city gym, 2 boxing hall, 3 grand arena)
 ##   --capture=<png> take a screenshot during the fight and quit (see CaptureTool)
 
+## Boxers per division.
 const ROSTER_SIZE := 5
-## The starting roster is the same five boxers every time the game is run
-## (1985, after the original game). Fights and venues are still random.
-## Change this, or pass --roster=<n>, for a different set of boxers.
-const ROSTER_SEED := 1985
 
-var roster: Array[BoxerData] = []
+## rosters[division] = that division's boxers. Each division's starting roster
+## is the same every run (its roster_seed in Divisions; the middleweights use
+## 1985, after the original game). Fights and venues are still random. Pass
+## --roster=<n> for a different set of boxers.
+var rosters: Array = []
 var red: BoxerData
 var blue: BoxerData
+var division: int = Divisions.Id.MIDDLEWEIGHT
 var venue_id := 0
 
 ## Options parsed from the command line.
@@ -35,12 +38,22 @@ func _ready() -> void:
 		_rng.seed = seed_value
 	else:
 		_rng.randomize()
-	var roster_seed := int(options.get("roster", ROSTER_SEED))
-	roster = BoxerGenerator.new(roster_seed).generate_roster(ROSTER_SIZE)
+	_build_rosters()
 
 
-## Picks two different boxers from the roster at random, and a venue.
+## The boxers in one division.
+func boxers_in(division_id: int) -> Array[BoxerData]:
+	return rosters[division_id]
+
+
+## Picks a division, two different boxers from it, and a venue - all at random
+## unless --division / --venue are given.
 func new_fight() -> void:
+	if options.has("division"):
+		division = clampi(int(options["division"]), 0, Divisions.count() - 1)
+	else:
+		division = _rng.randi_range(0, Divisions.count() - 1)
+	var roster := boxers_in(division)
 	var first := _rng.randi_range(0, roster.size() - 1)
 	var second := _rng.randi_range(0, roster.size() - 2)
 	if second >= first:
@@ -51,6 +64,22 @@ func new_fight() -> void:
 		venue_id = clampi(int(options["venue"]), 0, Venues.count() - 1)
 	else:
 		venue_id = _rng.randi_range(0, Venues.count() - 1)
+
+
+## Middleweights are generated first so their roster never changes when other
+## divisions are added; surnames are kept unique across all divisions.
+func _build_rosters() -> void:
+	rosters.resize(Divisions.count())
+	var order := [Divisions.Id.MIDDLEWEIGHT, Divisions.Id.LIGHTWEIGHT, Divisions.Id.HEAVYWEIGHT]
+	var used_names: Array[String] = []
+	for id in order:
+		var seed_value: int = Divisions.get_division(id)["roster_seed"]
+		if options.has("roster"):
+			seed_value = int(options["roster"]) + id * 2
+		var roster := BoxerGenerator.new(seed_value).generate_roster(ROSTER_SIZE, id, used_names)
+		for b in roster:
+			used_names.append(b.last_name)
+		rosters[id] = roster
 
 
 ## A seed for the fight itself (punch luck, AI choices).

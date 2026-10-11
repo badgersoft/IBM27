@@ -10,10 +10,15 @@ extends Control
 const COLUMNS := 7
 const CELL := Vector2(88, 120)
 const SHEET_SIZE := Vector2i(616, 480)   # 7 x 88 wide, 4 x 120 tall.
+## Labels under the bottom row read "height cm / weight lb".
 const SCALE := 2
 const FONT := preload("res://assets/fonts/PressStart2P.woff2")
 
 ## [label, animation, which step to freeze on (-1 = last)].
+## Bottom row: [height_cm, weight_lb] - two lightweights, two middleweights,
+## three heavyweights, to compare builds.
+const BODY_ROW := [[166, 132], [178, 135], [172, 160], [196, 155], [188, 205], [195, 245], [203, 288]]
+
 const POSES := [
 	["RELAXED", "relaxed", 0], ["READY", "ready", 0], ["STANCE", "stance", 0],
 	["GUARD", "guard", 0], ["FORWARD", "move_forward", 0], ["BACK", "move_back", 0],
@@ -49,15 +54,15 @@ func _ready() -> void:
 		var x_offset := 12.0 if POSES[i][1] == "knockdown" else 0.0
 		_add_rig(model, cell + Vector2(CELL.x * 0.5 + x_offset, CELL.y - 22), POSES[i][1], POSES[i][2], i % 2)
 
-	# Bottom row: every skin tone and hair colour, shortest to tallest.
-	for i in COLUMNS:
+	# Bottom row: the three divisions side by side (see BODY_ROW).
+	for i in BODY_ROW.size():
 		var b := gen.generate_boxer()
-		b.skin_index = i % 5
-		b.hair_index = (i + 1) % 6 if i < 6 else 0
+		b.skin_index = [0, 2, 1, 3, 4, 2, 1][i]
+		b.hair_index = [3, 4, 1, 0, 2, 4, 5][i]
 		b.hair_style = i % 4
 		b.trunks_index = i
-		b.height_cm = 170 + i * 28 / (COLUMNS - 1)
-		b.weight_lb = 154 + i
+		b.height_cm = BODY_ROW[i][0]
+		b.weight_lb = BODY_ROW[i][1]
 		_add_rig(b, Vector2(i * CELL.x + CELL.x * 0.5, 3 * CELL.y + CELL.y - 22), "stance", 0, i % 2)
 
 	_viewport.add_child(labels)
@@ -91,10 +96,10 @@ func _draw_labels(c: CanvasItem) -> void:
 	for i in POSES.size():
 		var cell := Vector2(i % COLUMNS, i / COLUMNS) * CELL
 		c.draw_string(FONT, cell + Vector2(0, CELL.y - 6), POSES[i][0], HORIZONTAL_ALIGNMENT_CENTER, CELL.x, 8, Color("e8e4d8"))
-	for i in COLUMNS:
+	for i in BODY_ROW.size():
 		var cell := Vector2(i * CELL.x, 3 * CELL.y)
-		var cm := 170 + i * 28 / (COLUMNS - 1)
-		c.draw_string(FONT, cell + Vector2(0, CELL.y - 6), "%d CM" % cm, HORIZONTAL_ALIGNMENT_CENTER, CELL.x, 8, Color("8a90aa"))
+		var text := "%d/%d" % [BODY_ROW[i][0], BODY_ROW[i][1]]
+		c.draw_string(FONT, cell + Vector2(0, CELL.y - 6), text, HORIZONTAL_ALIGNMENT_CENTER, CELL.x, 8, Color("8a90aa"))
 
 
 func _capture(path: String) -> void:

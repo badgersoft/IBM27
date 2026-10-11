@@ -25,7 +25,7 @@ func setup(red: BoxerData, blue: BoxerData, venue_id: int, rounds: int) -> void:
 
 	var title := UiTheme.label("TALE OF THE TAPE", UiTheme.LARGE, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
 	add_child(UiTheme.place(title, 0, 12, W, UiTheme.LARGE))
-	var bill := "%d ROUNDS  -  MIDDLEWEIGHT  -  %s" % [rounds, Venues.venue_name(venue_id).to_upper()]
+	var bill := "%d ROUNDS  -  %s  -  %s" % [rounds, red.division_name().to_upper(), Venues.venue_name(venue_id).to_upper()]
 	add_child(UiTheme.place(UiTheme.label(bill, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), 0, 44, W, UiTheme.CAPTION))
 
 	var rows: Array = [
@@ -89,4 +89,4 @@ static func _nick(b: BoxerData) -> String:
 
 
 static func _height(b: BoxerData) -> String:
-	return "%d CM  %s" % [b.height_cm, b.height_imperial()]
+	return b.height_imperial()

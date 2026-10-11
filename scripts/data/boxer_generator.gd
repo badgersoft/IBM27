@@ -40,19 +40,21 @@ func _init(seed_value: int = -1) -> void:
 	_world = _load_world()
 
 
-## Builds a roster of [param count] unique-looking boxers. Between 40% and 50%
-## of them (rounded sensibly) are given a nickname.
-func generate_roster(count: int) -> Array[BoxerData]:
+## Builds a roster of [param count] unique-looking boxers in [param division].
+## Between 40% and 50% of them (rounded sensibly) are given a nickname.
+## Surnames in [param avoid_names] (e.g. other divisions' boxers) are skipped.
+func generate_roster(count: int, division: Divisions.Id = Divisions.Id.MIDDLEWEIGHT,
+		avoid_names: Array[String] = []) -> Array[BoxerData]:
 	var roster: Array[BoxerData] = []
 	var used_trunks: Array[int] = []
-	var used_names: Array[String] = []
+	var used_names: Array[String] = avoid_names.duplicate()
 
 	for i in count:
-		var boxer := generate_boxer(used_trunks)
-		# Avoid two boxers with the same surname in one small roster.
+		var boxer := generate_boxer(used_trunks, division)
+		# Avoid two boxers with the same surname.
 		var attempts := 0
 		while used_names.has(boxer.last_name) and attempts < 10:
-			boxer = generate_boxer(used_trunks)
+			boxer = generate_boxer(used_trunks, division)
 			attempts += 1
 		used_trunks.append(boxer.trunks_index)
 		used_names.append(boxer.last_name)
@@ -64,8 +66,9 @@ func generate_roster(count: int) -> Array[BoxerData]:
 
 ## Builds a single random boxer. Trunk colours already in [param avoid_trunks]
 ## are skipped (while there are colours left) so fighters look different.
-func generate_boxer(avoid_trunks: Array[int] = []) -> BoxerData:
+func generate_boxer(avoid_trunks: Array[int] = [], division: Divisions.Id = Divisions.Id.MIDDLEWEIGHT) -> BoxerData:
 	var b := BoxerData.new()
+	b.division = division
 
 	# --- Where he is from, and his name ----------------------------------------
 	var code := _pick_country_code()
@@ -77,8 +80,7 @@ func generate_boxer(avoid_trunks: Array[int] = []) -> BoxerData:
 	b.last_name = _pick(country["last"])
 
 	# --- Body -----------------------------------------------------------------
-	b.height_cm = _rng.randi_range(BoxerData.MIN_HEIGHT_CM, BoxerData.MAX_HEIGHT_CM)
-	b.weight_lb = _rng.randi_range(BoxerData.MIN_WEIGHT_LB, BoxerData.MAX_WEIGHT_LB)
+	_roll_size(b)
 	b.skin_index = _rng.randi_range(0, Palette.SKIN_TONES.size() - 1)
 	b.hair_index = _rng.randi_range(0, Palette.HAIR_TONES.size() - 1)
 	b.hair_style = _rng.randi_range(0, Palette.HAIR_STYLES.size() - 1)
@@ -112,6 +114,20 @@ func generate_boxer(avoid_trunks: Array[int] = []) -> BoxerData:
 #  Helpers
 # ----------------------------------------------------------------------------
 
+## Height and weight inside the boxer's division. Heavyweights have no upper
+## weight limit in real life, so their weight follows their height (taller =
+## heavier) with a spread, and only a few reach the very top of the range.
+func _roll_size(b: BoxerData) -> void:
+	var div := Divisions.get_division(b.division)
+	var h: Array = div["height_cm"]
+	var w: Array = div["weight_lb"]
+	b.height_cm = _rng.randi_range(h[0], h[1])
+	if b.division == Divisions.Id.HEAVYWEIGHT:
+		var tall := inverse_lerp(float(h[0]), float(h[1]), b.height_cm)
+		b.weight_lb = clampi(roundi(lerpf(212.0, 252.0, tall) + _rng.randfn(0.0, 20.0)), w[0], w[1])
+	else:
+		b.weight_lb = _rng.randi_range(w[0], w[1])
+
 ## Makes up a believable professional record:
 ##  - older boxers have had more fights (about 1.5 - 3.5 a year since turning pro
 ##    at 18 - 23), never more than MAX_FIGHTS;
@@ -134,7 +150,8 @@ func _roll_record(b: BoxerData) -> void:
 	b.wins = clampi(roundi((fights - b.draws) * win_rate), 0, fights - b.draws)
 	b.losses = fights - b.draws - b.wins
 
-	var ko_rate := clampf(0.12 + b.power / 99.0 * 0.65 + _rng.randf_range(-0.08, 0.08), 0.05, 0.92)
+	var ko_bias: float = Divisions.get_division(b.division)["ko_bias"]
+	var ko_rate := clampf(0.12 + b.power / 99.0 * 0.65 + ko_bias + _rng.randf_range(-0.08, 0.08), 0.05, 0.92)
 	b.kos = clampi(roundi(b.wins * ko_rate), 0, b.wins)
 
 

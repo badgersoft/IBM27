@@ -50,6 +50,9 @@ const GLYPH_DROP := 2   ## Gap between the bottom of a capital and the baseline.
 
 ## 0 - 1. Raise it when something exciting happens; it fades by itself.
 var excitement := 0.0
+## Set false before setup() for a plain apron (e.g. the Boxers line-up, where
+## numbers are drawn over it).
+var show_apron_text := true
 
 var venue_id := 0
 var fighter_layer: Node2D
@@ -603,7 +606,8 @@ func _draw_apron(c: CanvasItem) -> void:
 			c.draw_rect(Rect2(left, CANVAS_FRONT_Y + 2, rect.size.x, 1), Color("f0f0f0"))
 			# Text centred in the cloth between the white trim and the floor.
 			var area := Rect2(left, CANVAS_FRONT_Y + 3, rect.size.x, APRON_BOTTOM_Y - CANVAS_FRONT_Y - 3)
-			_text_in(c, _venue["apron_text"], area, Color("f0f0f0"))
+			if show_apron_text:
+				_text_in(c, _venue["apron_text"], area, Color("f0f0f0"))
 		Venues.Id.BOXING_HALL, Venues.Id.GRAND_ARENA:
 			# Skirt folds, gold trim and sponsor text.
 			for x in range(int(left) + 12, int(right), 24):
@@ -612,7 +616,8 @@ func _draw_apron(c: CanvasItem) -> void:
 			c.draw_rect(Rect2(left, APRON_BOTTOM_Y - 2, rect.size.x, 1), Color("c8a020"))
 			# Text centred between the two gold trim lines.
 			var area := Rect2(left, CANVAS_FRONT_Y + 3, rect.size.x, APRON_BOTTOM_Y - CANVAS_FRONT_Y - 5)
-			_text_in(c, _venue["apron_text"], area, Color("f0d060"))
+			if show_apron_text:
+				_text_in(c, _venue["apron_text"], area, Color("f0d060"))
 
 	# Floor in front of the ring.
 	var floor_colour: Color = FLOOR_COLOURS[venue_id]

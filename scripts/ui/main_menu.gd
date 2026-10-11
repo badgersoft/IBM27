@@ -73,7 +73,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func _build_backdrop(frame: Control) -> void:
 	_view = ArenaView.new()
 	add_child(_view)
-	_view.setup(Venues.Id.BOXING_HALL, GameState.roster[0], GameState.roster[1])
+	var middleweights := GameState.boxers_in(Divisions.Id.MIDDLEWEIGHT)
+	_view.setup(Venues.Id.BOXING_HALL, middleweights[0], middleweights[1])
 	_view.place(0, 176)
 	_view.place(1, 248)
 	_view.rigs[0].play("stance")

@@ -29,7 +29,11 @@ var corner: int = 0
 var facing: int = 1: set = set_facing
 
 var _h := 80.0          # Height in arena pixels.
-var _bulk := 1.0        # Width multiplier (weight / height build).
+var _bulk := 1.0        # Torso width multiplier (see BoxerSkeleton.build_for).
+var _limb := 1.0        # Arm and leg thickness multiplier.
+var _neck := 1.0        # Neck thickness multiplier.
+var _belly := 0.0       # 0 - 1, heavyweight stomach.
+var _lean := false      # Wiry build: ribs show.
 var _skin: Array = []
 var _hair: Array = []
 var _trunks: Array = []
@@ -51,7 +55,12 @@ func setup(boxer: BoxerData, corner_index: int) -> void:
 	data = boxer
 	corner = corner_index
 	_h = BoxerSkeleton.pixel_height(boxer.height_cm)
-	_bulk = BoxerSkeleton.bulk_for(boxer.height_cm, boxer.weight_lb)
+	var build := BoxerSkeleton.build_for(boxer.height_cm, boxer.weight_lb)
+	_bulk = build["bulk"]
+	_limb = build["limb"]
+	_neck = build["neck"]
+	_belly = build["belly"]
+	_lean = build["lean"]
 	_skin = Palette.SKIN_TONES[boxer.skin_index]
 	_hair = Palette.HAIR_TONES[boxer.hair_index]
 	_trunks = Palette.TRUNKS[boxer.trunks_index]["tones"]
@@ -185,8 +194,8 @@ func _draw_leg(j: Dictionary, side: String, far: bool) -> void:
 	var knee: Vector2 = j["knee_" + side]
 	var ankle: Vector2 = j["ankle_" + side]
 	var skin := _tones(_skin, far)
-	var thigh_w := _h * 0.085 * _bulk
-	var shin_w := _h * 0.062 * _bulk
+	var thigh_w := _h * 0.085 * _limb
+	var shin_w := _h * 0.062 * _limb
 	_chain([hip_p, knee, ankle], [thigh_w, shin_w], skin)
 
 	# Boot: the bottom of the shin plus a foot pointing the way the boxer faces.
@@ -212,8 +221,8 @@ func _draw_arm(j: Dictionary, side: String, far: bool) -> void:
 	var elbow: Vector2 = j["elbow_" + side]
 	var glove: Vector2 = j["glove_" + side]
 	var skin := _tones(_skin, far)
-	var upper_w := _h * 0.066 * _bulk
-	var fore_w := _h * 0.056 * _bulk
+	var upper_w := _h * 0.066 * _limb
+	var fore_w := _h * 0.056 * _limb
 	if far:
 		# The far shoulder is hidden behind the torso, so a full outline is fine.
 		_chain([shoulder, elbow, glove], [upper_w, fore_w], skin)
@@ -260,15 +269,19 @@ func _draw_glove(j: Dictionary, side: String, far: bool) -> void:
 
 func _draw_torso(j: Dictionary) -> void:
 	var skin: Array = _skin
-	# Outline of the chest / back seen from a three-quarter angle.
+	# Outline of the chest / back seen from a three-quarter angle. A heavy
+	# stomach pushes the front out below the chest and the sides out at the
+	# waist.
+	var b := _belly
 	var body := _torso_points(j, [
-		Vector2(-0.070, 0.000), Vector2(-0.080, 0.100), Vector2(-0.085, 0.200),
+		Vector2(-0.070 - 0.014 * b, 0.000), Vector2(-0.080 - 0.008 * b, 0.100), Vector2(-0.085, 0.200),
 		Vector2(-0.075, 0.270), Vector2(-0.030, 0.295), Vector2(0.030, 0.295),
 		Vector2(0.075, 0.275), Vector2(0.092, 0.220), Vector2(0.086, 0.150),
-		Vector2(0.070, 0.070), Vector2(0.068, 0.000),
+		Vector2(0.070 + 0.034 * b, 0.105), Vector2(0.069 + 0.056 * b, 0.060),
+		Vector2(0.068 + 0.030 * b, 0.012), Vector2(0.068, 0.000),
 	])
 	# Neck goes in first so the shoulders overlap it.
-	var neck_w := _h * 0.062 * _bulk
+	var neck_w := _h * 0.062 * _neck
 	var head_base: Vector2 = j["neck"] + (j["head"] - j["neck"]) * 0.45
 	_capsule_outline(j["neck"], head_base, neck_w)
 	_capsule_fill(j["neck"], head_base, neck_w, skin[1])
@@ -284,24 +297,39 @@ func _draw_torso(j: Dictionary) -> void:
 		Vector2(0.015, 0.250), Vector2(0.070, 0.262), Vector2(0.086, 0.215),
 		Vector2(0.074, 0.165), Vector2(0.020, 0.175),
 	]), skin[2])
-	# Pec line and, for the heavier boxers, a bit of ab definition.
+	# Pec line, then whichever detail suits the build.
 	var pec := _torso_points(j, [Vector2(0.018, 0.168), Vector2(0.084, 0.152)])
 	draw_line(pec[0], pec[1], skin[1], 1.0)
-	if _bulk > 0.98:
+	if b > 0.25:
+		# Heavy stomach: a soft highlight on the front and a shadow under it.
+		draw_colored_polygon(_torso_points(j, [
+			Vector2(0.040, 0.110), Vector2(0.066 + 0.030 * b, 0.100),
+			Vector2(0.066 + 0.046 * b, 0.064), Vector2(0.046, 0.072),
+		]), skin[2])
+		var under := _torso_points(j, [Vector2(0.010, 0.030), Vector2(0.040, 0.016), Vector2(0.066 + 0.026 * b, 0.014)])
+		draw_polyline(under, skin[1], 1.0)
+	elif _bulk > 0.98 or _lean:
 		var abs_a := _torso_points(j, [Vector2(0.020, 0.110), Vector2(0.066, 0.104)])
 		var abs_b := _torso_points(j, [Vector2(0.022, 0.065), Vector2(0.064, 0.060)])
 		draw_line(abs_a[0], abs_a[1], skin[1], 1.0)
 		draw_line(abs_b[0], abs_b[1], skin[1], 1.0)
+	if _lean:
+		# Wiry build: a couple of ribs showing along the side.
+		for rib_y in [0.185, 0.155, 0.125]:
+			var rib := _torso_points(j, [Vector2(-0.050, rib_y), Vector2(-0.015, rib_y - 0.010)])
+			draw_line(rib[0], rib[1], skin[1], 1.0)
 
 
 func _draw_trunks(j: Dictionary) -> void:
 	var tones: Array = _trunks
-	var leg_w := _h * 0.085 * _bulk + 3.0
+	var leg_w := _h * 0.085 * _limb + 3.0
 	var lead_end: Vector2 = j["hip_lead"].lerp(j["knee_lead"], 0.48)
 	var rear_end: Vector2 = j["hip_rear"].lerp(j["knee_rear"], 0.48)
+	# The waistband wraps round a heavyweight's stomach.
+	var b := _belly
 	var pelvis := _torso_points(j, [
-		Vector2(-0.080, 0.055), Vector2(0.074, 0.055),
-		Vector2(0.080, -0.035), Vector2(-0.084, -0.035),
+		Vector2(-0.080 - 0.014 * b, 0.055), Vector2(0.074 + 0.030 * b, 0.055),
+		Vector2(0.080 + 0.012 * b, -0.035), Vector2(-0.084 - 0.010 * b, -0.035),
 	])
 
 	# Outline pass for all three pieces, then the fills on top.
@@ -314,8 +342,8 @@ func _draw_trunks(j: Dictionary) -> void:
 
 	# Waistband, side stripe and a fold of shadow between the legs.
 	var band := _torso_points(j, [
-		Vector2(-0.080, 0.055), Vector2(0.074, 0.055),
-		Vector2(0.076, 0.030), Vector2(-0.082, 0.030),
+		Vector2(-0.080 - 0.014 * b, 0.055), Vector2(0.074 + 0.030 * b, 0.055),
+		Vector2(0.076 + 0.026 * b, 0.030), Vector2(-0.082 - 0.012 * b, 0.030),
 	])
 	draw_colored_polygon(band, _trim)
 	draw_line(j["hip_lead"], lead_end, _trim, 1.0)

@@ -19,12 +19,6 @@ const STYLE_BLURBS: Array[String] = [
 	"Stays on the move and saves himself late.",
 ]
 
-## Weight-class limits for this build (middleweight).
-const MIN_WEIGHT_LB := 154
-const MAX_WEIGHT_LB := 160
-const MIN_HEIGHT_CM := 170
-const MAX_HEIGHT_CM := 198
-
 # --- Identity --------------------------------------------------------------
 @export var first_name: String = ""
 @export var last_name: String = ""
@@ -43,8 +37,10 @@ const MAX_HEIGHT_CM := 198
 @export var kos: int = 0                 ## Wins by knockout (counted inside wins).
 
 # --- Body ------------------------------------------------------------------
-@export_range(170, 198) var height_cm: int = 180
-@export_range(154, 160) var weight_lb: int = 157
+## Weight division (see Divisions); height and weight ranges depend on it.
+@export var division: Divisions.Id = Divisions.Id.MIDDLEWEIGHT
+@export_range(150, 210) var height_cm: int = 180
+@export_range(120, 300) var weight_lb: int = 157
 @export var skin_index: int = 0          ## Index into Palette.SKIN_TONES.
 @export var hair_index: int = 0          ## Index into Palette.HAIR_TONES (0 = none).
 @export var hair_style: int = 0          ## Index into Palette.HAIR_STYLES.
@@ -83,6 +79,10 @@ func billing_name() -> String:
 ## "Belfast, GBR"
 func hometown() -> String:
 	return "%s, %s" % [city, country_code]
+
+
+func division_name() -> String:
+	return Divisions.division_name(division)
 
 
 func style_name() -> String:

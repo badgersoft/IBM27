@@ -227,7 +227,7 @@ func _update_fighter(f: Fighter, o: Fighter, dt: float) -> void:
 
 func _start_clinch() -> void:
 	var hold := rng.randf_range(1.0, 1.8)
-	var gap := (red.height_px + blue.height_px) * 0.5 * MIN_GAP
+	var gap := _min_gap()
 	var centre := (red.x + blue.x) * 0.5
 	red.x = centre - gap * 0.5
 	blue.x = centre + gap * 0.5
@@ -258,9 +258,17 @@ func _hit_ropes(f: Fighter, moving_back: bool) -> bool:
 	return false
 
 
+## Closest the two centres may get: scales with height, and with build so
+## two broad heavyweights stand a little further apart than two lightweights.
+func _min_gap() -> float:
+	var red_build := sqrt(BoxerSkeleton.build_for(red.data.height_cm, red.data.weight_lb)["bulk"])
+	var blue_build := sqrt(BoxerSkeleton.build_for(blue.data.height_cm, blue.data.weight_lb)["bulk"])
+	return (red.height_px * red_build + blue.height_px * blue_build) * 0.5 * MIN_GAP
+
+
 ## Boxers can never walk through each other.
 func _keep_apart() -> void:
-	var gap := (red.height_px + blue.height_px) * 0.5 * MIN_GAP
+	var gap := _min_gap()
 	var overlap := gap - (blue.x - red.x)
 	if overlap > 0.0:
 		if red.is_down():
@@ -310,6 +318,7 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	# Damage before defence. Tired, later-round boxers get hurt more.
 	var power := a.skill("power")
 	var dmg := PunchTypes.DAMAGE[type] * (0.45 + power / 99.0 * 0.95) * rng.randf_range(0.8, 1.2)
+	dmg *= Divisions.get_division(a.data.division)["power_scale"]   # Heavyweights hit harder.
 	dmg *= 1.0 + d.fatigue() * 0.6 + (round_number - 1) * 0.06
 	if a.advice == Fighter.Advice.ALL_OUT:
 		dmg *= 1.1
