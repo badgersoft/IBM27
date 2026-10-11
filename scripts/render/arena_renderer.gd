@@ -42,6 +42,7 @@ const AISLES: Array[float] = [110.0, 314.0]
 const BUBBLE_TOP := 24.0
 const BUBBLE_TAIL_Y := 56.0
 const FRONT_ROPE_ALPHA := 0.45
+const FLASH_SECONDS := 0.15     ## How long a big punch's impact flash shows.
 
 const FONT := preload("res://assets/fonts/PressStart2P.woff2")
 const FONT_SIZE := 8
@@ -66,6 +67,8 @@ var _flash_rng := RandomNumberGenerator.new()
 var _crowd_clock := 0.0
 var _advice_text := ["", ""]   # What each corner man is saying ("" = not shown).
 var _advice_time := [0.0, 0.0]
+var _flash_pos := Vector2.ZERO
+var _flash_time := 0.0
 
 var _static_back: Node2D
 var _crowd_layer: Node2D
@@ -107,6 +110,13 @@ func set_announcing(on: bool) -> void:
 	_ring_front.queue_redraw()
 
 
+## A white starburst where a big punch lands, gone after a few frames.
+func impact_flash(at: Vector2) -> void:
+	_flash_pos = at
+	_flash_time = FLASH_SECONDS
+	_fx.queue_redraw()
+
+
 ## Shows the corner man for [param corner] with a speech bubble.
 func show_corner_advice(corner: int, text: String, seconds: float) -> void:
 	_advice_text[corner] = text
@@ -134,6 +144,10 @@ func _process(delta: float) -> void:
 		_rope_shake[1] = maxf(_rope_shake[1] - delta * 2.5, 0.0)
 		_ring_back.queue_redraw()
 		_ring_front.queue_redraw()
+
+	if _flash_time > 0.0:
+		_flash_time -= delta
+		_fx.queue_redraw()
 
 	for corner in 2:
 		if _advice_time[corner] > 0.0:
@@ -658,6 +672,8 @@ func _draw_apron(c: CanvasItem) -> void:
 # ============================================================================
 
 func _draw_fx(c: CanvasItem) -> void:
+	if _flash_time > 0.0:
+		_draw_impact(c, _flash_pos, _flash_time / FLASH_SECONDS)
 	for corner in 2:
 		if _advice_text[corner].is_empty():
 			continue
@@ -665,6 +681,19 @@ func _draw_fx(c: CanvasItem) -> void:
 		var x := 13.0 if corner == 0 else SIZE.x - 13.0
 		_draw_corner_man(c, x, dir)
 		_draw_bubble(c, _advice_text[corner], Vector2(x + dir * 6.0, BUBBLE_TAIL_Y), dir)
+
+
+## An eight-point star: long spikes up, down and sideways, short diagonals,
+## with a hot centre. [param life] runs from 1 down to 0 and shrinks it.
+func _draw_impact(c: CanvasItem, at: Vector2, life: float) -> void:
+	var size := 5.0 + 6.0 * life
+	var pts := PackedVector2Array()
+	for i in 16:
+		var a := TAU * i / 16.0
+		var r := size if i % 4 == 0 else (size * 0.6 if i % 2 == 0 else size * 0.25)
+		pts.append(at + Vector2(cos(a), sin(a)) * r)
+	c.draw_colored_polygon(pts, Color(1.0, 0.92, 0.55, 0.9))
+	c.draw_circle(at, size * 0.3, Color.WHITE)
 
 
 ## The trainer stands on the floor by the corner post, leaning in to talk.

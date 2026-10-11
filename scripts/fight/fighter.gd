@@ -69,6 +69,7 @@ var clinch_cooldown := 0.0
 var taunt_cooldown := 8.0
 var reset_timer := 0.0          ## Boxer style: time left backing off after a combo.
 var counter_window := 0.0       ## Time left to punish an opponent's miss.
+var streak := 0                 ## Clean punches landed in a row (feeds big punches).
 var advice: Advice = Advice.NONE
 
 # --- Knockdowns -----------------------------------------------------------------
@@ -97,6 +98,7 @@ static func _empty_stats() -> Dictionary:
 		"landed": 0,         # Punches that landed clean.
 		"power_landed": 0,   # Clean non-jab punches.
 		"blocked": 0,        # Punches that hit the gloves.
+		"big": 0,            # Big, significant punches landed.
 		"score": 0.0,        # Judges' "clean punching" points.
 		"damage": 0.0,       # Health damage dealt.
 		"pressure": 0.0,     # Seconds spent coming forward.

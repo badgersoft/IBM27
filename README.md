@@ -51,6 +51,16 @@ preset under *Project > Export*.
   one of four instructions (*attack more*, *defend more*, *keep it up*,
   *go all out*), and it appears in a speech bubble. It changes how the boxer
   fights the next round.
+* Punches can land clean, be slipped, or be **blocked**. A boxer who covers
+  up blocks most head shots (and catches some body shots on his elbows);
+  how well depends on his intelligence and speed against the puncher's
+  intelligence.
+* Now and then a **big punch** lands: far more damage, twice the chance of a
+  knockdown, a flash where it lands, a heavy thud and the crowd roaring in
+  anticipation. They are rare (one or two per boxer in a fight) and come
+  from a run of clean punches, an opponent running out of gas, a dropped
+  guard (hurt, showboating or hands down) or a good counter; harder
+  punchers and smarter boxers make more of them.
 * Knockdowns get a count. A boxer may make it to one knee and then stand, or
   stay down. Three knockdowns in one round stops the fight.
 * When the fight ends, both boxers and the referee turn to face the crowd in
@@ -85,8 +95,10 @@ when a boxer comes from the judge's own country.
 The official cards are **secret until the final bell**. During the fight the
 panel shows a **TV pundit's unofficial card** instead. Five pundits share the
 job, each with a secret accuracy rating: they score like a neutral judge with
-a little error, so the card is a good guide with the occasional bad call. The
-round-by-round official cards replace it once the winner is announced.
+a little error, so the card is a good guide with the occasional bad call.
+Like a real card it is only filled in when the bell ends each round. The
+official cards replace it when the verdict is read, one judge at a time,
+with a pause before each score and before the winner's name.
 
 Knockdown rounds are scored the way real judges do it: the boxer who scored the
 knockdown wins the round, 10-8 if he was clearly winning it anyway, otherwise
@@ -105,8 +117,8 @@ Every boxer has six skills from 1 to 99 and a fighting style.
 
 | Skill        | What it does in a fight                                              |
 |--------------|----------------------------------------------------------------------|
-| Power        | Damage per punch                                                     |
-| Speed        | How fast punches land, footwork, how often he gets to make a choice  |
+| Power        | Damage per punch; more big punches                                   |
+| Speed        | How fast punches land, footwork, blocking, how often he gets to act  |
 | Stamina      | How slowly energy drains, so how slowly the other skills drop        |
 | Chin         | How well big head shots are absorbed; how fast he beats the count    |
 | Strength     | How little being hit drains energy and wears down the other skills   |
@@ -152,8 +164,8 @@ record, style, height, weight, all six skills and an overall rating (with any
 nickname under the name), and the whole division lined up face-on in the ring
 underneath, weigh-in style, numbered to match the table.
 
-Over 400 simulated fights per division, stoppages ended about 16% of
-lightweight fights, 21% of middleweight fights and 36% of heavyweight fights.
+Over 400 simulated fights per division, stoppages ended about 22% of
+lightweight fights, 23% of middleweight fights and 38% of heavyweight fights.
 
 ![The Boxers](docs/screenshots/boxers_heavyweight.png)
 
@@ -286,17 +298,17 @@ godot --path . scenes/fight.tscn -- --venue=2 --seed=21 --show=fight --capture=f
 
 Command-line options read by the game (after `--`):
 
-| Option             | Meaning                                                   |
-|--------------------|-----------------------------------------------------------|
-| `--seed=<n>`       | Fixed random seed (same match-up and fight every time)    |
-| `--roster=<n>`     | Different starting rosters                                |
-| `--division=<0-2>` | 0 Lightweight, 1 Middleweight, 2 Heavyweight              |
-| `--tab=<0-2>`      | Which division tab the Boxers screen opens on             |
-| `--venue=<0-3>`    | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena |
-| `--capture=<png>`  | Fast-forward, save a screenshot and quit                  |
-| `--show=<moment>`  | What to capture: `menu`, `roster`, `intro`, `fight`, `break`, `count`, `announce`, `result` |
-| `--wait=<seconds>` | Real seconds to wait before the shot (e.g. mid read-out)  |
-| `--at=<seconds>`   | Earliest real second of round 1 to capture (default 20)   |
+| Option             | Meaning                                                                                                                  |
+|--------------------|--------------------------------------------------------------------------------------------------------------------------|
+| `--seed=<n>`       | Fixed random seed (same match-up and fight every time)                                                                   |
+| `--roster=<n>`     | Different starting rosters                                                                                               |
+| `--division=<0-2>` | 0 Lightweight, 1 Middleweight, 2 Heavyweight                                                                             |
+| `--tab=<0-2>`      | Which division tab the Boxers screen opens on                                                                            |
+| `--venue=<0-3>`    | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena                                                               |
+| `--capture=<png>`  | Fast-forward, save a screenshot and quit                                                                                 |
+| `--show=<moment>`  | What to capture: `menu`, `roster`, `intro`, `fight`, `big` (a big punch landing), `break`, `count`, `announce`, `result` |
+| `--wait=<seconds>` | Real seconds to wait before the shot (e.g. mid read-out)                                                                 |
+| `--at=<seconds>`   | Earliest real second of round 1 to capture (default 20)                                                                  |
 
 ### Code style
 

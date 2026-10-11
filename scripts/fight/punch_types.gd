@@ -20,8 +20,9 @@ const ENERGY_COST: Array[float] = [0.45,   1.05,   1.20,   1.35,   1.10]
 const STUN:        Array[float] = [0.35,   1.00,   1.25,   1.45,   0.15]
 ## How much the judges like seeing it land clean.
 const SCORE:       Array[float] = [0.70,   1.00,   1.10,   1.20,   0.90]
-## Chance a high guard stops it (uppercuts come up through the gloves).
-const BLOCKABLE:   Array[float] = [0.95,   0.90,   0.80,   0.45,   0.00]
+## Chance a high guard stops it (uppercuts come up through the gloves; a body
+## shot can only be caught on the elbows of a boxer covering up).
+const BLOCKABLE:   Array[float] = [0.95,   0.90,   0.80,   0.45,   0.40]
 ## Head shots can stun and knock down; body shots drain energy instead.
 const TO_HEAD:     Array[bool]  = [true,   true,   true,   true,   false]
 

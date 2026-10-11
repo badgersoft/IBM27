@@ -7,10 +7,9 @@ extends SubViewport
 ## chunky Amiga-style pixels. UI text is NOT drawn in here - it lives in normal
 ## Controls at full resolution so it stays sharp and readable.
 
-## Where the boxers and referee stand for the verdict: the front of the
-## canvas, so even a tall heavyweight's raised glove stays below the
-## announcement band over the crowd.
-const CEREMONY_Y := 139.0
+## Where the boxers and referee stand for the verdict: the middle of the
+## canvas, in the centre of the ring.
+const CEREMONY_Y := 130.0
 
 var arena: ArenaRenderer
 var rigs: Array[BoxerRig] = []

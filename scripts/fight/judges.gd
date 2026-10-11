@@ -124,13 +124,9 @@ func totals(judge: int) -> Array:
 	return _sum(cards[judge])
 
 
-## [red_total, blue_total] on the pundit's card. Pass the round in progress to
-## include the pundit's live view of it.
-func pundit_totals(live_round: int = -1, red: Fighter = null, blue: Fighter = null) -> Array:
-	var card := pundit_card.duplicate()
-	if live_round >= 0 and red != null and card[live_round].is_empty():
-		card[live_round] = pundit_round(live_round, red, blue)
-	return _sum(card)
+## [red_total, blue_total] on the pundit's card (finished rounds only).
+func pundit_totals() -> Array:
+	return _sum(pundit_card)
 
 
 func fair_totals() -> Array:

@@ -14,6 +14,9 @@ signal bell(strikes: int)
 signal round_started(round_number: int)
 signal round_ended(round_number: int)
 signal punch_landed(corner: int, type: int, damage: float, blocked: bool)
+## A big, significant punch from [param corner] is about to land (emitted just
+## before its punch_landed) - the crowd roars.
+signal big_punch(corner: int, type: int)
 signal punch_missed(corner: int, type: int)
 signal knocked_down(corner: int)
 signal count_changed(corner: int, count: int)
@@ -40,6 +43,17 @@ const MIN_GAP := 0.34                 ## Closest the boxers' centres get, in bod
 ## Order matches BoxerData.Style: Brawler, Slugger, Boxer, Counter, Evasive.
 const STYLE_TOUGHNESS: Array[float] = [0.82, 0.85, 1.00, 1.00, 1.00]
 const STYLE_POWER:     Array[float] = [1.08, 1.12, 1.00, 1.00, 1.00]
+
+## Big punches: an occasional power punch that lands with much more on it.
+## Chances add up from what led to it (see _big_punch_chance).
+const BIG_BASE := 0.004           ## Any clean power punch.
+const BIG_PER_STREAK := 0.007     ## Each clean punch in a row after the first.
+const BIG_TIRED := 0.05           ## Opponent completely exhausted.
+const BIG_GUARD_DOWN := 0.020     ## Opponent hurt, showboating or hands dropped.
+const BIG_COUNTER := 0.025        ## Caught him punching / punished his miss.
+const BIG_MAX := 0.25
+const BIG_DAMAGE := Vector2(1.6, 2.0)   ## Damage multiplier range.
+const BIG_KNOCKDOWN := 2.0        ## Knockdown chance multiplier.
 
 const State := Fighter.State
 
@@ -128,6 +142,7 @@ func _start_round() -> void:
 	for f in fighters:
 		f.reset_round_stats()
 		f.combo.clear()
+		f.streak = 0
 		f.think_timer = rng.randf_range(0.2, 0.6)
 		f.set_state(State.IDLE, "stance")
 	bell.emit(1)
@@ -328,26 +343,40 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	if caught_punching:
 		dmg *= 1.3   # Walked onto it.
 
-	# Blocked? A high guard stops most head shots; the normal stance catches some.
+	# Blocked? A high guard stops most head shots and, on the elbows, some body
+	# shots; the normal stance catches a few head shots. How well depends on
+	# the defender's skill (reading the punch, quick hands) against the
+	# attacker's (feints, finding the gap).
 	var to_head := PunchTypes.TO_HEAD[type]
 	var guard_quality := 0.0
 	if d.state == State.GUARD:
 		guard_quality = 1.0
-	elif d.state == State.IDLE or d.state == State.MOVE:
+	elif to_head and (d.state == State.IDLE or d.state == State.MOVE):
 		guard_quality = 0.35 if d.anim == "stance" or d.state == State.MOVE else 0.10
-	guard_quality *= 0.75 + 0.25 * d.skill("intelligence") / 99.0
-	if to_head and rng.randf() < PunchTypes.BLOCKABLE[type] * guard_quality:
+	var defence := (d.skill("intelligence") * 0.6 + d.skill("speed") * 0.4) / 99.0
+	guard_quality *= 0.70 + 0.70 * defence - a.skill("intelligence") / 99.0 * 0.15
+	if rng.randf() < PunchTypes.BLOCKABLE[type] * clampf(guard_quality, 0.0, 1.0):
 		dmg *= 0.12
 		d.health = maxf(d.health - dmg, 0.0)
 		d.spend_energy(0.3)
 		d.add_stat("evaded", 1)
 		a.add_stat("blocked", 1)
+		a.streak = 0
 		d.x -= d.facing * 1.0
 		punch_landed.emit(a.corner, type, dmg, true)
 		return
 
+	# A big one? Rare, but it does far more damage and can end things.
+	var big := PunchTypes.is_power_punch(type) and rng.randf() < _big_punch_chance(a, d, caught_punching)
+	if big:
+		dmg *= rng.randf_range(BIG_DAMAGE.x, BIG_DAMAGE.y)
+		a.add_stat("big", 1)
+		big_punch.emit(a.corner, type)
+
 	# Clean shot.
 	d.health = maxf(d.health - dmg, 0.0)
+	a.streak += 1
+	d.streak = 0
 	a.add_stat("landed", 1)
 	a.add_stat("damage", dmg)
 	a.add_stat("score", PunchTypes.SCORE[type] * (0.6 + dmg))
@@ -367,18 +396,39 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 		_knockdown(d, a)
 		return
 	if to_head and PunchTypes.is_power_punch(type):
-		var chance := (dmg - 0.5) * 0.05 * (1.5 - d.data.chin / 99.0)
+		var chance := (dmg - 0.5) * 0.04 * (1.5 - d.data.chin / 99.0)
 		chance *= (1.0 + d.stun / 60.0) * (1.6 - d.health / Fighter.MAX_HEALTH)
-		if rng.randf() < clampf(chance, 0.0, 0.30):
+		if big:
+			chance *= BIG_KNOCKDOWN
+		if rng.randf() < clampf(chance, 0.0, 0.45 if big else 0.30):
 			_knockdown(d, a)
 			return
 
 	var reaction := "hurt" if to_head else "hurt_body"
-	d.set_state(State.HURT, reaction, 0.25 + dmg * 0.15)
+	d.set_state(State.HURT, reaction, 0.25 + dmg * (0.22 if big else 0.15))
 	_hit_ropes(d, true)
 
 
+## Chance that a clean power punch is a big, significant one. Each of these
+## adds to it: a run of clean punches, an opponent running out of gas, his
+## guard down (hurt, showboating or hands dropped) and a good counter. Harder
+## punchers and smarter boxers make more of their chances.
+func _big_punch_chance(a: Fighter, d: Fighter, caught_punching: bool) -> float:
+	var chance := BIG_BASE
+	chance += maxi(a.streak - 1, 0) * BIG_PER_STREAK
+	chance += d.fatigue() * d.fatigue() * BIG_TIRED
+	var guard_down := d.state in [State.HURT, State.TAUNT, State.ROPES] \
+			or (d.state == State.IDLE and d.anim == "ready")
+	if guard_down:
+		chance += BIG_GUARD_DOWN
+	if caught_punching or a.counter_window > 0.0:
+		chance += BIG_COUNTER * (0.5 + a.skill("intelligence") / 99.0)
+	chance *= 0.6 + 0.5 * a.skill("power") / 99.0 + 0.3 * a.skill("intelligence") / 99.0
+	return clampf(chance, 0.0, BIG_MAX)
+
+
 func _missed(a: Fighter, d: Fighter, type: int) -> void:
+	a.streak = 0
 	d.add_stat("evaded", 1)
 	d.counter_window = maxf(d.counter_window, 0.5)
 	punch_missed.emit(a.corner, type)

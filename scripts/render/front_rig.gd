@@ -27,6 +27,9 @@ const HEAD_Y := 0.9375           ## Centre of the head (chin 0.875, crown 1.0).
 ## Where a hanging hand rests, relative to its shoulder.
 const REST_HAND := Vector2(0.024, -0.315)
 
+## How far down the upper arm (0 - 1) it blends into the shoulder before the
+## crease against the torso begins.
+const SHOULDER_BLEND := 0.45
 ## How much of the side-on build's extra (or missing) width shows face-on.
 const FRONT_WIDTH := 0.6
 
@@ -69,11 +72,13 @@ var _breath := 0.0               # Pixels the upper body is lifted (0 or 1).
 
 
 ## A boxer. [param corner_index] picks the glove colour (0 = red, 1 = blue).
-func setup_boxer(boxer: BoxerData, corner_index: int, wear_gloves: bool = true) -> void:
+## [param size] shrinks the whole figure, e.g. to stand him further back in
+## the ring (outlines stay a crisp 2 px).
+func setup_boxer(boxer: BoxerData, corner_index: int, wear_gloves: bool = true, size: float = 1.0) -> void:
 	kind = Kind.BOXER
 	data = boxer
 	gloves = wear_gloves
-	_h = BoxerSkeleton.pixel_height(boxer.height_cm)
+	_h = BoxerSkeleton.pixel_height(boxer.height_cm) * size
 	var build := BoxerSkeleton.build_for(boxer.height_cm, boxer.weight_lb)
 	# Seen from the front a big man looks less wide than he does side-on
 	# (where the chest's depth shows too), so the build is toned down.
@@ -95,9 +100,9 @@ func setup_boxer(boxer: BoxerData, corner_index: int, wear_gloves: bool = true) 
 
 
 ## The referee: white shirt, black bow tie and trousers, grey hair.
-func setup_referee(skin_index: int) -> void:
+func setup_referee(skin_index: int, size: float = 1.0) -> void:
 	kind = Kind.REFEREE
-	_h = BoxerSkeleton.pixel_height(REFEREE_HEIGHT_CM)
+	_h = BoxerSkeleton.pixel_height(REFEREE_HEIGHT_CM) * size
 	_bulk = 0.92
 	_limb = 0.95
 	_neck = 0.95
@@ -498,7 +503,25 @@ func _draw_arm(side: int) -> void:
 	var upper_w := _h * 0.066 * _limb
 	var fore_w := _h * 0.056 * _limb
 	var tones: Array = SHIRT if kind == Kind.REFEREE else _skin
-	_chain([sh, elbow, hand_p], [upper_w, fore_w], tones, out)
+	# The forearm is a normal outlined limb.
+	_capsule_outline(elbow, hand_p, fore_w)
+	# The upper arm grows out of the shoulder rather than being pinned on: no
+	# outline where it joins the body, a dark edge only on its outer side (the
+	# silhouette) from part way down, and a soft crease in the shadow tone on
+	# the side against the torso.
+	var along := (elbow - sh).normalized()
+	var normal := along.orthogonal()
+	if normal.x * out < 0.0:
+		normal = -normal
+	var edge := upper_w * 0.5 + 0.5
+	var outer_from := sh.lerp(elbow, SHOULDER_BLEND * 0.5)
+	var inner_from := sh.lerp(elbow, SHOULDER_BLEND)
+	draw_line(outer_from + normal * edge, elbow + normal * edge, Palette.OUTLINE, 2.0)
+	_capsule_fill(sh, elbow, upper_w, tones[0])
+	_capsule_fill(elbow, hand_p, fore_w, tones[0])
+	draw_line(inner_from - normal * (edge - 1.0), elbow - normal * (edge - 1.0), tones[1], 1.0)
+	_shade(elbow, hand_p, fore_w, tones, out)
+	draw_line(inner_from + normal * upper_w * 0.30, elbow + normal * upper_w * 0.30, tones[1], maxf(upper_w * 0.30, 1.0))
 	# Rounded shoulder in the body's own tone so the arm grows out of it.
 	draw_circle(sh, upper_w * 0.62, tones[0])
 	if kind == Kind.REFEREE:
@@ -542,22 +565,24 @@ func _torso_poly(pts: Array) -> PackedVector2Array:
 	return out
 
 
-## A limb of joined segments: outline, fill, then the shadow on the side
-## facing [param out] (away from the light, which is front-left).
+## A limb of joined segments: outline, fill, then the shading.
 func _chain(points: Array, widths: Array, tones: Array, out: float) -> void:
 	for i in widths.size():
 		_capsule_outline(points[i], points[i + 1], widths[i])
 	for i in widths.size():
 		_capsule_fill(points[i], points[i + 1], widths[i], tones[0])
 	for i in widths.size():
-		var a: Vector2 = points[i]
-		var b: Vector2 = points[i + 1]
-		var normal := (b - a).normalized().orthogonal()
-		if normal.x * out < 0.0:
-			normal = -normal
-		var w: float = widths[i]
-		draw_line(a + normal * w * 0.30, b + normal * w * 0.30, tones[1], maxf(w * 0.30, 1.0))
-		draw_line(a - normal * w * 0.22, b - normal * w * 0.22, tones[2], 1.0)
+		_shade(points[i], points[i + 1], widths[i], tones, out)
+
+
+## Shadow along the side of a segment facing [param out] (away from the
+## light, which is front-left) and a highlight along the other side.
+func _shade(a: Vector2, b: Vector2, w: float, tones: Array, out: float) -> void:
+	var normal := (b - a).normalized().orthogonal()
+	if normal.x * out < 0.0:
+		normal = -normal
+	draw_line(a + normal * w * 0.30, b + normal * w * 0.30, tones[1], maxf(w * 0.30, 1.0))
+	draw_line(a - normal * w * 0.22, b - normal * w * 0.22, tones[2], 1.0)
 
 
 func _capsule_outline(a: Vector2, b: Vector2, width: float) -> void:

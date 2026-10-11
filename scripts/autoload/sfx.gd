@@ -58,6 +58,13 @@ func punch(power: float) -> void:
 	_play(_punch, lerpf(-12.0, -2.0, p), lerpf(1.25, 0.85, p) * _rng.randf_range(0.95, 1.05))
 
 
+## A big, significant punch: a deeper, heavier thud and the crowd rising,
+## sensing a knockdown.
+func big_hit() -> void:
+	_play(_punch, 0.0, 0.72)
+	roar(0.7)
+
+
 ## A light "ting" as each judge's score is read out.
 func reveal() -> void:
 	_play(_bell, -16.0, 2.0)

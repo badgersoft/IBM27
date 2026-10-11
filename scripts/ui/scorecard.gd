@@ -8,8 +8,8 @@ extends Control
 ##   H. PEMBERTON          GBR        FAIR
 ##
 ## PUNDIT (during the fight) - the official cards are secret, so this shows a
-## ringside TV pundit's unofficial card. The round in progress is the pundit's
-## live view, dimmed:
+## ringside TV pundit's unofficial card. Like a real card, each round is only
+## scored when the bell ends it:
 ##   RINGSIDE PUNDIT - UNOFFICIAL                 SALLY BRENNAN
 ##              ROUND 1   ROUND 2   ROUND 3    TOTAL
 ##   CARD        10-9      9-10       -        19-19
@@ -155,8 +155,6 @@ func _build_official(face: Control) -> void:
 
 
 func _refresh_pundit(sim: FightSim) -> void:
-	var live := sim.phase == FightSim.Phase.ROUND or sim.phase == FightSim.Phase.COUNT
-	var live_round := sim.round_number - 1 if live else -1
 	var judges := sim.judges
 	var any := false
 	for r in judges.rounds:
@@ -165,18 +163,15 @@ func _refresh_pundit(sim: FightSim) -> void:
 		if not score.is_empty():
 			cell.set_score(score[0], score[1])
 			any = true
-		elif r == live_round:
-			var p := judges.pundit_round(r, sim.red, sim.blue)
-			cell.set_score(p[0], p[1], true)
-			any = true
 		else:
 			cell.clear()
 	var total_cell: ScorePair = _pundit_cells[3]
 	if not any:
 		total_cell.clear()
-		_verdict.text = ""
+		_verdict.text = "SCORED AFTER EACH ROUND"
+		_verdict.add_theme_color_override("font_color", Palette.UI_TEXT_DIM)
 		return
-	var t := judges.pundit_totals(live_round, sim.red, sim.blue)
+	var t := judges.pundit_totals()
 	total_cell.set_score(t[0], t[1])
 	if t[0] == t[1]:
 		_verdict.text = "SCORES IT LEVEL  %d-%d" % [t[0], t[1]]

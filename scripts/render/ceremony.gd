@@ -14,6 +14,9 @@ const ANIM_FPS := 20.0
 const GAP := 5.0
 ## Reach used when holding or lifting an arm (a little short of straight).
 const REACH := 0.96
+## Everyone is drawn a touch smaller than in the fight because they stand
+## back in the middle of the ring, further from the camera.
+const SIZE := 0.9
 
 var boxers: Array[FrontRig] = []
 var referee: FrontRig
@@ -29,11 +32,11 @@ func setup(red: BoxerData, blue: BoxerData, ref_skin: int) -> void:
 		child.queue_free()
 	boxers.clear()
 	referee = FrontRig.new()
-	referee.setup_referee(ref_skin)
+	referee.setup_referee(ref_skin, SIZE)
 	var data := [red, blue]
 	for corner in 2:
 		var rig := FrontRig.new()
-		rig.setup_boxer(data[corner], corner, true)
+		rig.setup_boxer(data[corner], corner, true, SIZE)
 		var out := -1.0 if corner == 0 else 1.0
 		var ref_half := FrontRig.SHOULDER_X * 0.92 * referee.pixel_height()
 		rig.position.x = roundf(out * (ref_half + GAP + rig.half_width()))

@@ -24,7 +24,7 @@ func _initialize() -> void:
 	var methods := {}
 	var by_style_wins := [0, 0, 0, 0, 0]
 	var by_style_fights := [0, 0, 0, 0, 0]
-	var totals := {"thrown": 0.0, "landed": 0.0, "blocked": 0.0, "knockdowns": 0.0, "end_health": 0.0, "end_energy": 0.0, "clinches": 0.0}
+	var totals := {"thrown": 0.0, "landed": 0.0, "blocked": 0.0, "big": 0.0, "knockdowns": 0.0, "end_health": 0.0, "end_energy": 0.0, "clinches": 0.0}
 	var rounds_ended := [0, 0, 0, 0]
 	# Judging: how often the official result differs from a neutral card.
 	var judging := {"decisions": 0, "differs": 0, "robbery": 0, "all_agree": 0, "pundit_right": 0, "split_rounds": 0, "rounds": 0}
@@ -59,6 +59,7 @@ func _initialize() -> void:
 			totals["thrown"] += f.fight_stats["thrown"]
 			totals["landed"] += f.fight_stats["landed"]
 			totals["blocked"] += f.fight_stats["blocked"]
+			totals["big"] += f.fight_stats["big"]
 			totals["end_health"] += f.health
 			totals["end_energy"] += f.energy
 			by_style_fights[f.data.style] += 1
@@ -77,6 +78,7 @@ func _initialize() -> void:
 	print("  Punches thrown / boxer  %6.1f" % (totals["thrown"] / boxers))
 	print("  Punches landed / boxer  %6.1f" % (totals["landed"] / boxers))
 	print("  Punches blocked / boxer %6.1f" % (totals["blocked"] / boxers))
+	print("  Big punches / boxer     %6.2f" % (totals["big"] / boxers))
 	print("  Accuracy                %5.1f%%" % (100.0 * totals["landed"] / maxf(totals["thrown"], 1.0)))
 	print("  Knockdowns / fight      %6.2f" % (totals["knockdowns"] / fights))
 	print("  Clinches / fight        %6.2f" % (totals["clinches"] / fights))

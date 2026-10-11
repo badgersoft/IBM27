@@ -6,9 +6,9 @@ extends Control
 ## It covers the whole arena overlay but only draws in two places:
 ##
 ##   y  8  +--------------------------------------------------------------+
-##         |            JUDGE Y. SHIMADA SCORES THE BOUT...      (lead-in) |
-##         |               29-28 IN FAVOUR OF HAYES              (payoff)  |
-##   y 80  +--------------------------------------------------------------+
+##         |          JUDGE Y. SHIMADA SCORES THE BOUT...   (lead-in, 24) |
+##         |             29-28 IN FAVOUR OF HAYES           (payoff, 32)  |
+##   y 88  +--------------------------------------------------------------+
 ##
 ##                 ( boxers and referee stand in the ring )
 ##
@@ -27,21 +27,23 @@ signal judge_revealed(index: int)
 ## Emitted the moment the winner (or draw) is read out.
 signal winner_announced
 
-## Ink is spaced evenly: 11 px of panel above, between and below the lines.
-const BAND := Rect2(16, 8, 1240, 72)
+## Ink is spaced evenly: 9 px of panel above, between and below the lines.
+const BAND := Rect2(16, 8, 1240, 80)
 const PAD := 16                 ## Inside the band, left and right.
-const LEAD_Y := 9               ## 16 px text.
-const PAYOFF_Y := 38            ## 24 px text.
+const LEAD_Y := 11              ## 24 px text.
+const PAYOFF_Y := 41            ## 32 px text.
 
 const BUTTON_W := 256
 const BUTTON_H := 48
 const BUTTON_GAP := 32
 
 ## Seconds into the announcement when each step happens.
-const FIRST_JUDGE_AT := 1.6
-const JUDGE_EVERY := 2.6
-const SCORE_AFTER := 1.0        ## Judge's name first, then his score.
-const WINNER_PAUSE := 1.4       ## Drum roll between "and the winner..." and the name.
+## Each wait is a second longer than a ring announcer strictly needs: the
+## pause is the drama.
+const FIRST_JUDGE_AT := 2.0
+const JUDGE_EVERY := 3.6
+const SCORE_AFTER := 2.0        ## Judge's name first, then his score.
+const WINNER_PAUSE := 2.4       ## Drum roll between "and the winner..." and the name.
 const STOPPAGE_VERDICT_AT := 0.4
 const BUTTONS_AFTER := 1.0
 
@@ -71,10 +73,10 @@ func setup(result: Dictionary, red: BoxerData, blue: BoxerData, judges: Judges, 
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(UiTheme.panel(BAND.position.x, BAND.position.y, BAND.size.x, BAND.size.y))
 	var inner_w := BAND.size.x - PAD * 2
-	_lead = UiTheme.label("", UiTheme.BODY, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
+	_lead = UiTheme.label("", UiTheme.LARGE, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
 	add_child(UiTheme.place(_lead, BAND.position.x + PAD, BAND.position.y + LEAD_Y, inner_w, UiTheme.ROW_H))
-	_payoff = UiTheme.label("", UiTheme.LARGE, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
-	add_child(UiTheme.place(_payoff, BAND.position.x + PAD, BAND.position.y + PAYOFF_Y, inner_w, UiTheme.LARGE))
+	_payoff = UiTheme.label("", UiTheme.TITLE, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
+	add_child(UiTheme.place(_payoff, BAND.position.x + PAD, BAND.position.y + PAYOFF_Y, inner_w, UiTheme.TITLE))
 
 	_buttons = Control.new()
 	_buttons.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -165,7 +167,7 @@ func _plan_stoppage(result: Dictionary, boxers: Array, judges: Judges) -> void:
 	for j in judges.panel.size():
 		_at(0.0, judge_revealed.emit.bind(j))
 	var winner: int = result["winner"]
-	var how := "KNOCKOUT" if result["method"] == "KO" else "TECHNICAL KNOCKOUT"
+	var how := "KNOCKOUT" if result["method"] == "KO" else "TKO"
 	var lead_in := "AND THE WINNER, BY %s IN ROUND %d AT %s..." % [how, result["round"], result["time"]]
 	_at(STOPPAGE_VERDICT_AT, _say.bind(lead_in, "", Palette.UI_TEXT))
 	var name_at := STOPPAGE_VERDICT_AT + WINNER_PAUSE
@@ -180,14 +182,14 @@ func _at(time: float, action: Callable) -> void:
 
 ## Shows a lead-in line and (optionally) its payoff under it.
 func _say(lead: String, payoff: String, colour: Color) -> void:
-	_set_text(_lead, lead, Palette.UI_TEXT if payoff.is_empty() else Palette.UI_TEXT_DIM, UiTheme.BODY)
-	_set_text(_payoff, payoff, colour, UiTheme.LARGE)
+	_set_text(_lead, lead, Palette.UI_TEXT, UiTheme.LARGE)
+	_set_text(_payoff, payoff, colour, UiTheme.TITLE)
 	Sfx.reveal()
 
 
 func _announce(lead: String, verdict: String, colour: Color) -> void:
-	_set_text(_lead, lead, Palette.UI_TEXT_DIM, UiTheme.BODY)
-	_set_text(_payoff, verdict, colour, UiTheme.LARGE)
+	_set_text(_lead, lead, Palette.UI_TEXT, UiTheme.LARGE)
+	_set_text(_payoff, verdict, colour, UiTheme.TITLE)
 	if not _announced:
 		_announced = true
 		Sfx.roar(1.0)

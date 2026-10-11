@@ -40,6 +40,8 @@ var _intro_time := 0.0
 var _card_clock := 0.0
 var _result_clock := -1.0
 var _capturing := false
+var _big_landing := false        # A big punch's punch_landed is on its way.
+var _big_this_step := false     # The screenshot tool waits for a big punch.
 
 
 func _ready() -> void:
@@ -179,6 +181,7 @@ func _connect_sim() -> void:
 	sim.round_started.connect(_on_round_started)
 	sim.round_ended.connect(_on_round_ended)
 	sim.punch_landed.connect(_on_punch_landed)
+	sim.big_punch.connect(_on_big_punch)
 	sim.knocked_down.connect(_on_knocked_down)
 	sim.count_changed.connect(func(_c: int, n: int) -> void: _show_banner(str(n), 0.9, Palette.UI_TEXT))
 	sim.fighter_rose.connect(func(_c: int) -> void: view.arena.excitement = 0.8)
@@ -210,10 +213,25 @@ func _on_punch_landed(_corner: int, _type: int, damage: float, blocked: bool) ->
 	if blocked:
 		Sfx.block()
 		return
+	if _big_landing:
+		_big_landing = false     # The big punch already made its own noise.
+		return
 	Sfx.punch(damage / 1.6)
 	view.arena.excitement = minf(view.arena.excitement + damage * 0.25, 1.0)
 	if damage > 1.3:
 		Sfx.roar(0.5)
+
+
+## A big punch: a flash where it lands, a heavy thud and the crowd rising.
+func _on_big_punch(corner: int, type: int) -> void:
+	_big_landing = true
+	_big_this_step = true
+	var d: Fighter = sim.fighters[1 - corner]
+	var height_share := 0.80 if PunchTypes.TO_HEAD[type] else 0.56
+	var at := Vector2(d.x + d.facing * d.height_px * 0.10, ArenaRenderer.FIGHT_Y - d.height_px * height_share)
+	view.arena.impact_flash(at.round())
+	view.arena.excitement = 1.0
+	Sfx.big_hit()
 
 
 func _on_knocked_down(_corner: int) -> void:
@@ -327,7 +345,7 @@ func _update_banner(delta: float) -> void:
 # ============================================================================
 #  Screenshot mode (developer tool)
 # ============================================================================
-## Run with:  -- --capture=<file.png> [--show=intro|fight|break|count|result] [--at=<seconds>]
+## Run with:  -- --capture=<file.png> [--show=intro|fight|big|break|count|announce|result] [--at=<seconds>]
 ## The fight is fast-forwarded (rigs stepped in lock-step with the fight) to a
 ## moment worth showing, frozen, and the whole screen saved as a PNG.
 
@@ -344,6 +362,7 @@ func _run_capture() -> void:
 		var t := 0.0
 		var limit := 60.0 * 5.0
 		while t < limit:
+			_big_this_step = false
 			sim.step(dt)
 			_sync_rigs()
 			for rig in view.rigs:
@@ -354,6 +373,8 @@ func _run_capture() -> void:
 				break
 		for rig in view.rigs:
 			rig.set_process(false)
+		if show == "big":
+			view.arena.set_process(false)   # Hold the impact flash for the shot.
 		_refresh_hud()
 		if show in ["result", "announce"] and sim.phase == FightSim.Phase.FINISHED:
 			_show_result()
@@ -377,6 +398,8 @@ func _is_capture_moment(show: String) -> bool:
 			return sim.phase == FightSim.Phase.COUNT and sim.count_value >= 2
 		"result", "announce":
 			return sim.phase == FightSim.Phase.FINISHED and sim._finish_timer > 1.0
+		"big":
+			return _big_this_step
 		_:
 			if sim.phase != FightSim.Phase.ROUND:
 				return false
