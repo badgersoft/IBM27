@@ -34,6 +34,9 @@ const RING_MAX_X := 366.0
 const CORNER_X := [60.0, 364.0]
 
 const CROWD_FPS := 12.0
+## Speech bubbles sit above the tallest boxer's head (which tops out near y 46).
+const BUBBLE_TOP := 24.0
+const BUBBLE_TAIL_Y := 56.0
 const FRONT_ROPE_ALPHA := 0.45
 
 const FONT := preload("res://assets/fonts/PressStart2P.woff2")
@@ -511,7 +514,7 @@ func _draw_fx(c: CanvasItem) -> void:
 		var dir := 1.0 if corner == 0 else -1.0
 		var x := 13.0 if corner == 0 else SIZE.x - 13.0
 		_draw_corner_man(c, x, dir)
-		_draw_bubble(c, _advice_text[corner], Vector2(x + dir * 6.0, 92), dir)
+		_draw_bubble(c, _advice_text[corner], Vector2(x + dir * 6.0, BUBBLE_TAIL_Y), dir)
 
 
 ## The trainer stands on the floor by the corner post, leaning in to talk.
@@ -548,10 +551,10 @@ func _draw_bubble(c: CanvasItem, text: String, anchor: Vector2, dir: float) -> v
 	var width := text.length() * FONT_SIZE + 10.0
 	var height := 15.0
 	var left := anchor.x if dir > 0 else anchor.x - width
-	var rect := Rect2(left, anchor.y - 36, width, height)
+	var rect := Rect2(left, BUBBLE_TOP, width, height)
 	var tail := PackedVector2Array([
 		Vector2(anchor.x + dir * 8.0, rect.end.y - 1), Vector2(anchor.x + dir * 16.0, rect.end.y - 1),
-		Vector2(anchor.x + dir * 4.0, anchor.y - 12),
+		Vector2(anchor.x + dir * 4.0, anchor.y),
 	])
 	c.draw_rect(rect.grow(1), Palette.OUTLINE)
 	c.draw_colored_polygon(tail, Palette.OUTLINE)

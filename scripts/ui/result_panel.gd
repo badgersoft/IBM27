@@ -47,11 +47,14 @@ func setup(result: Dictionary, red: BoxerData, blue: BoxerData) -> void:
 			detail += "  -  %s" % str(result["detail"]).to_upper()
 	add_child(UiTheme.place(UiTheme.label(detail, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), 0, 104, W, 12))
 
-	# Final cards, centred as a block: label column + score column.
+	# Cards, centred as a block: label column + score column.
+	var stopped: bool = result["method"] in ["KO", "TKO"]
+	var cards_title := "SCORECARDS AT THE STOPPAGE" if stopped else "FINAL SCORECARDS"
+	add_child(UiTheme.place(UiTheme.label(cards_title, UiTheme.CAPTION, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_CENTER), 0, 128, W, 12))
 	var block_w := 128 + ScorePair.WIDTH
 	var block_x := (W - block_w) / 2.0
 	for j in Judges.JUDGE_NAMES.size():
-		var y := 136 + j * UiTheme.ROW_H
+		var y := 144 + j * UiTheme.ROW_H
 		add_child(UiTheme.place(UiTheme.label(Judges.JUDGE_NAMES[j], UiTheme.CAPTION), block_x, y, 128, UiTheme.ROW_H))
 		var pair := ScorePair.new()
 		pair.position = Vector2(block_x + 128, y)

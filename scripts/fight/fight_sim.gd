@@ -29,10 +29,11 @@ const REAL_ROUND_SECONDS := 60.0
 const GAME_ROUND_SECONDS := 180.0
 const CLOCK_SPEED := GAME_ROUND_SECONDS / REAL_ROUND_SECONDS
 const BREAK_SECONDS := 10.0           ## Real seconds in the corner between rounds.
-const ADVICE_AT := 2.5                ## Seconds into the break when trainers speak.
+const ADVICE_AT := 3.5                ## Seconds into the break when trainers speak.
 const COUNT_SECONDS := 1.0            ## Real seconds per number of the count.
 const KNOCKDOWNS_FOR_TKO := 3         ## Knockdowns in one round that stop the fight.
-const WALK_SPEED := 34.0              ## Pixels per second walking to the corner.
+const WALK_SPEED := 56.0              ## Pixels per second walking to the corner.
+const MIN_GAP := 0.34                 ## Closest the boxers' centres get, in body heights.
 
 ## Brawlers and sluggers "don't mind getting hit": less stun and wear per
 ## shot, and a little extra on their own power punches.
@@ -230,7 +231,7 @@ func _update_fighter(f: Fighter, o: Fighter, dt: float) -> void:
 
 func _start_clinch() -> void:
 	var hold := rng.randf_range(1.0, 1.8)
-	var gap := (red.height_px + blue.height_px) * 0.5 * 0.30
+	var gap := (red.height_px + blue.height_px) * 0.5 * MIN_GAP
 	var centre := (red.x + blue.x) * 0.5
 	red.x = centre - gap * 0.5
 	blue.x = centre + gap * 0.5
@@ -263,7 +264,7 @@ func _hit_ropes(f: Fighter, moving_back: bool) -> bool:
 
 ## Boxers can never walk through each other.
 func _keep_apart() -> void:
-	var gap := (red.height_px + blue.height_px) * 0.5 * 0.30
+	var gap := (red.height_px + blue.height_px) * 0.5 * MIN_GAP
 	var overlap := gap - (blue.x - red.x)
 	if overlap > 0.0:
 		if red.is_down():
@@ -501,7 +502,8 @@ func _decision() -> void:
 func _finish(winner: int, method: String, detail: String) -> void:
 	phase = Phase.FINISHED
 	_finish_timer = 0.0
-	var elapsed := ceili(GAME_ROUND_SECONDS - clock)
+	# Derived from the displayed clock so "time of stoppage" + clock = 3:00.
+	var elapsed := int(GAME_ROUND_SECONDS) - ceili(clock)
 	result = {
 		"winner": winner,
 		"method": method,

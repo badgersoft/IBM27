@@ -157,7 +157,7 @@ func _build_layout(red: BoxerData, blue: BoxerData) -> void:
 	UiTheme.outline(_banner, 16)
 	_banner.clip_text = false
 	_banner.visible = false
-	_overlay.add_child(UiTheme.place(_banner, 0, 112, arena_size.x, 64))
+	_overlay.add_child(UiTheme.place(_banner, 0, 160, arena_size.x, 64))
 
 	_tape = TaleOfTape.new()
 	_tape.setup(red, blue, GameState.venue_id, FightSim.ROUNDS)
@@ -172,7 +172,7 @@ func _build_layout(red: BoxerData, blue: BoxerData) -> void:
 
 func _connect_sim() -> void:
 	sim.bell.connect(func(strikes: int) -> void: Sfx.bell(strikes))
-	sim.round_started.connect(func(r: int) -> void: _show_banner("ROUND %d" % r, 1.6))
+	sim.round_started.connect(_on_round_started)
 	sim.round_ended.connect(_on_round_ended)
 	sim.punch_landed.connect(_on_punch_landed)
 	sim.knocked_down.connect(_on_knocked_down)
@@ -189,6 +189,11 @@ func _begin_fight() -> void:
 	if is_instance_valid(_tape):
 		_tape.queue_free()
 	sim.start_fight()
+
+
+func _on_round_started(r: int) -> void:
+	view.arena.hide_corner_advice()
+	_show_banner("ROUND %d" % r, 1.6)
 
 
 func _on_round_ended(r: int) -> void:
@@ -335,6 +340,7 @@ func _is_capture_moment(show: String) -> bool:
 				return false
 			for f in sim.fighters:
 				var near_impact := f.state == Fighter.State.PUNCH and absf(f.state_time - f.punch_impact) < 0.02
-				if near_impact and absf(sim.red.x - sim.blue.x) < f.height_px * 0.62:
+				var gap := absf(sim.red.x - sim.blue.x) / f.height_px
+				if near_impact and gap > 0.40 and gap < 0.62:
 					return true
 			return false
