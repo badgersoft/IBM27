@@ -1,0 +1,621 @@
+class_name ArenaRenderer
+extends Node2D
+## Draws a venue and the ring inside the low-resolution arena viewport.
+##
+## Layers, back to front (each is a child Node2D that this script draws into):
+##   StaticBack  - walls, ceiling, lights. Drawn once.
+##   Crowd       - spectators. Redrawn at CROWD_FPS so they can cheer.
+##   RingBack    - canvas, back posts, back and side ropes.
+##   Fighters    - the two BoxerRigs are added here by ArenaView.
+##   RingFront   - semi-transparent front ropes, front posts, apron, floor.
+##   Fx          - corner man and his speech bubble between rounds.
+##
+## The ring geometry below is shared by every venue, so the ring is always the
+## same size; the venue only changes its colours and finish.
+
+const SIZE := Vector2i(424, 168)
+
+# --- Ring geometry (arena pixels) ---------------------------------------------------
+const CANVAS_BACK_Y  := 118.0   ## Far edge of the canvas.
+const CANVAS_FRONT_Y := 142.0   ## Near edge of the canvas (top of the apron).
+const FIGHT_Y        := 132.0   ## Where the boxers' feet touch the canvas.
+const APRON_BOTTOM_Y := 160.0
+const POST_FRONT_X   := [28.0, 396.0]
+const POST_BACK_X    := [50.0, 374.0]
+const POST_FRONT_H   := 60.0
+const POST_BACK_H    := 52.0
+const ROPE_LEVELS    := [0.30, 0.60, 0.90]   ## Rope heights as a share of post height.
+const CANVAS_OVERHANG := 8.0                 ## Canvas visible outside the ropes.
+
+## Furthest left / right a boxer's centre may stand (the ropes at FIGHT_Y).
+const RING_MIN_X := 58.0
+const RING_MAX_X := 366.0
+## Where each corner's boxer rests between rounds (0 = red, 1 = blue).
+const CORNER_X := [60.0, 364.0]
+
+const CROWD_FPS := 12.0
+const FRONT_ROPE_ALPHA := 0.45
+
+const FONT := preload("res://assets/fonts/PressStart2P.woff2")
+const FONT_SIZE := 8
+
+## 0 - 1. Raise it when something exciting happens; it fades by itself.
+var excitement := 0.0
+
+var venue_id := 0
+var fighter_layer: Node2D
+
+var _venue: Dictionary = {}
+var _crowd: Array = []
+var _rope_shake := [0.0, 0.0]
+var _time := 0.0
+var _crowd_clock := 0.0
+var _corner_man := -1          # Corner currently being talked to (-1 = none).
+var _bubble_text := ""
+var _bubble_time := 0.0
+
+var _static_back: Node2D
+var _crowd_layer: Node2D
+var _ring_back: Node2D
+var _ring_front: Node2D
+var _fx: Node2D
+
+
+## Builds the layers for venue [param id] (see Venues.Id).
+func setup(id: int) -> void:
+	venue_id = clampi(id, 0, Venues.count() - 1)
+	_venue = Venues.get_venue(venue_id)
+	_build_crowd()
+
+	_static_back = _make_layer("StaticBack", _draw_static_back)
+	_crowd_layer = _make_layer("Crowd", _draw_crowd)
+	_ring_back = _make_layer("RingBack", _draw_ring_back)
+	fighter_layer = Node2D.new()
+	fighter_layer.name = "Fighters"
+	add_child(fighter_layer)
+	_ring_front = _make_layer("RingFront", _draw_ring_front)
+	_fx = _make_layer("Fx", _draw_fx)
+
+
+## Wobbles the ropes on one side: 0 = left (red corner) side, 1 = right.
+func shake_ropes(side: int, amount: float = 1.0) -> void:
+	_rope_shake[side] = maxf(_rope_shake[side], amount)
+
+
+## Shows the corner man for [param corner] with a speech bubble.
+func show_corner_advice(corner: int, text: String, seconds: float) -> void:
+	_corner_man = corner
+	_bubble_text = text
+	_bubble_time = seconds
+	_fx.queue_redraw()
+
+
+func hide_corner_advice() -> void:
+	_corner_man = -1
+	_bubble_time = 0.0
+	_fx.queue_redraw()
+
+
+func _process(delta: float) -> void:
+	_time += delta
+	excitement = maxf(excitement - delta * 0.25, 0.0)
+
+	_crowd_clock += delta
+	if _crowd_clock >= 1.0 / CROWD_FPS:
+		_crowd_clock = 0.0
+		_crowd_layer.queue_redraw()
+
+	if _rope_shake[0] > 0.0 or _rope_shake[1] > 0.0:
+		_rope_shake[0] = maxf(_rope_shake[0] - delta * 2.5, 0.0)
+		_rope_shake[1] = maxf(_rope_shake[1] - delta * 2.5, 0.0)
+		_ring_back.queue_redraw()
+		_ring_front.queue_redraw()
+
+	if _bubble_time > 0.0:
+		_bubble_time -= delta
+		if _bubble_time <= 0.0:
+			hide_corner_advice()
+
+
+func _make_layer(layer_name: String, draw_func: Callable) -> Node2D:
+	var layer := Node2D.new()
+	layer.name = layer_name
+	add_child(layer)
+	layer.draw.connect(draw_func.bind(layer))
+	return layer
+
+
+# ============================================================================
+#  Crowd
+# ============================================================================
+
+## Places every spectator once. A fixed seed per venue keeps the crowd the same
+## each time you visit.
+func _build_crowd() -> void:
+	_crowd.clear()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 2027 + venue_id * 97
+	for row in _venue["crowd"]:
+		var x_from: float = row["x_range"][0]
+		var x_to: float = row["x_range"][1]
+		var n: int = row["count"]
+		var spacing := (x_to - x_from) / maxf(n - 1, 1)
+		for i in n:
+			if rng.randf() > row["fill"]:
+				continue
+			var x := x_from + spacing * i + rng.randf_range(-1.5, 1.5)
+			if venue_id == Venues.Id.BOXING_HALL and (absf(x - 110.0) < 7.0 or absf(x - 314.0) < 7.0):
+				continue   # Leave the aisles clear.
+			_crowd.append({
+				"pos": Vector2(roundf(x), row["seat_y"]),
+				"scale": row["scale"] * rng.randf_range(0.92, 1.08),
+				"dim": row["dim"],
+				"stand": rng.randf() < row["stand"],
+				"skin": Palette.SKIN_TONES[rng.randi_range(0, 4)][0],
+				"hair": Palette.HAIR_TONES[rng.randi_range(1, 5)][0] if rng.randf() < 0.8 else Color(0, 0, 0, 0),
+				"shirt": Venues.SHIRTS[rng.randi_range(0, Venues.SHIRTS.size() - 1)],
+				"phase": rng.randf() * TAU,
+				"cheer": rng.randf() < 0.55,
+			})
+
+
+func _draw_crowd(c: CanvasItem) -> void:
+	match venue_id:
+		Venues.Id.SMALL_GYM:
+			_draw_bench(c, 110.0, 92.0, 340.0, Color("6a4a30"))
+		Venues.Id.CITY_GYM:
+			for row in _venue["crowd"]:
+				_draw_bleacher(c, row["seat_y"], row["dim"])
+		Venues.Id.BOXING_HALL:
+			for row in _venue["crowd"]:
+				_draw_tier(c, row["seat_y"], row["dim"])
+	for s in _crowd:
+		_draw_spectator(c, s)
+	if venue_id == Venues.Id.BOXING_HALL:
+		# Ringside barrier between the front row and the ring.
+		c.draw_rect(Rect2(0, 112, SIZE.x, 6), Color("10101a"))
+		c.draw_rect(Rect2(0, 112, SIZE.x, 1), Color("c8a020"))
+
+
+## A very simple spectator: legs (if standing), shirt, head, hair, and arms
+## thrown up in the air when the crowd gets excited.
+func _draw_spectator(c: CanvasItem, s: Dictionary) -> void:
+	var k: float = s["scale"]
+	var dim: float = s["dim"]
+	var x: float = s["pos"].x
+	var base: float = s["pos"].y
+	var cheering: bool = s["cheer"] and excitement > 0.35
+	var bob := 0.0
+	if excitement > 0.2:
+		bob = -roundf(absf(sin(_time * 9.0 + s["phase"])) * 2.0 * excitement * k)
+
+	var torso_w := roundf(8.0 * k)
+	var torso_h := roundf(10.0 * k)
+	var top := base - torso_h + bob
+	if s["stand"]:
+		top -= roundf(11.0 * k)
+		var legs := Rect2(x - torso_w * 0.4, top + torso_h, torso_w * 0.8, base - (top + torso_h))
+		c.draw_rect(legs, Palette.darken(Color("2a2a34"), dim))
+	var shirt: Color = Palette.darken(s["shirt"], dim)
+	var skin: Color = Palette.darken(s["skin"], dim)
+	c.draw_rect(Rect2(x - torso_w * 0.5, top, torso_w, torso_h), shirt)
+	c.draw_rect(Rect2(x - torso_w * 0.5, top, torso_w, 1), shirt.lightened(0.15))
+
+	var head := Vector2(x, top - 3.0 * k)
+	var r := maxf(3.0 * k, 1.5)
+	var hair: Color = s["hair"]
+	if hair.a > 0.0:
+		c.draw_circle(head + Vector2(0, -0.8 * k), r, Palette.darken(hair, dim))
+		c.draw_circle(head + Vector2(0, 0.5 * k), r * 0.9, skin)
+	else:
+		c.draw_circle(head, r, skin)
+
+	if cheering:
+		var lift := 1.0 + absf(sin(_time * 7.0 + s["phase"])) * 2.0
+		for side in [-1.0, 1.0]:
+			var shoulder := Vector2(x + side * torso_w * 0.45, top + 1.0)
+			var hand := shoulder + Vector2(side * 2.0 * k, -(5.0 + lift) * k)
+			c.draw_line(shoulder, hand, shirt, maxf(2.0 * k, 1.0))
+			c.draw_circle(hand, maxf(1.2 * k, 1.0), skin)
+
+
+func _draw_bench(c: CanvasItem, y: float, x_from: float, x_to: float, wood: Color) -> void:
+	c.draw_rect(Rect2(x_from, y, x_to - x_from, 3), wood)
+	c.draw_rect(Rect2(x_from, y, x_to - x_from, 1), wood.lightened(0.2))
+	for leg_x in [x_from + 4.0, (x_from + x_to) * 0.5, x_to - 6.0]:
+		c.draw_rect(Rect2(leg_x, y + 3, 2, 6), wood.darkened(0.3))
+
+
+## Wooden bleacher step for the City Gym.
+func _draw_bleacher(c: CanvasItem, y: float, dim: float) -> void:
+	var wood := Palette.darken(Color("8a6440"), dim)
+	c.draw_rect(Rect2(40, y + 1, 344, 10), Palette.darken(Color("3a3440"), dim))
+	c.draw_rect(Rect2(40, y, 344, 3), wood)
+	c.draw_rect(Rect2(40, y, 344, 1), wood.lightened(0.2))
+
+
+## Seating tier for the Boxing Hall: a dark riser with red seat backs.
+func _draw_tier(c: CanvasItem, y: float, dim: float) -> void:
+	c.draw_rect(Rect2(0, y, SIZE.x, 11), Palette.darken(Color("221c30"), dim))
+	c.draw_rect(Rect2(0, y, SIZE.x, 1), Palette.darken(Color("3a3048"), dim))
+	var seat := Palette.darken(Color("8a2230"), dim)
+	var x := 4.0
+	while x < SIZE.x:
+		if absf(x - 110.0) > 7.0 and absf(x - 314.0) > 7.0:
+			c.draw_rect(Rect2(x, y - 6, 7, 6), seat)
+		x += 12.0
+	# Aisle steps.
+	for aisle_x in [110.0, 314.0]:
+		c.draw_rect(Rect2(aisle_x - 5, y - 6, 10, 17), Palette.darken(Color("2e2638"), dim))
+		c.draw_rect(Rect2(aisle_x - 5, y + 4, 10, 1), Palette.darken(Color("4a4058"), dim))
+
+
+# ============================================================================
+#  Static background (walls, ceilings, lights)
+# ============================================================================
+
+func _draw_static_back(c: CanvasItem) -> void:
+	match venue_id:
+		Venues.Id.SMALL_GYM:
+			_draw_small_gym_walls(c)
+		Venues.Id.CITY_GYM:
+			_draw_city_gym_walls(c)
+		Venues.Id.BOXING_HALL:
+			_draw_hall_walls(c)
+	# Floor either side of the ring, under the canvas line.
+	var floor_colour := [Color("3a2818"), Color("2a2c34"), Color("08080c")][venue_id] as Color
+	c.draw_rect(Rect2(0, CANVAS_BACK_Y, SIZE.x, SIZE.y - CANVAS_BACK_Y), floor_colour)
+
+
+func _draw_small_gym_walls(c: CanvasItem) -> void:
+	# Brick wall with a little variation so it does not look like wallpaper.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 11
+	c.draw_rect(Rect2(0, 0, SIZE.x, 120), Color("4e3026"))
+	var brick_w := 12
+	var brick_h := 5
+	for row in range(0, 24):
+		var y := 8 + row * (brick_h + 1)
+		var offset := 0 if row % 2 == 0 else brick_w / 2
+		for col in range(-1, SIZE.x / (brick_w + 1) + 1):
+			var x := col * (brick_w + 1) + offset
+			var tone := Color("7a4a38").darkened(rng.randf_range(0.0, 0.18))
+			c.draw_rect(Rect2(x, y, brick_w, brick_h), tone)
+			c.draw_rect(Rect2(x, y, brick_w, 1), tone.lightened(0.08))
+
+	# Ceiling joists and a single fluorescent strip light.
+	c.draw_rect(Rect2(0, 0, SIZE.x, 8), Color("2e2018"))
+	for x in range(6, SIZE.x, 40):
+		c.draw_rect(Rect2(x, 0, 6, 8), Color("3e2c20"))
+	c.draw_rect(Rect2(170, 7, 84, 4), Color("3a3a3a"))
+	c.draw_rect(Rect2(172, 8, 80, 2), Color("f4f4e4"))
+	c.draw_colored_polygon(PackedVector2Array([
+		Vector2(172, 10), Vector2(252, 10), Vector2(300, 60), Vector2(124, 60)
+	]), Color(1, 1, 0.9, 0.05))
+
+	# Window with dirty glass.
+	c.draw_rect(Rect2(326, 20, 46, 38), Color("2a2420"))
+	c.draw_rect(Rect2(329, 23, 40, 32), Color("62788a"))
+	c.draw_rect(Rect2(348, 23, 2, 32), Color("2a2420"))
+	c.draw_rect(Rect2(329, 38, 40, 2), Color("2a2420"))
+	c.draw_line(Vector2(332, 34), Vector2(342, 25), Color("8aa0b0"), 1.0)
+	c.draw_line(Vector2(353, 52), Vector2(365, 42), Color("8aa0b0"), 1.0)
+
+	# "No smoking" sign - a nod to the classic gym backdrop.
+	c.draw_rect(Rect2(96, 17, 88, 14), Color("2a2420"))
+	c.draw_rect(Rect2(97, 18, 86, 12), Color("e8e4d8"))
+	_text(c, "NO SMOKING", Vector2(97, 28), 86, Color("a02020"))
+
+	# Wall clock.
+	c.draw_circle(Vector2(262, 26), 7.0, Color("2a2420"))
+	c.draw_circle(Vector2(262, 26), 6.0, Color("e8e4d8"))
+	c.draw_line(Vector2(262, 26), Vector2(262, 22), Color("202020"), 1.0)
+	c.draw_line(Vector2(262, 26), Vector2(265, 27), Color("202020"), 1.0)
+
+	# Heavy bag hanging outside the ring on the left.
+	c.draw_line(Vector2(14, 8), Vector2(14, 22), Color("8a8a8a"), 1.0)
+	c.draw_rect(Rect2(7, 22, 15, 44), Color("1a1010"))
+	c.draw_rect(Rect2(8, 23, 13, 42), Color("7a2a22"))
+	c.draw_rect(Rect2(9, 24, 3, 40), Color("9a3e32"))
+	c.draw_rect(Rect2(8, 30, 13, 2), Color("4a1a14"))
+	c.draw_rect(Rect2(8, 56, 13, 2), Color("4a1a14"))
+
+	# Speed-bag platform on the right.
+	c.draw_rect(Rect2(400, 38, 22, 4), Color("4e3424"))
+	c.draw_circle(Vector2(411, 47), 4.0, Color("1a1010"))
+	c.draw_circle(Vector2(411, 47), 3.0, Color("a83a2a"))
+
+	# Bare wooden floor behind the ring.
+	c.draw_rect(Rect2(0, 104, SIZE.x, 16), Color("4a3424"))
+	for x in range(0, SIZE.x, 18):
+		c.draw_rect(Rect2(x, 104, 1, 16), Color("3a2818"))
+
+
+func _draw_city_gym_walls(c: CanvasItem) -> void:
+	# Painted breeze-block wall.
+	c.draw_rect(Rect2(0, 0, SIZE.x, 120), Color("4a5470"))
+	for row in range(0, 15):
+		var y := row * 8
+		var offset := 0 if row % 2 == 0 else 8
+		c.draw_rect(Rect2(0, y, SIZE.x, 1), Color("3c445c"))
+		for x in range(-offset, SIZE.x, 16):
+			c.draw_rect(Rect2(x, y, 1, 8), Color("3c445c"))
+
+	# High windows letting in daylight.
+	for wx in [24.0, 72.0, 328.0, 376.0]:
+		c.draw_rect(Rect2(wx, 24, 26, 18), Color("2a2e3a"))
+		c.draw_rect(Rect2(wx + 2, 26, 22, 14), Color("9ab8d0"))
+		c.draw_rect(Rect2(wx + 12, 26, 2, 14), Color("2a2e3a"))
+		c.draw_line(Vector2(wx + 4, 36), Vector2(wx + 10, 29), Color("c8dcec"), 1.0)
+
+	# Club banner.
+	c.draw_rect(Rect2(140, 8, 144, 16), Color("6a1418"))
+	c.draw_rect(Rect2(141, 9, 142, 14), Color("b02028"))
+	c.draw_rect(Rect2(141, 9, 142, 1), Color("d04048"))
+	_text(c, "CITY GYM", Vector2(141, 20), 142, Color("f4ecd8"))
+
+	# Two hanging lamps with soft light cones.
+	for lx in [120.0, 304.0]:
+		c.draw_line(Vector2(lx, 0), Vector2(lx, 26), Color("202024"), 1.0)
+		c.draw_colored_polygon(PackedVector2Array([
+			Vector2(lx - 3, 26), Vector2(lx + 3, 26), Vector2(lx + 7, 32), Vector2(lx - 7, 32)
+		]), Color("2c3038"))
+		c.draw_rect(Rect2(lx - 5, 32, 10, 1), Color("fff4c8"))
+		c.draw_colored_polygon(PackedVector2Array([
+			Vector2(lx - 6, 33), Vector2(lx + 6, 33), Vector2(lx + 40, 118), Vector2(lx - 40, 118)
+		]), Color(1, 0.95, 0.8, 0.05))
+
+
+func _draw_hall_walls(c: CanvasItem) -> void:
+	# Dark hall fading up into the roof.
+	var bands := [Color("0b0a12"), Color("0e0c17"), Color("120f1d"), Color("161324"), Color("1a172a")]
+	for i in bands.size():
+		c.draw_rect(Rect2(0, i * 14, SIZE.x, 14), bands[i])
+	c.draw_rect(Rect2(0, 70, SIZE.x, 50), Color("1a172a"))
+
+	# Lighting truss: two rails joined by a zig-zag lattice.
+	c.draw_rect(Rect2(0, 6, SIZE.x, 1), Color("4a4a5a"))
+	c.draw_rect(Rect2(0, 12, SIZE.x, 1), Color("4a4a5a"))
+	for x in range(0, SIZE.x, 8):
+		c.draw_line(Vector2(x, 7), Vector2(x + 4, 12), Color("34343f"), 1.0)
+		c.draw_line(Vector2(x + 4, 12), Vector2(x + 8, 7), Color("34343f"), 1.0)
+
+	# Spot lamps hanging from the truss.
+	for lx in [52.0, 132.0, 212.0, 292.0, 372.0]:
+		c.draw_rect(Rect2(lx - 4, 13, 8, 6), Color("26262e"))
+		c.draw_rect(Rect2(lx - 3, 18, 6, 2), Color("fff6d0"))
+		c.draw_circle(Vector2(lx, 19), 5.0, Color(1, 0.95, 0.75, 0.12))
+
+	# A huge banner high up at the back.
+	c.draw_rect(Rect2(124, 26, 176, 18), Color("0c0c14"))
+	c.draw_rect(Rect2(125, 27, 174, 16), Color("1c2a5a"))
+	c.draw_rect(Rect2(125, 27, 174, 1), Color("c8a020"))
+	c.draw_rect(Rect2(125, 42, 174, 1), Color("c8a020"))
+	_text(c, "WORLD TITLE NIGHT", Vector2(125, 39), 174, Color("f0d060"))
+
+
+# ============================================================================
+#  Ring - back half (behind the boxers)
+# ============================================================================
+
+func _draw_ring_back(c: CanvasItem) -> void:
+	_draw_canvas(c)
+	for side in 2:
+		_draw_post(c, POST_BACK_X[side], CANVAS_BACK_Y, POST_BACK_H, 3.0, _venue["pads"][2])
+	# Back ropes run between the two back posts; side ropes join back to front.
+	for i in ROPE_LEVELS.size():
+		var level: float = ROPE_LEVELS[i]
+		var colour: Color = _venue["ropes"][i]
+		var back_l := Vector2(POST_BACK_X[0], CANVAS_BACK_Y - POST_BACK_H * level)
+		var back_r := Vector2(POST_BACK_X[1], CANVAS_BACK_Y - POST_BACK_H * level)
+		var front_l := Vector2(POST_FRONT_X[0], CANVAS_FRONT_Y - POST_FRONT_H * level)
+		var front_r := Vector2(POST_FRONT_X[1], CANVAS_FRONT_Y - POST_FRONT_H * level)
+		_draw_rope(c, back_l, back_r, colour, 1.0, 1.0, true)
+		_draw_rope(c, back_l, front_l, colour, 1.0, 1.0, false, 0)
+		_draw_rope(c, back_r, front_r, colour, 1.0, 1.0, false, 1)
+	# Rope ties holding the back ropes together.
+	var tie: Color = _venue["rope_tape"]
+	for tx in [131.0, 212.0, 293.0]:
+		var top := CANVAS_BACK_Y - POST_BACK_H * ROPE_LEVELS[-1]
+		c.draw_line(Vector2(tx, top), Vector2(tx, CANVAS_BACK_Y - POST_BACK_H * ROPE_LEVELS[0]), Color(tie, 0.8), 1.0)
+
+
+func _draw_canvas(c: CanvasItem) -> void:
+	var tones: Array = _venue["canvas"]
+	var back_l := Vector2(POST_BACK_X[0] - CANVAS_OVERHANG * 0.7, CANVAS_BACK_Y)
+	var back_r := Vector2(POST_BACK_X[1] + CANVAS_OVERHANG * 0.7, CANVAS_BACK_Y)
+	var front_r := Vector2(POST_FRONT_X[1] + CANVAS_OVERHANG, CANVAS_FRONT_Y)
+	var front_l := Vector2(POST_FRONT_X[0] - CANVAS_OVERHANG, CANVAS_FRONT_Y)
+	c.draw_colored_polygon(PackedVector2Array([back_l, back_r, front_r, front_l]), tones[0])
+	# Darker strip at the far edge and a lit lip at the near edge.
+	c.draw_colored_polygon(PackedVector2Array([
+		back_l, back_r, back_r + Vector2(-1, 3), back_l + Vector2(1, 3)
+	]), tones[1])
+	c.draw_line(front_l + Vector2(0, -1), front_r + Vector2(0, -1), tones[2], 1.0)
+
+	match venue_id:
+		Venues.Id.SMALL_GYM:
+			# Old stains and a taped repair.
+			var stain := Color(tones[1], 0.7)
+			_ellipse(c, Vector2(120, 128), 14, 3, stain)
+			_ellipse(c, Vector2(292, 136), 10, 2, stain)
+			_ellipse(c, Vector2(205, 124), 6, 1.5, stain)
+			c.draw_rect(Rect2(250, 125, 9, 2), Color("8c8a80"))
+		Venues.Id.CITY_GYM:
+			_ellipse(c, Vector2(160, 133), 10, 2, Color(tones[1], 0.4))
+		Venues.Id.BOXING_HALL:
+			# Centre-ring logo.
+			_ellipse(c, Vector2(212, 130), 44, 7, tones[2])
+			_ellipse(c, Vector2(212, 130), 41, 6, tones[0])
+			_ellipse(c, Vector2(212, 130), 30, 4, Color(tones[2], 0.5))
+
+
+# ============================================================================
+#  Ring - front half (in front of the boxers)
+# ============================================================================
+
+func _draw_ring_front(c: CanvasItem) -> void:
+	# Front ropes are see-through so the boxers stay visible behind them.
+	for i in ROPE_LEVELS.size():
+		var level: float = ROPE_LEVELS[i]
+		var colour: Color = _venue["ropes"][i]
+		colour.a = FRONT_ROPE_ALPHA
+		var a := Vector2(POST_FRONT_X[0], CANVAS_FRONT_Y - POST_FRONT_H * level)
+		var b := Vector2(POST_FRONT_X[1], CANVAS_FRONT_Y - POST_FRONT_H * level)
+		_draw_rope(c, a, b, colour, 2.0, FRONT_ROPE_ALPHA, true)
+
+	_draw_post(c, POST_FRONT_X[0], CANVAS_FRONT_Y, POST_FRONT_H, 4.0, _venue["pads"][0])
+	_draw_post(c, POST_FRONT_X[1], CANVAS_FRONT_Y, POST_FRONT_H, 4.0, _venue["pads"][1])
+	_draw_apron(c)
+
+
+func _draw_apron(c: CanvasItem) -> void:
+	var tones: Array = _venue["apron"]
+	var left := POST_FRONT_X[0] - CANVAS_OVERHANG
+	var right := POST_FRONT_X[1] + CANVAS_OVERHANG
+	var rect := Rect2(left, CANVAS_FRONT_Y, right - left, APRON_BOTTOM_Y - CANVAS_FRONT_Y)
+	c.draw_rect(rect, tones[0])
+	c.draw_rect(Rect2(left, CANVAS_FRONT_Y, rect.size.x, 2), tones[1])
+
+	match venue_id:
+		Venues.Id.SMALL_GYM:
+			# Bare wooden boards.
+			for x in range(int(left) + 9, int(right), 10):
+				c.draw_rect(Rect2(x, CANVAS_FRONT_Y + 2, 1, rect.size.y - 2), tones[1])
+			c.draw_rect(Rect2(left, APRON_BOTTOM_Y - 2, rect.size.x, 2), tones[1])
+		Venues.Id.CITY_GYM:
+			c.draw_rect(Rect2(left, CANVAS_FRONT_Y + 2, rect.size.x, 1), Color("f0f0f0"))
+			_text(c, _venue["apron_text"], Vector2(left, CANVAS_FRONT_Y + 13), rect.size.x, Color("f0f0f0"))
+		Venues.Id.BOXING_HALL:
+			# Skirt folds, gold trim and sponsor text.
+			for x in range(int(left) + 12, int(right), 24):
+				c.draw_rect(Rect2(x, CANVAS_FRONT_Y + 4, 1, rect.size.y - 4), Color("1c2446"))
+			c.draw_rect(Rect2(left, CANVAS_FRONT_Y + 2, rect.size.x, 1), Color("c8a020"))
+			c.draw_rect(Rect2(left, APRON_BOTTOM_Y - 2, rect.size.x, 1), Color("c8a020"))
+			_text(c, _venue["apron_text"], Vector2(left, CANVAS_FRONT_Y + 13), rect.size.x, Color("f0d060"))
+
+	# Floor in front of the ring.
+	var floor_colour := [Color("3a2818"), Color("2a2c34"), Color("08080c")][venue_id] as Color
+	c.draw_rect(Rect2(0, APRON_BOTTOM_Y, SIZE.x, SIZE.y - APRON_BOTTOM_Y), floor_colour)
+	c.draw_rect(Rect2(left, APRON_BOTTOM_Y, rect.size.x, 1), Color(0, 0, 0, 0.5))
+
+
+# ============================================================================
+#  Corner man and speech bubble (between rounds)
+# ============================================================================
+
+func _draw_fx(c: CanvasItem) -> void:
+	if _corner_man < 0:
+		return
+	var dir := 1.0 if _corner_man == 0 else -1.0
+	var x := 13.0 if _corner_man == 0 else SIZE.x - 13.0
+	_draw_corner_man(c, x, dir)
+	_draw_bubble(c, _bubble_text, Vector2(x + dir * 6.0, 92), dir)
+
+
+## The trainer stands on the floor by the corner post, leaning in to talk.
+func _draw_corner_man(c: CanvasItem, x: float, dir: float) -> void:
+	var skin: Color = Palette.SKIN_TONES[1][0]
+	var shirt := Color("e8e4d8")
+	var shirt_shade := Color("b4b0a6")
+	# Body (shirt) - the legs are hidden below the bottom of the screen.
+	var body := PackedVector2Array([
+		Vector2(x - 7, 168), Vector2(x - 7, 116), Vector2(x - 3, 110),
+		Vector2(x + 4, 110), Vector2(x + 8, 116), Vector2(x + 8, 168),
+	])
+	c.draw_polyline(_closed(body), Palette.OUTLINE, 2.0)
+	c.draw_colored_polygon(body, shirt)
+	c.draw_rect(Rect2(x - 7 if dir < 0 else x + 4, 116, 3, 52), shirt_shade)
+	# Towel over the shoulder.
+	c.draw_rect(Rect2(x - 6, 110, 4, 16), Color("c83030") if dir > 0 else Color("3060c8"))
+	# Head.
+	var head := Vector2(x + dir * 1.0, 103)
+	c.draw_circle(head, 6.0, Palette.OUTLINE)
+	c.draw_circle(head, 5.0, skin)
+	c.draw_circle(head + Vector2(0, -2), 4.5, Color("5a5a5a"))
+	c.draw_circle(head + Vector2(dir * 1.0, 1), 4.0, skin)
+	c.draw_rect(Rect2(head.x + dir * 2.0, head.y - 1, 1, 1), Palette.EYE)
+	# Arm pointing into the ring.
+	var shoulder := Vector2(x + dir * 5.0, 114)
+	var hand := Vector2(x + dir * 17.0, 104)
+	c.draw_line(shoulder, hand, Palette.OUTLINE, 5.0)
+	c.draw_line(shoulder, hand, shirt, 3.0)
+	c.draw_circle(hand, 2.0, skin)
+
+
+func _draw_bubble(c: CanvasItem, text: String, anchor: Vector2, dir: float) -> void:
+	var width := text.length() * FONT_SIZE + 10.0
+	var height := 15.0
+	var left := anchor.x if dir > 0 else anchor.x - width
+	var rect := Rect2(left, anchor.y - 36, width, height)
+	var tail := PackedVector2Array([
+		Vector2(anchor.x + dir * 8.0, rect.end.y - 1), Vector2(anchor.x + dir * 16.0, rect.end.y - 1),
+		Vector2(anchor.x + dir * 4.0, anchor.y - 12),
+	])
+	c.draw_rect(rect.grow(1), Palette.OUTLINE)
+	c.draw_colored_polygon(tail, Palette.OUTLINE)
+	c.draw_rect(rect, Color("f8f6ee"))
+	var inner := PackedVector2Array([tail[0] + Vector2(dir, -1), tail[1] + Vector2(-dir, -1), tail[2] + Vector2(0, -2)])
+	c.draw_colored_polygon(inner, Color("f8f6ee"))
+	_text(c, text, Vector2(rect.position.x, rect.end.y - 4), rect.size.x, Color("101010"))
+
+
+# ============================================================================
+#  Shared drawing helpers
+# ============================================================================
+
+## A post with a padded turnbuckle cover over the ropes.
+func _draw_post(c: CanvasItem, x: float, base_y: float, height: float, width: float, pad: Color) -> void:
+	var tones: Array = _venue["post"]
+	var rect := Rect2(x - width * 0.5, base_y - height - 2.0, width, height + 2.0)
+	c.draw_rect(rect.grow(1), Palette.OUTLINE)
+	c.draw_rect(rect, tones[0])
+	c.draw_rect(Rect2(rect.position, Vector2(1, rect.size.y)), tones[2])
+	c.draw_rect(Rect2(rect.end.x - 1, rect.position.y, 1, rect.size.y), tones[1])
+	# Corner pad from just above the top rope to just below the bottom rope.
+	var pad_top := base_y - height * ROPE_LEVELS[-1] - 4.0
+	var pad_bottom := base_y - height * ROPE_LEVELS[0] + 4.0
+	var pad_rect := Rect2(x - width * 0.5 - 1.0, pad_top, width + 2.0, pad_bottom - pad_top)
+	c.draw_rect(pad_rect.grow(1), Palette.OUTLINE)
+	c.draw_rect(pad_rect, pad)
+	c.draw_rect(Rect2(pad_rect.position, Vector2(1, pad_rect.size.y)), pad.lightened(0.3))
+	c.draw_rect(Rect2(pad_rect.end.x - 1, pad_rect.position.y, 1, pad_rect.size.y), pad.darkened(0.3))
+
+
+## Draws a rope as a short polyline so it can wobble when a boxer hits it.
+## [param side] = 0 or 1 makes the whole rope shake with that side; -1 means
+## the shake fades out towards the middle (back and front ropes).
+func _draw_rope(c: CanvasItem, a: Vector2, b: Vector2, colour: Color, width: float,
+		_alpha: float, spans_ring: bool, side: int = -1) -> void:
+	var points := PackedVector2Array()
+	var segments := 12
+	for i in segments + 1:
+		var t := float(i) / segments
+		var shake := 0.0
+		if spans_ring:
+			shake = _rope_shake[0] * maxf(0.0, 1.0 - t * 2.2) + _rope_shake[1] * maxf(0.0, 1.0 - (1.0 - t) * 2.2)
+		elif side >= 0:
+			shake = _rope_shake[side]
+		var sag := sin(t * PI) * 0.6
+		var wobble := shake * sin(_time * 38.0 + t * 3.0) * 2.0
+		points.append(a.lerp(b, t) + Vector2(0, sag + wobble))
+	c.draw_polyline(points, colour.darkened(0.35), width + 1.0)
+	c.draw_polyline(points, colour, width)
+
+
+func _text(c: CanvasItem, text: String, baseline_left: Vector2, width: float, colour: Color) -> void:
+	c.draw_string(FONT, baseline_left, text, HORIZONTAL_ALIGNMENT_CENTER, width, FONT_SIZE, colour)
+
+
+func _ellipse(c: CanvasItem, centre: Vector2, rx: float, ry: float, colour: Color) -> void:
+	var pts := PackedVector2Array()
+	for i in 20:
+		var a := TAU * i / 20.0
+		pts.append(centre + Vector2(cos(a) * rx, sin(a) * ry))
+	c.draw_colored_polygon(pts, colour)
+
+
+func _closed(points: PackedVector2Array) -> PackedVector2Array:
+	var out := points.duplicate()
+	out.append(points[0])
+	return out

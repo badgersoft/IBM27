@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 32 32" shape-rendering="crispEdges">
+  <!-- International Boxing Manager 2027 - a pixel boxing glove on a navy tile -->
+  <rect width="32" height="32" fill="#0d1020"/>
+  <rect x="1" y="1" width="30" height="30" fill="none" stroke="#c8a850" stroke-width="2"/>
+  <rect x="9"  y="7"  width="13" height="3" fill="#140c0a"/>
+  <rect x="7"  y="9"  width="17" height="11" fill="#140c0a"/>
+  <rect x="10" y="20" width="12" height="6" fill="#140c0a"/>
+  <rect x="10" y="8"  width="11" height="2" fill="#d42a2a"/>
+  <rect x="8"  y="10" width="15" height="9" fill="#d42a2a"/>
+  <rect x="11" y="21" width="10" height="4" fill="#8c1616"/>
+  <rect x="11" y="19" width="10" height="2" fill="#f4f2ec"/>
+  <rect x="10" y="10" width="4" height="2" fill="#ff7a6a"/>
+  <rect x="7"  y="13" width="5" height="4" fill="#8c1616"/>
+</svg>

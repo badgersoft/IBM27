@@ -1,0 +1,58 @@
+; Engine configuration file.
+; International Boxing Manager 2027 - Badger-soft
+;
+; Notes for anyone editing this by hand:
+;  - The game is authored at 1280x720 and stretched with "canvas_items" so the UI
+;    text stays crisp on any PC monitor or phone screen.
+;  - The ring itself is rendered into a small low-resolution SubViewport and
+;    scaled up with nearest-neighbour filtering to get the chunky Amiga look.
+;  - The Compatibility (OpenGL) renderer is used everywhere so the same build
+;    runs on desktop and on low-end mobile devices.
+
+config_version=5
+
+[application]
+
+config/name="International Boxing Manager 2027"
+config/description="An ode to 1985's Barry McGuigan World Championship Boxing. By Badger-soft."
+config/version="0.1.0"
+run/main_scene="res://scenes/main_menu.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+boot_splash/bg_color=Color(0.051, 0.063, 0.125, 1)
+config/icon="res://icon.svg"
+
+[autoload]
+
+GameState="*res://scripts/autoload/game_state.gd"
+Sfx="*res://scripts/autoload/sfx.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=4
+
+[gui]
+
+theme/default_font_antialiasing=0
+theme/default_font_hinting=0
+theme/default_font_subpixel_positioning=0
+
+[input_devices]
+
+pointing/emulate_mouse_from_touch=true
+
+[physics]
+
+common/physics_ticks_per_second=60
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0
+2d/snap/snap_2d_transforms_to_pixel=true
+2d/snap/snap_2d_vertices_to_pixel=true
+environment/defaults/default_clear_color=Color(0.051, 0.063, 0.125, 1)

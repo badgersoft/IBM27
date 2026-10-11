@@ -1,0 +1,18 @@
+# Godot 4 generated / per-machine folders
+.godot/
+.import/
+export.cfg
+*.translation
+
+# Builds
+build/
+exports/
+*.apk
+*.aab
+*.exe
+*.pck
+*.x86_64
+
+# OS clutter
+.DS_Store
+Thumbs.db

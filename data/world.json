@@ -1,0 +1,218 @@
+{
+	"_comment": "Where boxers come from. Region weights are percentages and must add up to 100. Names are plain ASCII so the pixel font can always draw them.",
+
+	"regions": [
+		{ "id": "usa",            "weight": 25, "countries": ["USA"] },
+		{ "id": "uk",             "weight": 10, "countries": ["GBR"] },
+		{ "id": "western_europe", "weight": 15, "countries": ["IRL", "FRA", "DEU", "ESP", "ITA", "NLD", "BEL", "PRT"] },
+		{ "id": "east_europe",    "weight": 10, "countries": ["RUS", "UKR", "LTU", "LVA", "EST"] },
+		{ "id": "china",          "weight": 10, "countries": ["CHN"] },
+		{ "id": "canada",         "weight": 10, "countries": ["CAN"] },
+		{ "id": "rest_of_world",  "weight": 20, "countries": ["MEX", "PRI", "CUB", "BRA", "ARG", "JPN", "PHL", "KOR", "THA", "KAZ", "NGA", "GHA", "ZAF", "AUS", "NZL"] }
+	],
+
+	"countries": {
+		"USA": {
+			"name": "United States",
+			"cities": ["New York", "Los Angeles", "Chicago", "Philadelphia", "Detroit", "Houston", "Las Vegas", "Boston", "Atlanta", "Miami"],
+			"first": ["Marcus", "Tyrone", "Jake", "Danny", "Ray", "Mike", "Andre", "Tommy", "Jerome", "Carlos", "Bobby", "Leon", "Vince", "Darnell", "Joey"],
+			"last": ["Johnson", "Williams", "Brown", "Jackson", "Davis", "Miller", "Washington", "Harris", "Robinson", "Walker", "Mitchell", "Carter", "Coleman", "Russo", "Kowalski"]
+		},
+		"GBR": {
+			"name": "United Kingdom",
+			"cities": ["London", "Manchester", "Liverpool", "Birmingham", "Glasgow", "Belfast", "Cardiff", "Leeds", "Sheffield", "Newcastle"],
+			"first": ["Barry", "Lee", "Ricky", "Danny", "Callum", "Liam", "Nigel", "Gary", "Kieran", "Jamie", "Dean", "Craig", "Ryan", "Owen", "Stuart"],
+			"last": ["Smith", "Jones", "Taylor", "Evans", "Wilson", "Thomas", "Murray", "Campbell", "Hughes", "Walsh", "Fletcher", "Price", "Bennett", "McKenzie", "Doyle"]
+		},
+		"IRL": {
+			"name": "Ireland",
+			"cities": ["Dublin", "Cork", "Limerick", "Galway", "Waterford"],
+			"first": ["Sean", "Padraig", "Conor", "Eamon", "Declan", "Ciaran", "Niall", "Rory", "Fergal", "Darragh"],
+			"last": ["Murphy", "Kelly", "O'Sullivan", "Byrne", "Ryan", "O'Brien", "Gallagher", "Quinn", "Flanagan", "Duffy"]
+		},
+		"FRA": {
+			"name": "France",
+			"cities": ["Paris", "Marseille", "Lyon", "Toulouse", "Lille", "Bordeaux"],
+			"first": ["Jean", "Pierre", "Mathieu", "Julien", "Nicolas", "Karim", "Yanis", "Antoine", "Laurent", "Sebastien"],
+			"last": ["Martin", "Bernard", "Dubois", "Moreau", "Laurent", "Lefebvre", "Girard", "Fontaine", "Rousseau", "Mercier"]
+		},
+		"DEU": {
+			"name": "Germany",
+			"cities": ["Berlin", "Hamburg", "Munich", "Cologne", "Frankfurt", "Dortmund"],
+			"first": ["Lukas", "Jonas", "Felix", "Max", "Tobias", "Stefan", "Jens", "Dirk", "Markus", "Kai"],
+			"last": ["Muller", "Schmidt", "Schneider", "Fischer", "Weber", "Wagner", "Becker", "Hoffmann", "Krause", "Vogel"]
+		},
+		"ESP": {
+			"name": "Spain",
+			"cities": ["Madrid", "Barcelona", "Valencia", "Seville", "Bilbao", "Malaga"],
+			"first": ["Javier", "Alejandro", "Pablo", "Sergio", "Diego", "Raul", "Alvaro", "Ivan", "Ruben", "Mario"],
+			"last": ["Garcia", "Fernandez", "Lopez", "Martinez", "Sanchez", "Romero", "Navarro", "Torres", "Ruiz", "Moreno"]
+		},
+		"ITA": {
+			"name": "Italy",
+			"cities": ["Rome", "Milan", "Naples", "Turin", "Palermo", "Bologna"],
+			"first": ["Marco", "Giuseppe", "Luca", "Alessandro", "Francesco", "Matteo", "Davide", "Stefano", "Enzo", "Vito"],
+			"last": ["Rossi", "Russo", "Ferrari", "Esposito", "Bianchi", "Romano", "Colombo", "Ricci", "Marino", "Greco"]
+		},
+		"NLD": {
+			"name": "Netherlands",
+			"cities": ["Amsterdam", "Rotterdam", "The Hague", "Utrecht", "Eindhoven"],
+			"first": ["Daan", "Sem", "Lars", "Bram", "Ruben", "Thijs", "Jesse", "Niels", "Sven", "Joost"],
+			"last": ["de Jong", "Jansen", "de Vries", "van Dijk", "Bakker", "Visser", "Smit", "Meijer", "Mulder", "Bos"]
+		},
+		"BEL": {
+			"name": "Belgium",
+			"cities": ["Brussels", "Antwerp", "Ghent", "Liege", "Charleroi"],
+			"first": ["Arne", "Wout", "Thomas", "Maxime", "Kevin", "Jens", "Pieter", "Remco", "Dries", "Yannick"],
+			"last": ["Peeters", "Janssens", "Maes", "Jacobs", "Mertens", "Willems", "Claes", "Goossens", "Wouters", "Dubois"]
+		},
+		"PRT": {
+			"name": "Portugal",
+			"cities": ["Lisbon", "Porto", "Braga", "Coimbra", "Faro"],
+			"first": ["Joao", "Tiago", "Rui", "Nuno", "Miguel", "Pedro", "Andre", "Bruno", "Ricardo", "Hugo"],
+			"last": ["Silva", "Santos", "Ferreira", "Pereira", "Oliveira", "Costa", "Rodrigues", "Martins", "Sousa", "Gomes"]
+		},
+		"RUS": {
+			"name": "Russia",
+			"cities": ["Moscow", "St Petersburg", "Novosibirsk", "Yekaterinburg", "Kazan", "Chelyabinsk"],
+			"first": ["Dmitri", "Sergei", "Alexei", "Ivan", "Nikolai", "Artur", "Mikhail", "Pavel", "Viktor", "Yuri"],
+			"last": ["Ivanov", "Petrov", "Smirnov", "Volkov", "Kuznetsov", "Sokolov", "Popov", "Morozov", "Lebedev", "Orlov"]
+		},
+		"UKR": {
+			"name": "Ukraine",
+			"cities": ["Kyiv", "Kharkiv", "Odesa", "Lviv", "Dnipro"],
+			"first": ["Oleksandr", "Vasyl", "Taras", "Bohdan", "Andriy", "Mykola", "Serhiy", "Dmytro", "Yaroslav", "Ihor"],
+			"last": ["Kovalenko", "Shevchenko", "Bondarenko", "Tkachenko", "Kravchenko", "Melnyk", "Boyko", "Lysenko", "Hrytsenko", "Usenko"]
+		},
+		"LTU": {
+			"name": "Lithuania",
+			"cities": ["Vilnius", "Kaunas", "Klaipeda"],
+			"first": ["Jonas", "Mantas", "Tomas", "Darius", "Lukas", "Arvydas", "Rokas", "Paulius"],
+			"last": ["Kazlauskas", "Petrauskas", "Jankauskas", "Butkus", "Paulauskas", "Vasiliauskas", "Navickas", "Zukauskas"]
+		},
+		"LVA": {
+			"name": "Latvia",
+			"cities": ["Riga", "Daugavpils", "Liepaja"],
+			"first": ["Janis", "Andris", "Martins", "Edgars", "Kristaps", "Raimonds", "Arturs", "Valdis"],
+			"last": ["Berzins", "Kalnins", "Ozolins", "Liepins", "Krumins", "Balodis", "Zarins", "Vitols"]
+		},
+		"EST": {
+			"name": "Estonia",
+			"cities": ["Tallinn", "Tartu", "Narva"],
+			"first": ["Rasmus", "Martin", "Kristjan", "Andrus", "Marko", "Siim", "Toomas", "Rein"],
+			"last": ["Tamm", "Saar", "Sepp", "Magi", "Kask", "Kukk", "Rebane", "Ilves"]
+		},
+		"CHN": {
+			"name": "China",
+			"cities": ["Beijing", "Shanghai", "Guangzhou", "Shenzhen", "Chengdu", "Wuhan", "Xi'an", "Harbin"],
+			"first": ["Wei", "Jun", "Lei", "Hao", "Peng", "Bo", "Tao", "Yong", "Qiang", "Zhen", "Long", "Kai"],
+			"last": ["Zhang", "Wang", "Li", "Liu", "Chen", "Yang", "Zhao", "Huang", "Zhou", "Wu", "Xu", "Sun"]
+		},
+		"CAN": {
+			"name": "Canada",
+			"cities": ["Toronto", "Montreal", "Vancouver", "Calgary", "Ottawa", "Winnipeg", "Edmonton", "Quebec City"],
+			"first": ["Connor", "Tyler", "Brett", "Wayne", "Logan", "Jean-Luc", "Mathieu", "Dylan", "Scott", "Evan", "Francois", "Shane"],
+			"last": ["Tremblay", "MacDonald", "Gagnon", "Campbell", "Roy", "Fraser", "Bouchard", "Stewart", "Lavoie", "Henderson", "Cote", "McLean"]
+		},
+		"MEX": {
+			"name": "Mexico",
+			"cities": ["Mexico City", "Guadalajara", "Monterrey", "Tijuana", "Puebla"],
+			"first": ["Juan", "Julio", "Saul", "Erik", "Miguel", "Jorge", "Ricardo", "Ruben", "Oscar", "Rafael"],
+			"last": ["Hernandez", "Gonzalez", "Ramirez", "Flores", "Castillo", "Navarro", "Vargas", "Mendoza", "Ortiz", "Reyes"]
+		},
+		"PRI": {
+			"name": "Puerto Rico",
+			"cities": ["San Juan", "Bayamon", "Ponce", "Caguas"],
+			"first": ["Javier", "Hector", "Ramon", "Angel", "Edwin", "Jose", "Luis", "Orlando"],
+			"last": ["Rivera", "Cruz", "Colon", "Torres", "Santiago", "Vazquez", "Figueroa", "Pagan"]
+		},
+		"CUB": {
+			"name": "Cuba",
+			"cities": ["Havana", "Santiago de Cuba", "Camaguey", "Holguin"],
+			"first": ["Yoel", "Yunier", "Lazaro", "Yasmani", "Osmay", "Dairon", "Ariel", "Raidel"],
+			"last": ["Perez", "Hernandez", "Castro", "Diaz", "Valdes", "Fonseca", "Ortega", "Leyva"]
+		},
+		"BRA": {
+			"name": "Brazil",
+			"cities": ["Sao Paulo", "Rio de Janeiro", "Salvador", "Recife", "Belo Horizonte"],
+			"first": ["Rafael", "Thiago", "Lucas", "Bruno", "Gustavo", "Rodrigo", "Diego", "Felipe", "Anderson", "Everton"],
+			"last": ["Silva", "Souza", "Costa", "Lima", "Barbosa", "Carvalho", "Almeida", "Ribeiro", "Nascimento", "Rocha"]
+		},
+		"ARG": {
+			"name": "Argentina",
+			"cities": ["Buenos Aires", "Cordoba", "Rosario", "Mendoza"],
+			"first": ["Sergio", "Marcos", "Lucas", "Matias", "Nicolas", "Facundo", "Carlos", "Omar"],
+			"last": ["Gonzalez", "Rodriguez", "Fernandez", "Sosa", "Romero", "Diaz", "Acosta", "Benitez"]
+		},
+		"JPN": {
+			"name": "Japan",
+			"cities": ["Tokyo", "Osaka", "Yokohama", "Nagoya", "Fukuoka"],
+			"first": ["Takeshi", "Kenji", "Hiroshi", "Ryota", "Yuto", "Daisuke", "Haruto", "Shingo"],
+			"last": ["Sato", "Suzuki", "Takahashi", "Tanaka", "Watanabe", "Yamamoto", "Inoue", "Nakamura"]
+		},
+		"PHL": {
+			"name": "Philippines",
+			"cities": ["Manila", "Cebu City", "Davao", "General Santos"],
+			"first": ["Rodel", "Nonoy", "Arnel", "Jerwin", "Mark", "Rey", "Jomar", "Jonas"],
+			"last": ["Santos", "Reyes", "Cruz", "Bautista", "Villanueva", "Mendoza", "Ramos", "Aquino"]
+		},
+		"KOR": {
+			"name": "South Korea",
+			"cities": ["Seoul", "Busan", "Incheon", "Daegu"],
+			"first": ["Min-jun", "Ji-hoon", "Seung-woo", "Dong-hyun", "Jae-won", "Hyun-woo"],
+			"last": ["Kim", "Lee", "Park", "Choi", "Jung", "Kang"]
+		},
+		"THA": {
+			"name": "Thailand",
+			"cities": ["Bangkok", "Chiang Mai", "Pattaya", "Phuket"],
+			"first": ["Somchai", "Anan", "Kittisak", "Prasert", "Wichai", "Chatchai"],
+			"last": ["Saelim", "Srisuk", "Wongsawat", "Chaiyaporn", "Boonmee", "Rattanakorn"]
+		},
+		"KAZ": {
+			"name": "Kazakhstan",
+			"cities": ["Almaty", "Astana", "Shymkent", "Karaganda"],
+			"first": ["Arman", "Daniyar", "Yerlan", "Bakhyt", "Serik", "Kanat", "Aidos", "Zhanibek"],
+			"last": ["Abenov", "Tulegenov", "Seitkali", "Omarov", "Kassymov", "Zhakupov", "Nurlanov", "Bekov"]
+		},
+		"NGA": {
+			"name": "Nigeria",
+			"cities": ["Lagos", "Abuja", "Ibadan", "Kano", "Port Harcourt"],
+			"first": ["Chukwuemeka", "Tunde", "Segun", "Obinna", "Emeka", "Ayodele", "Kelechi", "Femi"],
+			"last": ["Okafor", "Adeyemi", "Balogun", "Okonkwo", "Eze", "Ogunleye", "Nwosu", "Bello"]
+		},
+		"GHA": {
+			"name": "Ghana",
+			"cities": ["Accra", "Kumasi", "Tamale", "Takoradi"],
+			"first": ["Kwame", "Kofi", "Joshua", "Isaac", "Emmanuel", "Yaw", "Kwaku", "Samuel"],
+			"last": ["Mensah", "Owusu", "Boateng", "Asante", "Appiah", "Darko", "Tetteh", "Quaye"]
+		},
+		"ZAF": {
+			"name": "South Africa",
+			"cities": ["Johannesburg", "Cape Town", "Durban", "Pretoria", "Port Elizabeth"],
+			"first": ["Sipho", "Thabo", "Pieter", "Johan", "Mandla", "Brian", "Lwandile", "Francois"],
+			"last": ["Nkosi", "Dlamini", "van der Merwe", "Botha", "Naidoo", "Khumalo", "Mthembu", "Pretorius"]
+		},
+		"AUS": {
+			"name": "Australia",
+			"cities": ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide"],
+			"first": ["Jack", "Liam", "Brodie", "Mitch", "Cooper", "Riley", "Lachlan", "Nathan"],
+			"last": ["Kelly", "Murphy", "Wright", "Harrison", "Lawson", "Doherty", "Fitzgerald", "Hayes"]
+		},
+		"NZL": {
+			"name": "New Zealand",
+			"cities": ["Auckland", "Wellington", "Christchurch", "Hamilton"],
+			"first": ["Ethan", "Shane", "Wiremu", "Tai", "Sione", "Hemi"],
+			"last": ["Walker", "Cameron", "Tupou", "Fonoti", "Ngata", "Te Rangi"]
+		}
+	},
+
+	"_nickname_comment": "Nicknames are grouped by fighting style so they suit the boxer.",
+
+	"nicknames": {
+		"BRAWLER": ["Bulldog", "Mad Dog", "The Brawler", "Bonecrusher", "The Pitbull", "Rough House"],
+		"SLUGGER": ["The Hammer", "Wrecking Ball", "Steamroller", "Dynamite", "Thunderfist", "The Bull"],
+		"BOXER":   ["The Professor", "Silk", "Sweet Science", "The Matador", "Hands of Stone", "The Technician"],
+		"COUNTER": ["The Viper", "The Cobra", "The Assassin", "The Sniper", "Ice Man", "The Hitman"],
+		"EVASIVE": ["The Ghost", "The Phantom", "Slick", "Lightning", "The Shadow", "Quicksilver"]
+	}
+}
