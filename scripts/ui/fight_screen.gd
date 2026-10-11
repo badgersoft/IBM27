@@ -1,6 +1,8 @@
 extends Control
 ## The fight screen: the ring in the middle, name plates and the score bug
-## above it, the boxers' condition and the judges' scorecard below it.
+## above it, the boxers' condition and the scorecard panel below it (today's
+## judges before the bell, the TV pundit's card during the fight, and the
+## official cards once the result is announced).
 ##
 ## Layout (1280 x 720 design frame, 8 px margins between every block):
 ##
@@ -147,6 +149,7 @@ func _build_layout(red: BoxerData, blue: BoxerData) -> void:
 	_scorecard = Scorecard.new()
 	_scorecard.position = Vector2((FRAME_SIZE.x - Scorecard.W) / 2.0, bottom_y)
 	_frame.add_child(_scorecard)
+	_scorecard.show_judges(sim.judges)
 
 	# Overlay over the arena for banners and pop-up panels.
 	_overlay = Control.new()
@@ -188,6 +191,7 @@ func _begin_fight() -> void:
 		return
 	if is_instance_valid(_tape):
 		_tape.queue_free()
+	_scorecard.set_mode(Scorecard.Mode.PUNDIT)
 	sim.start_fight()
 
 
@@ -241,8 +245,11 @@ func _update_records(result: Dictionary) -> void:
 
 func _show_result() -> void:
 	_banner.visible = false
+	# The judges' cards stay secret until now.
+	_scorecard.set_mode(Scorecard.Mode.OFFICIAL)
+	_scorecard.refresh(sim)
 	_result = ResultPanel.new()
-	_result.setup(sim.result, sim.red.data, sim.blue.data)
+	_result.setup(sim.result, sim.red.data, sim.blue.data, sim.judges)
 	_result.position = (_overlay.size - Vector2(ResultPanel.W, ResultPanel.H)) / 2.0
 	_result.new_fight_pressed.connect(_new_fight)
 	_result.menu_pressed.connect(_go_to_menu)

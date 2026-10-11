@@ -137,7 +137,7 @@ func think(me: Fighter, opp: Fighter, round_number: int, dt: float) -> void:
 ## Picks the trainer's advice for the next round.
 func corner_advice(me: Fighter, my_cards: int, opp_cards: int, next_round: int, last_round: int) -> Advice:
 	var behind := my_cards < opp_cards
-	var well_ahead := my_cards - opp_cards >= 3
+	var well_ahead := my_cards - opp_cards >= 2
 	if next_round == last_round and behind:
 		return Advice.ALL_OUT
 	if me.health < 35.0:

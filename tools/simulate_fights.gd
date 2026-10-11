@@ -23,6 +23,8 @@ func _initialize() -> void:
 	var by_style_fights := [0, 0, 0, 0, 0]
 	var totals := {"thrown": 0.0, "landed": 0.0, "blocked": 0.0, "knockdowns": 0.0, "end_health": 0.0, "end_energy": 0.0, "clinches": 0.0}
 	var rounds_ended := [0, 0, 0, 0]
+	# Judging: how often the official result differs from a neutral card.
+	var judging := {"decisions": 0, "differs": 0, "robbery": 0, "all_agree": 0, "pundit_right": 0, "split_rounds": 0, "rounds": 0}
 
 	for n in fights:
 		var gen := BoxerGenerator.new(seed_value * 1000 + n)
@@ -39,6 +41,8 @@ func _initialize() -> void:
 				clinches[0] += 1
 			guard += 1
 		var r: Dictionary = sim.result
+		if r["method"] in ["UD", "MD", "SD", "DRAW"]:
+			_judging_stats(sim, judging)
 		methods[r["method"]] = methods.get(r["method"], 0) + 1
 		rounds_ended[r["round"]] += 1
 		for f in sim.fighters:
@@ -69,8 +73,40 @@ func _initialize() -> void:
 	print("  Health at the end       %6.1f" % (totals["end_health"] / boxers))
 	print("  Energy at the end       %6.1f" % (totals["end_energy"] / boxers))
 	print("------------------------------------------")
+	var d: float = maxf(judging["decisions"], 1)
+	print("  Decisions                %5d" % judging["decisions"])
+	print("  ...differ from fair card %5.1f%%" % (100.0 * judging["differs"] / d))
+	print("  ...wrong winner (robbery)%5.1f%%" % (100.0 * judging["robbery"] / d))
+	print("  ...all 3 cards identical %5.1f%%" % (100.0 * judging["all_agree"] / d))
+	print("  ...pundit called it      %5.1f%%" % (100.0 * judging["pundit_right"] / d))
+	print("  Rounds judges split on   %5.1f%%" % (100.0 * judging["split_rounds"] / maxf(judging["rounds"], 1)))
+	print("------------------------------------------")
 	for s in 5:
 		var pct: float = 100.0 * by_style_wins[s] / maxf(by_style_fights[s], 1.0)
 		print("  %-8s wins %5.1f%% of %d fights" % [BoxerData.STYLE_NAMES[s], pct, by_style_fights[s]])
 	print("")
 	quit()
+
+
+static func _winner(t: Array) -> int:
+	return 0 if t[0] > t[1] else (1 if t[1] > t[0] else -1)
+
+
+func _judging_stats(sim: FightSim, out: Dictionary) -> void:
+	var j: Judges = sim.judges
+	var official: int = sim.result["winner"]
+	var fair := _winner(j.fair_totals())
+	out["decisions"] += 1
+	if official != fair:
+		out["differs"] += 1
+		if official >= 0 and fair >= 0:
+			out["robbery"] += 1
+	var first: Array = j.totals(0)
+	if j.totals(1) == first and j.totals(2) == first:
+		out["all_agree"] += 1
+	if _winner(j.pundit_totals()) == official:
+		out["pundit_right"] += 1
+	for r in j.rounds:
+		out["rounds"] += 1
+		if not (j.cards[0][r] == j.cards[1][r] and j.cards[1][r] == j.cards[2][r]):
+			out["split_rounds"] += 1

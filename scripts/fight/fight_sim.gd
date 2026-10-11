@@ -75,7 +75,7 @@ func _init(red_data: BoxerData, blue_data: BoxerData, seed_value: int = -1) -> v
 	blue.x = ArenaRenderer.CORNER_X[1]
 	for f in fighters:
 		f.set_state(State.CORNER, "relaxed")
-	judges = Judges.new(ROUNDS, rng)
+	judges = Judges.new(ROUNDS, Officials.pick_judges(rng), Officials.pick_pundit(rng), red_data, blue_data, rng)
 	ai = BoxerAI.new(rng)
 
 
@@ -149,15 +149,11 @@ func _end_round() -> void:
 		f.combo.clear()
 		f.set_state(State.WALK_CORNER, "move_back")
 		_corner_recovery(f)
-	# Each trainer looks at how the cards are going before giving advice.
-	var red_points := 0
-	var blue_points := 0
-	for j in Judges.JUDGE_NAMES.size():
-		var t := judges.totals(j)
-		red_points += t[0]
-		blue_points += t[1]
-	red.advice = ai.corner_advice(red, red_points, blue_points, round_number + 1, ROUNDS)
-	blue.advice = ai.corner_advice(blue, blue_points, red_points, round_number + 1, ROUNDS)
+	# The official cards are secret, so each trainer goes by the TV pundit's
+	# card (what they would hear at ringside) before giving advice.
+	var t := judges.pundit_totals()
+	red.advice = ai.corner_advice(red, t[0], t[1], round_number + 1, ROUNDS)
+	blue.advice = ai.corner_advice(blue, t[1], t[0], round_number + 1, ROUNDS)
 
 
 ## A minute in the corner: water, a towel and some breath back.
@@ -512,7 +508,7 @@ func _finish(winner: int, method: String, detail: String) -> void:
 		"time": "%d:%02d" % [elapsed / 60, elapsed % 60],
 		"cards": [],
 	}
-	for j in Judges.JUDGE_NAMES.size():
+	for j in judges.panel.size():
 		result["cards"].append(judges.totals(j))
 	for f in fighters:
 		f.combo.clear()

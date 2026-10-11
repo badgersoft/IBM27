@@ -54,6 +54,33 @@ preset under *Project > Export*.
 * After three rounds the three judges' cards decide it: unanimous, majority
   or split decision, or a draw.
 
+### Judges and the ringside pundit
+
+Three judges are drawn for each fight from a pool of 15 in
+`data/officials.json`. Before the first bell the panel under the ring shows
+**today's judges**, with where each is from and their public **fairness**
+rating: FAIR (70+), SO-SO (40-69) or WILD (under 40). Most of the pool is
+fair; a few are not.
+
+Each judge also has SECRET preferences that are never shown in game: how much
+they value attacking, defence, punches landed, punches thrown and power. On
+top of that, fairness controls how far a judge strays from what they saw:
+round-to-round personal opinion, and a lean towards one boxer that is strongest
+when a boxer comes from the judge's own country.
+
+The official cards are **secret until the final bell**. During the fight the
+panel shows a **TV pundit's unofficial card** instead. The pundit scores like
+a neutral judge with a little error, so it is a good but imperfect guide.
+When the result is announced, the real cards are revealed, each judge's
+fairness is shown beside their card, and the pundit's card sits underneath for
+comparison.
+
+Over 400 simulated fights (`tools/simulate_fights.gd`), the three cards were
+identical in only about 30% of decisions, and the judges split on about a third
+of all rounds. About 1 decision in 5 differed from a neutral card (most were
+draws or a different margin), roughly 1 in 25 gave the fight to the wrong boxer
+outright, and the pundit called the right winner about 78% of the time.
+
 ### How the boxers think
 
 Every boxer has six skills from 1 to 99 and a fighting style.
@@ -105,6 +132,7 @@ updated after every fight for the rest of the session.
 project.godot
 data/
   world.json                  Regions, countries, cities, names, nicknames
+  officials.json              Judges (fairness, secret likes) and TV pundits
 assets/fonts/                 Press Start 2P pixel font (SIL Open Font License)
 scenes/
   main_menu.tscn
@@ -122,7 +150,8 @@ scripts/
     fight_sim.gd              Clock, bell, punches, knockdowns, count, result
     fighter.gd                One boxer's live state during a fight
     boxer_ai.gd               Decision making for both corners
-    judges.gd                 Three judges, 10-point must system
+    judges.gd                 Three judges + pundit card, 10-point must system
+    officials.gd              Loads the judge/pundit pool and picks a panel
     punch_types.gd            The five punches and their numbers
   render/
     arena_view.gd             The low-res SubViewport holding ring + boxers
