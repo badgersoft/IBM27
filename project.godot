@@ -1,13 +1,10 @@
 ; Engine configuration file.
-; International Boxing Manager 2027 - Badger-soft
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
 ;
-; Notes for anyone editing this by hand:
-;  - The game is authored at 1280x720 and stretched with "canvas_items" so the UI
-;    text stays crisp on any PC monitor or phone screen.
-;  - The ring itself is rendered into a small low-resolution SubViewport and
-;    scaled up with nearest-neighbour filtering to get the chunky Amiga look.
-;  - The Compatibility (OpenGL) renderer is used everywhere so the same build
-;    runs on desktop and on low-end mobile devices.
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
 
 config_version=5
 
@@ -40,19 +37,11 @@ theme/default_font_antialiasing=0
 theme/default_font_hinting=0
 theme/default_font_subpixel_positioning=0
 
-[input_devices]
-
-pointing/emulate_mouse_from_touch=true
-
-[physics]
-
-common/physics_ticks_per_second=60
-
 [rendering]
 
+textures/canvas_textures/default_texture_filter=0
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-textures/canvas_textures/default_texture_filter=0
+environment/defaults/default_clear_color=Color(0.051, 0.063, 0.125, 1)
 2d/snap/snap_2d_transforms_to_pixel=true
 2d/snap/snap_2d_vertices_to_pixel=true
-environment/defaults/default_clear_color=Color(0.051, 0.063, 0.125, 1)
