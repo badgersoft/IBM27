@@ -131,7 +131,7 @@ boxers from the same division (picked at random, like the venue).
 | Middleweight | 170 - 198 cm | 154 - 160 lb | The baseline                                        |
 | Heavyweight  | 185 - 204 cm | 200 - 290 lb | Slower, hits much harder, far more knockouts        |
 
-Each division's roster is the same every run (seeds 1983, 1985 and 1987 in
+Each division's roster is the same every run (seeds 1983, 1985 and 1989 in
 `scripts/data/divisions.gd`; pass `--roster=<n>` for a different set).
 **BOXERS** on the main menu has a tab per division: a table of age, record,
 style, height, weight, all six skills and an overall rating, with the whole

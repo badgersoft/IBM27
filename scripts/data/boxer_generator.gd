@@ -124,7 +124,7 @@ func _roll_size(b: BoxerData) -> void:
 	b.height_cm = _rng.randi_range(h[0], h[1])
 	if b.division == Divisions.Id.HEAVYWEIGHT:
 		var tall := inverse_lerp(float(h[0]), float(h[1]), b.height_cm)
-		b.weight_lb = clampi(roundi(lerpf(212.0, 252.0, tall) + _rng.randfn(0.0, 20.0)), w[0], w[1])
+		b.weight_lb = clampi(roundi(lerpf(215.0, 262.0, tall) + _rng.randfn(0.0, 26.0)), w[0], w[1])
 	else:
 		b.weight_lb = _rng.randi_range(w[0], w[1])
 
