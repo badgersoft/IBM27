@@ -144,7 +144,7 @@ Each division's roster is the same every run (seeds 1983, 1985 and 2025 in
 `scripts/data/divisions.gd`; pass `--roster=<n>` for a different set).
 Heavyweights have no upper limit in real life, and most are well-toned men
 rather than big ones: weights are skewed towards the light end of the range
-(in the default roster seven of the ten weigh under 245 lb), with a couple of
+(in the default roster eight of the ten weigh under 245 lb), with a couple of
 big men near 290 lb. The heaviest are drawn heavy rather than obese.
 
 **BOXERS** on the main menu has a tab per division: a table of country, age,
