@@ -7,8 +7,14 @@ extends SubViewport
 ## chunky Amiga-style pixels. UI text is NOT drawn in here - it lives in normal
 ## Controls at full resolution so it stays sharp and readable.
 
+## Where the boxers and referee stand for the verdict: the front of the
+## canvas, so even a tall heavyweight's raised glove stays below the
+## announcement band over the crowd.
+const CEREMONY_Y := 139.0
+
 var arena: ArenaRenderer
 var rigs: Array[BoxerRig] = []
+var ceremony: Ceremony
 
 
 func _init() -> void:
@@ -46,3 +52,15 @@ func setup(venue_id: int, red: BoxerData, blue: BoxerData) -> void:
 ## Places a boxer at arena x, keeping him on the canvas line.
 func place(corner: int, x: float) -> void:
 	rigs[corner].position = Vector2(roundf(x), ArenaRenderer.FIGHT_Y)
+
+
+## Swaps the side-on fight for the face-on line-up waiting for the verdict.
+func show_ceremony(red: BoxerData, blue: BoxerData, ref_skin: int) -> Ceremony:
+	for rig in rigs:
+		rig.visible = false
+	arena.hide_corner_advice()
+	ceremony = Ceremony.new()
+	ceremony.position = Vector2(ArenaRenderer.SIZE.x / 2.0, CEREMONY_Y)
+	arena.fighter_layer.add_child(ceremony)
+	ceremony.setup(red, blue, ref_skin)
+	return ceremony

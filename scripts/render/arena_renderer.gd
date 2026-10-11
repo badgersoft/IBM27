@@ -58,6 +58,7 @@ var venue_id := 0
 var fighter_layer: Node2D
 
 var _venue: Dictionary = {}
+var _announcing := false         # Verdict being read out (see set_announcing).
 var _crowd: Array = []
 var _rope_shake := [0.0, 0.0]
 var _time := 0.0
@@ -92,6 +93,18 @@ func setup(id: int) -> void:
 ## Wobbles the ropes on one side: 0 = left (red corner) side, 1 = right.
 func shake_ropes(side: int, amount: float = 1.0) -> void:
 	_rope_shake[side] = maxf(_rope_shake[side], amount)
+
+
+## While the verdict is read out the announcement band covers the top of the
+## venue and the buttons sit on the apron, so anything that would peek out
+## under the band (the small gym's sign and clock, the hall's back banner,
+## the arena's big screen) and the apron lettering are taken down.
+func set_announcing(on: bool) -> void:
+	show_apron_text = not on
+	_announcing = on
+	_static_back.queue_redraw()
+	_crowd_layer.queue_redraw()
+	_ring_front.queue_redraw()
 
 
 ## Shows the corner man for [param corner] with a speech bubble.
@@ -198,7 +211,8 @@ func _draw_crowd(c: CanvasItem) -> void:
 		_draw_balcony(c)
 		_draw_camera_flashes(c)
 		_draw_spotlight_beams(c)
-		_draw_big_screen(c)
+		if not _announcing:
+			_draw_big_screen(c)
 
 
 ## A very simple spectator: legs (if standing), shirt, head, hair, and arms
@@ -397,16 +411,17 @@ func _draw_small_gym_walls(c: CanvasItem) -> void:
 	c.draw_line(Vector2(332, 34), Vector2(342, 25), Color("8aa0b0"), 1.0)
 	c.draw_line(Vector2(353, 52), Vector2(365, 42), Color("8aa0b0"), 1.0)
 
-	# "No smoking" sign - a nod to the classic gym backdrop.
-	c.draw_rect(Rect2(96, 17, 88, 15), Color("2a2420"))
-	c.draw_rect(Rect2(97, 18, 86, 13), Color("e8e4d8"))
-	_text_in(c, "NO SMOKING", Rect2(97, 18, 86, 13), Color("a02020"))
-
-	# Wall clock.
-	c.draw_circle(Vector2(262, 26), 7.0, Color("2a2420"))
-	c.draw_circle(Vector2(262, 26), 6.0, Color("e8e4d8"))
-	c.draw_line(Vector2(262, 26), Vector2(262, 22), Color("202020"), 1.0)
-	c.draw_line(Vector2(262, 26), Vector2(265, 27), Color("202020"), 1.0)
+	# "No smoking" sign - a nod to the classic gym backdrop - and the wall
+	# clock. Both straddle the bottom of the announcement band, so they come
+	# down while the verdict is read.
+	if not _announcing:
+		c.draw_rect(Rect2(96, 17, 88, 15), Color("2a2420"))
+		c.draw_rect(Rect2(97, 18, 86, 13), Color("e8e4d8"))
+		_text_in(c, "NO SMOKING", Rect2(97, 18, 86, 13), Color("a02020"))
+		c.draw_circle(Vector2(262, 26), 7.0, Color("2a2420"))
+		c.draw_circle(Vector2(262, 26), 6.0, Color("e8e4d8"))
+		c.draw_line(Vector2(262, 26), Vector2(262, 22), Color("202020"), 1.0)
+		c.draw_line(Vector2(262, 26), Vector2(265, 27), Color("202020"), 1.0)
 
 	# Heavy bag hanging outside the ring on the left.
 	c.draw_line(Vector2(14, 8), Vector2(14, 22), Color("8a8a8a"), 1.0)
@@ -500,6 +515,8 @@ func _draw_hall_walls(c: CanvasItem) -> void:
 		c.draw_circle(Vector2(lx, 19), 5.0, Color(1, 0.95, 0.75, 0.12))
 
 	# A huge banner high up at the back.
+	if _announcing:
+		return
 	c.draw_rect(Rect2(124, 26, 176, 19), Color("0c0c14"))
 	c.draw_rect(Rect2(125, 27, 174, 17), Color("1c2a5a"))
 	c.draw_rect(Rect2(125, 27, 174, 1), Color("c8a020"))
@@ -609,13 +626,24 @@ func _draw_apron(c: CanvasItem) -> void:
 			if show_apron_text:
 				_text_in(c, _venue["apron_text"], area, Color("f0f0f0"))
 		Venues.Id.BOXING_HALL, Venues.Id.GRAND_ARENA:
-			# Skirt folds, gold trim and sponsor text.
-			for x in range(int(left) + 12, int(right), 24):
-				c.draw_rect(Rect2(x, CANVAS_FRONT_Y + 4, 1, rect.size.y - 4), Color("1c2446"))
-			c.draw_rect(Rect2(left, CANVAS_FRONT_Y + 2, rect.size.x, 1), Color("c8a020"))
-			c.draw_rect(Rect2(left, APRON_BOTTOM_Y - 2, rect.size.x, 1), Color("c8a020"))
+			# Gold trim top and bottom; the skirt between them.
+			var top_trim := CANVAS_FRONT_Y + 2
+			var bottom_trim := APRON_BOTTOM_Y - 2
+			c.draw_rect(Rect2(left, top_trim, rect.size.x, 1), Color("c8a020"))
+			c.draw_rect(Rect2(left, bottom_trim, rect.size.x, 1), Color("c8a020"))
 			# Text centred between the two gold trim lines.
-			var area := Rect2(left, CANVAS_FRONT_Y + 3, rect.size.x, APRON_BOTTOM_Y - CANVAS_FRONT_Y - 5)
+			var area := Rect2(left, top_trim + 1, rect.size.x, bottom_trim - top_trim - 1)
+			# Skirt folds: faint pleats that stop at the trims and leave a clear
+			# margin round the lettering.
+			var text_w := 0.0
+			if show_apron_text:
+				text_w = FONT.get_string_size(_venue["apron_text"], HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE).x
+			var keep_clear := Rect2(area.get_center().x - text_w / 2.0 - 10.0, area.position.y, text_w + 20.0, area.size.y)
+			var fold: Color = (tones[0] as Color).lightened(0.06)
+			for x in range(int(left) + 12, int(right) - 4, 24):
+				if text_w > 0.0 and x >= keep_clear.position.x and x <= keep_clear.end.x:
+					continue
+				c.draw_rect(Rect2(x, area.position.y + 1, 1, area.size.y - 2), fold)
 			if show_apron_text:
 				_text_in(c, _venue["apron_text"], area, Color("f0d060"))
 

@@ -53,11 +53,20 @@ preset under *Project > Export*.
   fights the next round.
 * Knockdowns get a count. A boxer may make it to one knee and then stand, or
   stay down. Three knockdowns in one round stops the fight.
-* After three rounds the judges' cards are read out **one at a time**, like a
-  ring announcer ("Judge H. Pemberton scores the bout 29-28 in favour of
-  Johnson..."), then the winner: by unanimous (3-0), split (2-1) or majority
-  (2-0 with one even) decision, or a unanimous, majority or split draw. The
-  winner only starts celebrating when his name is read out.
+* When the fight ends, both boxers and the referee turn to face the crowd in
+  the middle of the ring, the referee holding each man by the wrist. A slim
+  two-line band over the crowd does the announcing, so nothing covers them:
+  after three rounds the judges' cards are read **one at a time**, like a
+  ring announcer ("Judge H. Pemberton scores the bout..." then "29-28 in
+  favour of Johnson"), and each judge's row fills in on the official
+  scorecard under the ring as it is read. Then the winner: by unanimous
+  (3-0), split (2-1) or majority (2-0 with one even) decision, or a
+  unanimous, majority or split draw. As the name is called the referee
+  **lifts the winner's arm** (both arms for a draw) and the loser drops his
+  head. A stoppage goes straight to "And the winner, by knockout in round 2
+  at 1:47...". NEW FIGHT and MAIN MENU then appear on the ring apron.
+
+![The verdict](docs/screenshots/decision_split.png)
 
 ### Judges and the ringside pundit
 
@@ -122,7 +131,7 @@ where injuries will carry over between fights.
 
 ### Weight divisions and the roster
 
-There are three divisions, five boxers in each. Every fight is between two
+There are three divisions, ten boxers in each. Every fight is between two
 boxers from the same division (picked at random, like the venue).
 
 | Division     | Height       | Weight       | In the ring                                         |
@@ -131,14 +140,20 @@ boxers from the same division (picked at random, like the venue).
 | Middleweight | 170 - 198 cm | 154 - 160 lb | The baseline                                        |
 | Heavyweight  | 185 - 204 cm | 200 - 290 lb | Slower, hits much harder, far more knockouts        |
 
-Each division's roster is the same every run (seeds 1983, 1985 and 1989 in
+Each division's roster is the same every run (seeds 1983, 1985 and 2025 in
 `scripts/data/divisions.gd`; pass `--roster=<n>` for a different set).
-**BOXERS** on the main menu has a tab per division: a table of age, record,
-style, height, weight, all six skills and an overall rating, with the whole
-division lined up in the ring underneath.
+Heavyweights have no upper limit in real life, and most are well-toned men
+rather than big ones: weights are skewed towards the light end of the range
+(in the default roster seven of the ten weigh under 245 lb), with a couple of
+big men near 290 lb. The heaviest are drawn heavy rather than obese.
 
-Over 300 simulated fights per division, knockouts ended about 15% of
-lightweight fights, 19% of middleweight fights and 33% of heavyweight fights.
+**BOXERS** on the main menu has a tab per division: a table of country, age,
+record, style, height, weight, all six skills and an overall rating (with any
+nickname under the name), and the whole division lined up face-on in the ring
+underneath, weigh-in style, numbered to match the table.
+
+Over 400 simulated fights per division, stoppages ended about 16% of
+lightweight fights, 21% of middleweight fights and 36% of heavyweight fights.
 
 ![The Boxers](docs/screenshots/boxers_heavyweight.png)
 
@@ -189,7 +204,9 @@ scripts/
     arena_view.gd             The low-res SubViewport holding ring + boxers
     arena_renderer.gd         Venues, crowd, ring, ropes, corner man
     venues.gd                 Venue colours and crowd layout
-    boxer_rig.gd              Draws and animates a boxer
+    boxer_rig.gd              Draws and animates a boxer (side-on)
+    front_rig.gd              A boxer or the referee seen face-on
+    ceremony.gd               Boxers and referee waiting for the verdict
     boxer_skeleton.gd         Pose -> joint positions (two-bone IK)
     boxer_poses.gd            Pose and animation library
   ui/                         Theme, menus, name plates, score bug, scorecard...
@@ -212,6 +229,13 @@ body is then drawn from outlined, three-tone shaded shapes.
   Taller boxers at the same weight look rangier.
 * Skin, hair (and hair style), trunks, boots are colours. Gloves are always
   red or blue by corner, so the two boxers are easy to tell apart.
+* Seen **face-on** (the weigh-in line-up and the verdict) a boxer is drawn by
+  `front_rig.gd` from the same proportions, build and colours, so he is
+  recognisably the same man; the build is toned down a little because a big
+  man looks less wide from the front than from the side. The referee uses
+  the same rig in a white shirt, bow tie and black trousers, and the
+  ceremony solves both men's arms with the same IK so his hand stays on the
+  boxer's wrist (or forearm, for a tall heavyweight) as he lifts it.
 
 I chose this over separate sprite sets per height and weight because one set
 of poses then works for every boxer, and new animations only need a few

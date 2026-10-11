@@ -16,7 +16,8 @@ extends Control
 ##   --------------------------------------------------
 ##              SCORES IT LEVEL  19-19
 ##
-## OFFICIAL (after the final bell) - the judges' real cards, revealed.
+## OFFICIAL (after the final bell) - the judges' real cards, each row filled
+## in as that judge's score is read out (see reveal_judges).
 
 enum Mode { JUDGES, PUNDIT, OFFICIAL }
 
@@ -42,6 +43,7 @@ var _verdict: Label
 var _official_cells: Array = []   # [judge][column], column 3 = total.
 var _official_names: Array = []
 var _pundit_name: Label
+var _revealed := 3                # Official rows shown (the rest stay blank).
 
 
 func _init() -> void:
@@ -187,9 +189,19 @@ func _refresh_pundit(sim: FightSim) -> void:
 	UiTheme.fit(_verdict, W - PAD * 2)
 
 
+## How many judges' rows of the official face are filled in.
+func reveal_judges(count: int, sim: FightSim) -> void:
+	_revealed = count
+	refresh(sim)
+
+
 func _refresh_official(sim: FightSim) -> void:
 	var judges := sim.judges
 	for j in judges.panel.size():
+		if j >= _revealed:
+			for cell in _official_cells[j]:
+				(cell as ScorePair).clear()
+			continue
 		for r in judges.rounds:
 			var cell: ScorePair = _official_cells[j][r]
 			var score: Array = judges.cards[j][r]

@@ -13,7 +13,7 @@ extends Node
 ##   --capture=<png> take a screenshot during the fight and quit (see CaptureTool)
 
 ## Boxers per division.
-const ROSTER_SIZE := 5
+const ROSTER_SIZE := 10
 
 ## rosters[division] = that division's boxers. Each division's starting roster
 ## is the same every run (its roster_seed in Divisions; the middleweights use

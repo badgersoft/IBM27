@@ -2,7 +2,7 @@ extends Control
 ## The fight screen: the ring in the middle, name plates and the score bug
 ## above it, the boxers' condition and the scorecard panel below it (today's
 ## judges before the bell, the TV pundit's card during the fight, and the
-## official cards once the result is announced).
+## official cards, filled in judge by judge as the verdict is read out).
 ##
 ## Layout (1280 x 720 design frame, 8 px margins between every block):
 ##
@@ -18,7 +18,7 @@ const ARENA_SCALE := 3
 const ARENA_POS := Vector2(4, 64)
 const MARGIN := 8
 const INTRO_AUTO_START := 12.0   ## Seconds before the fight starts by itself.
-const RESULT_DELAY := 3.0        ## Seconds of celebration before the result panel.
+const RESULT_DELAY := 3.0        ## Seconds after the final bell before the verdict.
 const SCORECARD_REFRESH := 0.25
 
 var sim: FightSim
@@ -32,7 +32,8 @@ var _panels: Array[FighterPanel] = []
 var _banner: Label
 var _banner_time := 0.0
 var _tape: TaleOfTape
-var _result: ResultPanel
+var _result: ResultBand
+var _ceremony: Ceremony
 
 var _serials := [-1, -1]
 var _intro_time := 0.0
@@ -225,7 +226,7 @@ func _on_fight_finished(result: Dictionary) -> void:
 	_update_records(result)
 	view.arena.excitement = 1.0
 	if result["method"] in ["KO", "TKO"]:
-		_show_banner(ResultPanel.METHOD_TITLES[result["method"]], RESULT_DELAY, Palette.UI_GOLD)
+		_show_banner(ResultBand.METHOD_TITLES[result["method"]], RESULT_DELAY, Palette.UI_GOLD)
 		Sfx.roar(1.0)
 	else:
 		_show_banner("FINAL BELL", RESULT_DELAY, Palette.UI_TEXT)
@@ -243,33 +244,36 @@ func _update_records(result: Dictionary) -> void:
 			f.data.add_result("W" if f.corner == winner else "L", by_ko)
 
 
+## The verdict: the boxers and referee face the crowd in the middle of the
+## ring while the slim band over the crowd reads out the result. The
+## referee lifts the winner's arm the moment his name is called.
 func _show_result() -> void:
 	_banner.visible = false
-	_result = ResultPanel.new()
-	_result.setup(sim.result, sim.red.data, sim.blue.data, sim.judges)
-	_result.position = ((_overlay.size - _result.size) / 2.0).round()
+	var ref_skin := absi(hash(sim.red.data.last_name + sim.blue.data.last_name)) % Palette.SKIN_TONES.size()
+	_ceremony = view.show_ceremony(sim.red.data, sim.blue.data, ref_skin)
+	view.arena.set_announcing(true)
+
+	_result = ResultBand.new()
+	_overlay.add_child(UiTheme.place(_result, 0, 0, _overlay.size.x, _overlay.size.y))
+	var apron_mid := (ArenaRenderer.CANVAS_FRONT_Y + ArenaRenderer.APRON_BOTTOM_Y) / 2.0 * ARENA_SCALE
+	_result.setup(sim.result, sim.red.data, sim.blue.data, sim.judges, apron_mid)
 	_result.new_fight_pressed.connect(_new_fight)
 	_result.menu_pressed.connect(_go_to_menu)
-	_overlay.add_child(_result)
-	if sim.result["method"] in ["KO", "TKO"]:
-		_reveal_official_cards()
-		_result.focus_default()
-	else:
-		# Decisions are read out judge by judge; nothing is revealed early.
-		_result.winner_announced.connect(_on_winner_announced)
+	_result.judge_revealed.connect(_on_judge_revealed)
+	_result.winner_announced.connect(_on_winner_announced)
+	# The official cards replace the pundit's, filled in judge by judge.
+	_scorecard.set_mode(Scorecard.Mode.OFFICIAL)
+	_scorecard.reveal_judges(0, sim)
+
+
+func _on_judge_revealed(index: int) -> void:
+	_scorecard.reveal_judges(index + 1, sim)
 
 
 func _on_winner_announced() -> void:
 	sim.announce_winner()
-	_sync_rigs()
+	_ceremony.raise(sim.result["winner"])
 	view.arena.excitement = 1.0
-	_reveal_official_cards()
-
-
-## The judges' cards stay secret until the result is announced.
-func _reveal_official_cards() -> void:
-	_scorecard.set_mode(Scorecard.Mode.OFFICIAL)
-	_scorecard.refresh(sim)
 
 
 func _new_fight() -> void:
@@ -355,8 +359,7 @@ func _run_capture() -> void:
 			_show_result()
 			if show == "result":
 				_result.reveal_all()
-				for rig in view.rigs:
-					rig.set_process(true)   # Let the winner's celebration play.
+				_ceremony.finish_raise()
 
 	# "--wait" lets the decision announcement run for a while before the shot.
 	await get_tree().create_timer(float(GameState.options.get("wait", "0.5"))).timeout

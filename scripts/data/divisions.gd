@@ -18,7 +18,7 @@ enum Id { LIGHTWEIGHT, MIDDLEWEIGHT, HEAVYWEIGHT }
 const LIST: Array = [
 	{"name": "Lightweight",  "height_cm": [165, 178], "weight_lb": [130, 136], "roster_seed": 1983, "power_scale": 0.90, "speed_scale": 0.92, "ko_bias": -0.08},
 	{"name": "Middleweight", "height_cm": [170, 198], "weight_lb": [154, 160], "roster_seed": 1985, "power_scale": 1.00, "speed_scale": 1.00, "ko_bias":  0.00},
-	{"name": "Heavyweight",  "height_cm": [185, 204], "weight_lb": [200, 290], "roster_seed": 1989, "power_scale": 1.25, "speed_scale": 1.10, "ko_bias":  0.12},
+	{"name": "Heavyweight",  "height_cm": [185, 204], "weight_lb": [200, 290], "roster_seed": 2025, "power_scale": 1.25, "speed_scale": 1.10, "ko_bias":  0.12},
 ]
 
 

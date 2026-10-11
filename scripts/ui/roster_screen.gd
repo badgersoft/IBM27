@@ -1,27 +1,35 @@
 extends Control
 ## The Boxers screen: one tab per weight division. Each tab shows that
-## division's boxers in a table, with all of them lined up in the ring
-## underneath so you can compare their builds.
+## division's ten boxers in a table, with all of them lined up face-on in the
+## ring underneath (a weigh-in line-up) so you can compare their builds.
+## Records shown include any fights played this session.
 ##
 ## Layout (1280 x 720 frame):
 ##   y  16  THE BOXERS                                        [ BACK ]
 ##   y  80  [ LIGHTWEIGHT ][ MIDDLEWEIGHT ][ HEAVYWEIGHT ]    size range
+##   y 120  table panel (1248 x 364), joined to the selected tab
+##   y 492  line-up in the ring (848 x 220, arena at x2, cropped)
 ##
-## Records shown include any fights played this session.
-##   y 120  table panel (1248 wide), joined to the selected tab
-##   y 448  line-up in the ring (848 x 256, arena at x2, cropped)
-##
-## Table columns are fixed widths on a 16 px grid, each at least one character
-## wider than its longest value, so there is always a gap between columns.
+## Table columns are fixed widths on a 16 px grid with at least 16 px between
+## the widest values of neighbouring columns, so there is always a clear gap
+## (32 px either side of STYLE, which separates the record from the body and
+## skills).
 ## Numbers are right-aligned so every column of figures lines up, and the
 ## record is split into separate W / L / D / KO columns for the same reason.
+## Each row has the name on its first line and any nickname under it.
 
 const FRAME_SIZE := Vector2(1280, 720)
-const PANEL := Rect2(16, 120, 1248, 312)
-const ROW_H := 48
+const PANEL := Rect2(16, 120, 1248, 364)
+const ROW_H := 30
 const FIRST_ROW_Y := 56          # Inside the panel.
 const GROUP_Y := 12              # "RECORD" / "SKILLS" group captions.
 const HEADER_Y := 32             # Column captions.
+## Inside a row: the main line (a 24 px label, so the 16 px capitals sit on
+## rows 4 - 17) and the nickname under it (capitals on rows 21 - 27). That
+## leaves 3 px between a name and its nickname and 6 px before the next row,
+## so a nickname clearly belongs to the name above it.
+const VALUE_Y := 0
+const NICK_Y := 14
 
 # --- Tabs ----------------------------------------------------------------------------
 const TAB_Y := 80
@@ -30,34 +38,40 @@ const TAB_GAP := 16
 
 ## [caption, x, width, alignment] - x and width are inside the panel.
 const L := HORIZONTAL_ALIGNMENT_LEFT
+const C := HORIZONTAL_ALIGNMENT_CENTER
 const R := HORIZONTAL_ALIGNMENT_RIGHT
 const COLUMNS := [
-	["#",      16,  32, L],
-	["NAME",   48, 304, L],
-	["AGE",   352,  48, R],
-	["W",     416,  48, R],
-	["L",     464,  48, R],
-	["D",     512,  48, R],
-	["KO",    560,  48, R],
-	["STYLE", 624, 128, L],
-	["CM",    752,  64, R],
-	["LB",    816,  64, R],
-	["POW",   896,  48, R],
-	["SPD",   944,  48, R],
-	["STA",   992,  48, R],
-	["CHN",  1040,  48, R],
-	["STR",  1088,  48, R],
-	["INT",  1136,  48, R],
-	["OVR",  1184,  48, R],
+	["#",       16,  32, R],
+	["NAME",    64, 256, L],
+	["FROM",   336,  48, C],
+	["AGE",    400,  32, R],
+	["W",      448,  32, R],
+	["L",      496,  32, R],
+	["D",      544,  32, R],
+	["KO",     592,  32, R],
+	["STYLE",  656, 112, L],
+	["CM",     784,  48, R],
+	["LB",     848,  48, R],
+	["POW",    912,  32, R],
+	["SPD",    960,  32, R],
+	["STA",   1008,  32, R],
+	["CHN",   1056,  32, R],
+	["STR",   1104,  32, R],
+	["INT",   1152,  32, R],
+	["OVR",   1200,  32, R],
 ]
+## Longest name shown in full (16 characters fill the NAME column); longer
+## names are shortened to an initial and surname.
+const NAME_CHARS := 16
 
 # --- Line-up -----------------------------------------------------------------------
 const LINEUP_SCALE := 2
-const LINEUP_TOP := 34           # Arena rows hidden above the line-up crop.
-const LINEUP_SIZE := Vector2i(424, 128)
-const LINEUP_Y := 448
-const LINEUP_X := [92.0, 152.0, 212.0, 272.0, 332.0]
-const BADGE_ARENA_Y := 151       # Numbers sit in a row on the apron.
+const LINEUP_Y := 492
+const LINEUP_SIZE := Vector2i(424, 110)
+const LINEUP_TOP := 42           # Arena rows hidden above the line-up crop.
+const LINEUP_FEET_Y := 138.0     # Near the front of the canvas.
+const LINEUP_SPAN := Vector2(36.0, 388.0)   # Arena x the line-up fills.
+const BADGE_ARENA_Y := 147       # Numbers sit in a row on the apron.
 
 var _frame: Control
 var _tabs: Array[Button] = []
@@ -164,8 +178,8 @@ func _build_table(frame: Control) -> void:
 	panel.add_child(UiTheme.panel(0, 0, PANEL.size.x, PANEL.size.y))
 
 	# Group captions over the record and skill columns.
-	_group(panel, "RECORD", 416, 608)
-	_group(panel, "SKILLS", 896, 1184)
+	_group(panel, "RECORD", 448, 624)
+	_group(panel, "SKILLS", 912, 1184)
 	for col in COLUMNS:
 		var h := UiTheme.label(col[0], UiTheme.CAPTION, Palette.UI_TEXT_DIM, col[3])
 		panel.add_child(UiTheme.place(h, col[1], HEADER_Y, col[2], UiTheme.CAPTION))
@@ -177,7 +191,7 @@ func _build_table(frame: Control) -> void:
 		if i % 2 == 0:
 			panel.add_child(UiTheme.block(Color(1, 1, 1, 0.04), 8, y, PANEL.size.x - 16, ROW_H))
 		var values := [
-			str(i + 1), b.display_name().to_upper(), str(b.age),
+			str(i + 1), _short_name(b), b.country_code, str(b.age),
 			str(b.wins), str(b.losses), str(b.draws), str(b.kos),
 			b.style_name().to_upper(), str(b.height_cm), str(b.weight_lb),
 			str(b.power), str(b.speed), str(b.stamina), str(b.chin), str(b.strength), str(b.intelligence),
@@ -186,17 +200,25 @@ func _build_table(frame: Control) -> void:
 		for c in COLUMNS.size():
 			var col: Array = COLUMNS[c]
 			var colour := Palette.UI_TEXT
-			if c == 0:
+			if c == 0 or c == COLUMNS.size() - 1:
 				colour = Palette.UI_GOLD
-			elif c == COLUMNS.size() - 1:
-				colour = Palette.UI_GOLD
+			elif c == 2:
+				colour = Palette.UI_TEXT_DIM
 			var cell := UiTheme.label(values[c], UiTheme.BODY, colour, col[3])
 			if c == 1:
 				UiTheme.fit(cell, col[2])
-			panel.add_child(UiTheme.place(cell, col[1], y + 4, col[2], UiTheme.ROW_H))
-		# Second line under the name: nickname and hometown.
-		var line := "\"%s\"  -  %s" % [b.nickname.to_upper(), b.hometown().to_upper()] if not b.nickname.is_empty() else b.hometown().to_upper()
-		panel.add_child(UiTheme.place(UiTheme.label(line, UiTheme.CAPTION, Palette.UI_TEXT_DIM), 48, y + 30, 384, UiTheme.CAPTION))
+			panel.add_child(UiTheme.place(cell, col[1], y + VALUE_Y, col[2], UiTheme.ROW_H))
+		if not b.nickname.is_empty():
+			var nick := UiTheme.label("\"%s\"" % b.nickname.to_upper(), UiTheme.CAPTION, Palette.UI_GOLD)
+			panel.add_child(UiTheme.place(nick, COLUMNS[1][1], y + NICK_Y, COLUMNS[1][2], UiTheme.CAPTION))
+
+
+## "DANIYAR TULEGENOV" (17) -> "D. TULEGENOV" so every name fits at full size.
+func _short_name(b: BoxerData) -> String:
+	var full := b.display_name().to_upper()
+	if full.length() <= NAME_CHARS:
+		return full
+	return "%s. %s" % [b.first_name.substr(0, 1).to_upper(), b.last_name.to_upper()]
 
 
 func _group(panel: Control, text: String, from_x: float, to_x: float) -> void:
@@ -208,8 +230,9 @@ func _group(panel: Control, text: String, from_x: float, to_x: float) -> void:
 #  Line-up
 # ============================================================================
 
-## All five boxers standing in the City Gym ring (a weigh-in look), numbered to
-## match the table.
+## The whole division standing face-on in the City Gym ring, as at a
+## weigh-in (hands taped, no gloves), numbered to match the table. They are
+## spread so the gaps between neighbours are all the same.
 func _build_lineup(frame: Control) -> void:
 	var viewport := SubViewport.new()
 	viewport.size = LINEUP_SIZE
@@ -234,20 +257,26 @@ func _build_lineup(frame: Control) -> void:
 	frame.add_child(UiTheme.place(view, x, LINEUP_Y, size.x, size.y))
 
 	var roster := GameState.boxers_in(_division)
-	for i in mini(roster.size(), LINEUP_X.size()):
-		var b: BoxerData = roster[i]
-		var rig := BoxerRig.new()
+	var rigs: Array[FrontRig] = []
+	var total_w := 0.0
+	for i in roster.size():
+		var rig := FrontRig.new()
+		rig.setup_boxer(roster[i], i % 2, false)
 		arena.fighter_layer.add_child(rig)
-		rig.setup(b, i % 2)
-		rig.facing = 1 if LINEUP_X[i] <= 212.0 else -1
-		rig.position = Vector2(LINEUP_X[i], ArenaRenderer.FIGHT_Y)
-		rig.play("relaxed")
+		rigs.append(rig)
+		total_w += rig.half_width() * 2.0
+	var gap := (LINEUP_SPAN.y - LINEUP_SPAN.x - total_w) / maxf(rigs.size() - 1, 1)
+	var left := LINEUP_SPAN.x
+	for i in rigs.size():
+		var rig := rigs[i]
+		rig.position = Vector2(roundf(left + rig.half_width()), LINEUP_FEET_Y)
+		left += rig.half_width() * 2.0 + gap
 		# Number badges in a row on the apron below the boxers, drawn crisp in
 		# the UI layer, matching the # column of the table.
 		var badge := UiTheme.label(str(i + 1), UiTheme.BODY, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
 		UiTheme.outline(badge, 8)
 		var badge_y := LINEUP_Y + (BADGE_ARENA_Y - LINEUP_TOP) * LINEUP_SCALE - UiTheme.ROW_H / 2.0
-		frame.add_child(UiTheme.place(badge, x + LINEUP_X[i] * LINEUP_SCALE - 24, badge_y, 48, UiTheme.ROW_H))
+		frame.add_child(UiTheme.place(badge, x + rig.position.x * LINEUP_SCALE - 24, badge_y, 48, UiTheme.ROW_H))
 
 
 func _capture(path: String) -> void:

@@ -33,6 +33,8 @@ static func pixel_height(height_cm: int) -> float:
 
 ## A 157 lb, 184 cm middleweight is the reference build (everything 1.0).
 const REF_LB_PER_CM := 157.0 / 184.0
+## Weight-per-height (relative to the reference) of a lean, toned heavyweight.
+const TONED_MASS := 1.25
 
 
 ## How a boxer's body is drawn, from his height and weight:
@@ -45,19 +47,29 @@ const REF_LB_PER_CM := 157.0 / 184.0
 ## "Mass" is weight per centimetre of height compared with the reference, so a
 ## tall, light man looks rangy and a short, heavy one looks stocky. Lighter men
 ## (under about 154 lb) also get a slimmer frame so the lightweights read as
-## clearly smaller than the middleweights, and the biggest heavyweights carry
-## some weight around the middle.
+## clearly smaller than the middleweights. Heavyweights widen quickly up to a
+## toned build, then more gently, and only the very heaviest carry a little
+## weight around the middle.
 static func build_for(height_cm: int, weight_lb: int) -> Dictionary:
 	var mass := (float(weight_lb) / float(height_cm)) / REF_LB_PER_CM
 	var frame := lerpf(0.90, 1.0, clampf((weight_lb - 130.0) / 24.0, 0.0, 1.0))
-	var bulk := clampf(pow(mass, 1.2) * frame, 0.78, 1.70)
+	# Up to a well-toned heavyweight (mass ~1.25) the body widens quickly;
+	# beyond that, extra weight adds width much more gently so the biggest men
+	# look heavy rather than obese.
+	var widen := _soft_cap(mass, TONED_MASS, 0.50)
+	var bulk := clampf(pow(widen, 1.2) * frame, 0.78, 1.60)
 	return {
 		"bulk": bulk,
-		"limb": clampf(pow(mass, 1.0) * frame, 0.80, 1.50),
-		"neck": clampf(pow(bulk, 1.2), 0.78, 1.80),
-		"belly": clampf((mass - 1.45) / 0.30, 0.0, 1.0),
+		"limb": clampf(_soft_cap(mass, TONED_MASS, 0.45) * frame, 0.80, 1.42),
+		"neck": clampf(pow(bulk, 1.2), 0.78, 1.70),
+		"belly": clampf((mass - 1.55) / 0.40, 0.0, 0.7),
 		"lean": weight_lb < 145,
 	}
+
+
+## Above [param knee], only [param rate] of any further increase counts.
+static func _soft_cap(value: float, knee: float, rate: float) -> float:
+	return value if value <= knee else knee + (value - knee) * rate
 
 
 ## Computes every joint for [param pose] at pixel height [param h].

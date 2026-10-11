@@ -17,7 +17,7 @@ const FONT := preload("res://assets/fonts/PressStart2P.woff2")
 ## [label, animation, which step to freeze on (-1 = last)].
 ## Bottom row: [height_cm, weight_lb] - two lightweights, two middleweights,
 ## three heavyweights, to compare builds.
-const BODY_ROW := [[166, 132], [178, 135], [172, 160], [196, 155], [188, 205], [195, 245], [203, 288]]
+const BODY_ROW := [[166, 132], [178, 135], [172, 160], [196, 155], [190, 215], [196, 245], [203, 290]]
 
 const POSES := [
 	["RELAXED", "relaxed", 0], ["READY", "ready", 0], ["STANCE", "stance", 0],

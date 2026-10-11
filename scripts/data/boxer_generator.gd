@@ -114,9 +114,12 @@ func generate_boxer(avoid_trunks: Array[int] = [], division: Divisions.Id = Divi
 #  Helpers
 # ----------------------------------------------------------------------------
 
-## Height and weight inside the boxer's division. Heavyweights have no upper
-## weight limit in real life, so their weight follows their height (taller =
-## heavier) with a spread, and only a few reach the very top of the range.
+## Height and weight inside the boxer's division.
+##
+## Heavyweights have no upper limit in real life. Most are well-toned men in
+## the lower half of the 200 - 290 lb range, with a few big men near the top:
+## the weight is skewed towards the light end (a power curve on a random
+## roll), and taller men tend to be heavier.
 func _roll_size(b: BoxerData) -> void:
 	var div := Divisions.get_division(b.division)
 	var h: Array = div["height_cm"]
@@ -124,9 +127,11 @@ func _roll_size(b: BoxerData) -> void:
 	b.height_cm = _rng.randi_range(h[0], h[1])
 	if b.division == Divisions.Id.HEAVYWEIGHT:
 		var tall := inverse_lerp(float(h[0]), float(h[1]), b.height_cm)
-		b.weight_lb = clampi(roundi(lerpf(215.0, 262.0, tall) + _rng.randfn(0.0, 26.0)), w[0], w[1])
+		var roll := clampf(_rng.randf() * 0.75 + tall * 0.25, 0.0, 1.0)
+		b.weight_lb = clampi(roundi(lerpf(w[0], w[1], pow(roll, 1.8))), w[0], w[1])
 	else:
 		b.weight_lb = _rng.randi_range(w[0], w[1])
+
 
 ## Makes up a believable professional record:
 ##  - older boxers have had more fights (about 1.5 - 3.5 a year since turning pro
