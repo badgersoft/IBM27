@@ -69,11 +69,11 @@ func display_name() -> String:
 	return "%s %s" % [first_name, last_name]
 
 
-## "Barry 'The Badger' McGuigan" - or the plain name when there is no nickname.
+## 'Barry "The Badger" McGuigan' - or the plain name when there is no nickname.
 func billing_name() -> String:
 	if nickname.is_empty():
 		return display_name()
-	return "%s '%s' %s" % [first_name, nickname, last_name]
+	return "%s \"%s\" %s" % [first_name, nickname, last_name]
 
 
 ## "Belfast, GBR"

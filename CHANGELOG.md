@@ -4,6 +4,15 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.2
+
+* Fight screen name plates are bigger (520 x 56): the record and nickname
+  are now 16 px like the name. The name and record share the top line and
+  the nickname sits under the name. To make room, the score bug is narrower
+  and the panels under the ring are 8 px shorter.
+* The winner is announced with his nickname between his first name and
+  surname, e.g. JAKE "MAMMOTH" HARRIS!
+
 ## 0.1.1
 
 * Version numbering: every build from now on bumps the last number.

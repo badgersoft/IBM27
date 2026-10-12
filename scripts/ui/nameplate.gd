@@ -1,17 +1,25 @@
 class_name Nameplate
 extends Control
-## Boxer name plate shown above the ring (456 x 48).
+## Boxer name plate shown above the ring (520 x 56).
 ##
-##   |#| MARCUS JOHNSON                          <- name, BODY size
-##   |#| "THE HAMMER"   22-3-1 (14 KO)           <- caption size
+##   |#| MARCUS JOHNSON                    22-3-1 (14 KO)   <- name, record
+##   |#| "THE HAMMER"                                       <- nickname
 ##
-## The red corner's plate reads from the left with its colour stripe on the
-## left; the blue corner's plate is the mirror image.
+## Everything is 16 px text. The name and nickname sit nearest the colour
+## stripe; the record is at the far end of the top line. The red corner's
+## plate reads from the left with its stripe on the left; the blue corner's
+## plate is the mirror image. A name too long to share the line with the
+## record is shortened to an initial and surname ("T. WASHINGTON").
+##
+## Rows (measured on screen): 8 px border-to-name, 8 px name-to-nickname and
+## 8 px nickname-to-border. The label tops below include the font's leading.
 
-const W := 456
-const H := 48
+const W := 520
+const H := 56
 const STRIPE := 8
 const PAD := 16
+const NAME_Y := 6
+const NICK_Y := 28
 
 
 func setup(boxer: BoxerData, corner: int) -> void:
@@ -25,28 +33,22 @@ func setup(boxer: BoxerData, corner: int) -> void:
 
 	var text_x := 2 + STRIPE + PAD if left_side else PAD
 	var text_w := W - (2 + STRIPE + PAD) - PAD
-	var align := HORIZONTAL_ALIGNMENT_LEFT if left_side else HORIZONTAL_ALIGNMENT_RIGHT
+	var near := HORIZONTAL_ALIGNMENT_LEFT if left_side else HORIZONTAL_ALIGNMENT_RIGHT
+	var far := HORIZONTAL_ALIGNMENT_RIGHT if left_side else HORIZONTAL_ALIGNMENT_LEFT
 
-	var name_label := UiTheme.label(boxer.display_name().to_upper(), UiTheme.BODY, Palette.UI_TEXT, align)
-	UiTheme.fit(name_label, text_w)
-	add_child(UiTheme.place(name_label, text_x, 6, text_w, 24))
+	var record_text := boxer.record_with_kos()
+	var record := UiTheme.label(record_text, UiTheme.BODY, Palette.UI_TEXT_DIM, far)
+	add_child(UiTheme.place(record, text_x, NAME_Y, text_w, UiTheme.ROW_H))
 
-	var line := HBoxContainer.new()
-	line.add_theme_constant_override("separation", UiTheme.GAP)
-	line.alignment = BoxContainer.ALIGNMENT_BEGIN if left_side else BoxContainer.ALIGNMENT_END
-	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(UiTheme.place(line, text_x, 30, text_w, 12))
-	var nick := UiTheme.label("", UiTheme.CAPTION, Palette.UI_GOLD)
-	var record := UiTheme.label(boxer.record_with_kos(), UiTheme.CAPTION, Palette.UI_TEXT_DIM)
-	nick.clip_text = false
-	record.clip_text = false
+	var name_w := text_w - record_text.length() * UiTheme.CHAR_W - UiTheme.GAP
+	var name_text := boxer.display_name().to_upper()
+	if name_text.length() * UiTheme.CHAR_W > name_w:
+		name_text = "%s. %s" % [boxer.first_name.substr(0, 1).to_upper(), boxer.last_name.to_upper()]
+	var name_label := UiTheme.label(name_text, UiTheme.BODY, Palette.UI_TEXT, near)
+	UiTheme.fit(name_label, name_w)
+	var name_x := text_x if left_side else text_x + text_w - name_w
+	add_child(UiTheme.place(name_label, name_x, NAME_Y, name_w, UiTheme.ROW_H))
+
 	if not boxer.nickname.is_empty():
-		nick.text = "\"%s\"" % boxer.nickname.to_upper()
-	# Keep the nickname nearest the stripe on both plates.
-	if left_side:
-		line.add_child(nick)
-		line.add_child(record)
-	else:
-		line.add_child(record)
-		line.add_child(nick)
-	nick.visible = not nick.text.is_empty()
+		var nick := UiTheme.label("\"%s\"" % boxer.nickname.to_upper(), UiTheme.BODY, Palette.UI_GOLD, near)
+		add_child(UiTheme.place(nick, text_x, NICK_Y, text_w, UiTheme.ROW_H))

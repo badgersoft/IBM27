@@ -16,7 +16,8 @@ extends Control
 ##
 ## The top line is the announcer's lead-in and the bigger line under it the
 ## payoff: each judge's name, then his score, then "AND THE WINNER, BY ...
-## DECISION..." and the name. As each judge is read out his row of the
+## DECISION..." and the name, billed with any nickname between first name
+## and surname (JAKE "MAMMOTH" HARRIS!). As each judge is read out his row of the
 ## official scorecard under the ring is filled in (judge_revealed).
 ## A stoppage gets to the name quickly. Tap, click or Space skips to the end.
 
@@ -156,7 +157,7 @@ func _plan_decision(result: Dictionary, boxers: Array, judges: Judges) -> void:
 	if winner >= 0:
 		var kind := {"UD": "UNANIMOUS", "SD": "SPLIT", "MD": "MAJORITY"}[result["method"]] as String
 		lead_in = "AND THE WINNER, BY %s DECISION..." % kind
-		verdict = "%s!" % boxers[winner].display_name().to_upper()
+		verdict = "%s!" % boxers[winner].billing_name().to_upper()
 		colour = Palette.corner_color(winner)
 	_at(verdict_at, _say.bind(lead_in, "", Palette.UI_TEXT))
 	_at(verdict_at + WINNER_PAUSE, _announce.bind(lead_in, verdict, colour))
@@ -171,7 +172,7 @@ func _plan_stoppage(result: Dictionary, boxers: Array, judges: Judges) -> void:
 	var lead_in := "AND THE WINNER, BY %s IN ROUND %d AT %s..." % [how, result["round"], result["time"]]
 	_at(STOPPAGE_VERDICT_AT, _say.bind(lead_in, "", Palette.UI_TEXT))
 	var name_at := STOPPAGE_VERDICT_AT + WINNER_PAUSE
-	_at(name_at, _announce.bind(lead_in, "%s!" % boxers[winner].display_name().to_upper(), Palette.corner_color(winner)))
+	_at(name_at, _announce.bind(lead_in, "%s!" % boxers[winner].billing_name().to_upper(), Palette.corner_color(winner)))
 	_at(name_at + BUTTONS_AFTER, _show_buttons)
 
 

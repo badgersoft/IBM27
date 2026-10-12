@@ -6,16 +6,16 @@ extends Control
 ##
 ## Layout (1280 x 720 design frame, 8 px margins between every block):
 ##
-##   y   8 - 56   [ RED NAMEPLATE ]   [ SCORE BUG ]   [ BLUE NAMEPLATE ]
-##   y  64 - 568  [                 ARENA (424 x 168 x3)               ]
-##   y 576 - 712  [ RED PANEL ]      [ SCORECARD ]      [ BLUE PANEL ]
+##   y   8 - 64   [ RED NAMEPLATE ] [ SCORE BUG ] [ BLUE NAMEPLATE ]
+##   y  72 - 576  [                ARENA (424 x 168 x3)              ]
+##   y 584 - 712  [ RED PANEL ]     [ SCORECARD ]     [ BLUE PANEL ]
 ##
 ## This script only wires things together. The fight itself is FightSim, the
 ## ring and boxers are ArenaView, and each panel is its own small widget.
 
 const FRAME_SIZE := Vector2(1280, 720)
 const ARENA_SCALE := 3
-const ARENA_POS := Vector2(4, 64)
+const ARENA_POS := Vector2(4, 72)
 const MARGIN := 8
 const INTRO_AUTO_START := 12.0   ## Seconds before the fight starts by itself.
 const RESULT_DELAY := 3.0        ## Seconds after the final bell before the verdict.

@@ -1,6 +1,6 @@
 class_name Scorecard
 extends Control
-## The panel under the ring (512 x 136). It has three faces:
+## The panel under the ring (512 x 128). It has three faces:
 ##
 ## TODAY'S JUDGES (before the first bell) - who is judging and how fair they are:
 ##   TODAY'S JUDGES
@@ -22,11 +22,11 @@ extends Control
 enum Mode { JUDGES, PUNDIT, OFFICIAL }
 
 const W := 512
-const H := 136
+const H := 128
 const PAD := 16
 const COL_W := 96                 # Score columns are all the same width.
-const HEADER_Y := 32
-const FIRST_ROW_Y := 48
+const HEADER_Y := 27
+const FIRST_ROW_Y := 43
 ## "Today's judges" columns: name, country, fairness band. Only the band
 ## (FAIR / SO-SO / WILD) is shown - the number behind it stays hidden.
 const JUDGE_NAME_W := 256
@@ -69,7 +69,7 @@ func show_judges(judges: Judges) -> void:
 	var face: Control = _faces[Mode.JUDGES]
 	for child in face.get_children():
 		child.queue_free()
-	face.add_child(UiTheme.place(UiTheme.label("TODAY'S JUDGES", UiTheme.CAPTION, Palette.UI_GOLD), PAD, 12, 240, UiTheme.CAPTION))
+	face.add_child(UiTheme.place(UiTheme.label("TODAY'S JUDGES", UiTheme.CAPTION, Palette.UI_GOLD), PAD, 7, 240, UiTheme.CAPTION))
 	face.add_child(UiTheme.place(UiTheme.label("JUDGE", UiTheme.CAPTION, Palette.UI_TEXT_DIM), PAD, HEADER_Y, JUDGE_NAME_W, UiTheme.CAPTION))
 	face.add_child(UiTheme.place(UiTheme.label("FROM", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), COUNTRY_X, HEADER_Y, COUNTRY_W, UiTheme.CAPTION))
 	face.add_child(UiTheme.place(UiTheme.label("FAIRNESS", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), FAIR_X, HEADER_Y, FAIR_W, UiTheme.CAPTION))
@@ -128,23 +128,23 @@ func _score_row(face: Control, y: float) -> Array:
 
 
 func _build_pundit(face: Control) -> void:
-	face.add_child(UiTheme.place(UiTheme.label("RINGSIDE PUNDIT  -  UNOFFICIAL", UiTheme.CAPTION, Palette.UI_TEXT_DIM), PAD, 12, 288, UiTheme.CAPTION))
+	face.add_child(UiTheme.place(UiTheme.label("RINGSIDE PUNDIT  -  UNOFFICIAL", UiTheme.CAPTION, Palette.UI_TEXT_DIM), PAD, 7, 288, UiTheme.CAPTION))
 	_pundit_name = UiTheme.label("", UiTheme.CAPTION, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_RIGHT)
-	face.add_child(UiTheme.place(_pundit_name, W - PAD - 192, 12, 192, UiTheme.CAPTION))
+	face.add_child(UiTheme.place(_pundit_name, W - PAD - 192, 7, 192, UiTheme.CAPTION))
 	_round_headers(face)
 	face.add_child(UiTheme.place(UiTheme.label("CARD", UiTheme.CAPTION), PAD, FIRST_ROW_Y, COL_W, UiTheme.ROW_H))
 	_pundit_cells = _score_row(face, FIRST_ROW_Y)
-	face.add_child(UiTheme.block(Color(Palette.UI_TEXT_DIM, 0.4), PAD, 84, W - PAD * 2, 1))
+	face.add_child(UiTheme.block(Color(Palette.UI_TEXT_DIM, 0.4), PAD, 79, W - PAD * 2, 1))
 	_verdict = UiTheme.label("", UiTheme.BODY, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
-	face.add_child(UiTheme.place(_verdict, PAD, 96, W - PAD * 2, UiTheme.ROW_H))
+	face.add_child(UiTheme.place(_verdict, PAD, 91, W - PAD * 2, UiTheme.ROW_H))
 
 
 func _build_official(face: Control) -> void:
-	face.add_child(UiTheme.place(UiTheme.label("OFFICIAL SCORECARDS", UiTheme.CAPTION, Palette.UI_GOLD), PAD, 12, 240, UiTheme.CAPTION))
+	face.add_child(UiTheme.place(UiTheme.label("OFFICIAL SCORECARDS", UiTheme.CAPTION, Palette.UI_GOLD), PAD, 7, 240, UiTheme.CAPTION))
 	var blue_key := UiTheme.label("BLUE", UiTheme.CAPTION, Palette.UI_BLUE, HORIZONTAL_ALIGNMENT_RIGHT)
 	var red_key := UiTheme.label("RED", UiTheme.CAPTION, Palette.UI_RED, HORIZONTAL_ALIGNMENT_RIGHT)
-	face.add_child(UiTheme.place(blue_key, W - PAD - 32, 12, 32, UiTheme.CAPTION))
-	face.add_child(UiTheme.place(red_key, W - PAD - 32 - 8 - 24, 12, 24, UiTheme.CAPTION))
+	face.add_child(UiTheme.place(blue_key, W - PAD - 32, 7, 32, UiTheme.CAPTION))
+	face.add_child(UiTheme.place(red_key, W - PAD - 32 - 8 - 24, 7, 24, UiTheme.CAPTION))
 	_round_headers(face)
 	for j in 3:
 		var y := FIRST_ROW_Y + j * UiTheme.ROW_H

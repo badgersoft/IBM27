@@ -1,6 +1,6 @@
 class_name FighterPanel
 extends Control
-## Live condition and punch stats for one boxer (352 x 136).
+## Live condition and punch stats for one boxer (352 x 128).
 ##
 ##   RED CORNER                      BOXER
 ##   HEALTH   [##########      ]      87
@@ -11,13 +11,13 @@ extends Control
 ## Column positions are constants so both panels line up exactly.
 
 const W := 352
-const H := 136
+const H := 128
 const PAD := 16
 const LABEL_W := 112
 const BAR_W := 144
 const BAR_H := 16
 const VALUE_W := 64
-const FIRST_ROW_Y := 32
+const FIRST_ROW_Y := 27
 
 var _health_bar: ProgressBar
 var _energy_bar: ProgressBar
@@ -33,8 +33,8 @@ func setup(boxer: BoxerData, corner: int) -> void:
 	var corner_name := "RED CORNER" if corner == 0 else "BLUE CORNER"
 	var title := UiTheme.label(corner_name, UiTheme.CAPTION, Palette.corner_color(corner))
 	var style := UiTheme.label(boxer.style_name().to_upper(), UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_RIGHT)
-	add_child(UiTheme.place(title, PAD, 12, W / 2.0 - PAD, 12))
-	add_child(UiTheme.place(style, W / 2.0, 12, W / 2.0 - PAD, 12))
+	add_child(UiTheme.place(title, PAD, 7, W / 2.0 - PAD, 12))
+	add_child(UiTheme.place(style, W / 2.0, 7, W / 2.0 - PAD, 12))
 
 	var rows := ["HEALTH", "ENERGY", "THROWN", "LANDED"]
 	for i in rows.size():

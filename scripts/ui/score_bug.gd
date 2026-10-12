@@ -1,24 +1,24 @@
 class_name ScoreBug
 extends Control
-## TV-style score bug showing the round and the fight clock (288 x 48).
+## TV-style score bug showing the round and the fight clock (176 x 56).
 ##
-##   +-----------------+-----------------+
-##   |      ROUND      |      TIME       |   <- captions, 8 px
-##   |       1/3       |      2:47       |   <- values, 16 px
-##   +-----------------+-----------------+
+##   +----------+----------+
+##   |  ROUND   |   TIME   |   <- captions, 8 px
+##   |   1/3    |   2:47   |   <- values, 16 px
+##   +----------+----------+
 ##
-## Kept deliberately sparse: two cells, two sizes of text, 8 px of air between
-## the border, the caption, the value and the border again.
+## Kept deliberately sparse: two cells, two sizes of text, with even air
+## between the border, the caption, the value and the border again.
 
-const W := 288
-const H := 48
+const W := 176
+const H := 56
 const HALF := W / 2
 ## Label tops, chosen (and measured on screen) so the visible letters sit with
-## equal space around them: 8 px border-to-caption, 7 px caption-to-value,
-## 8 px value-to-border. Label boxes include the font's internal leading, which
-## is why these are not simply 8 and 24.
-const CAPTION_Y := 3
-const VALUE_Y := 21
+## even space around them: 11 px border-to-caption, 9 px caption-to-value,
+## 11 px value-to-border. Label boxes include the font's internal leading,
+## which is why these are not simply 13 and 29.
+const CAPTION_Y := 6
+const VALUE_Y := 26
 
 var _round: Label
 var _time: Label
