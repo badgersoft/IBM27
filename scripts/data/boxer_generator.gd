@@ -33,7 +33,12 @@ const STYLE_BIAS := {
 	BoxerData.Style.BOXER:   [-2,   8,   4,  -2,  -2,   8],
 	BoxerData.Style.COUNTER: [ 4,   6,  -2,   0,  -4,  12],
 	BoxerData.Style.EVASIVE: [-6,  10,  12,  -4,  -4,   6],
+	BoxerData.Style.SHOWBOAT:[ 0,  12,  -2,  -4,  -2,  -2],
 }
+## Showboats are rare: one or two in a full roster (smaller groups, such as
+## the simulator's pairs, get one now and then).
+const SHOWBOATS_PER_ROSTER := Vector2i(1, 2)
+const SHOWBOAT_CHANCE := 0.15
 
 var _rng := RandomNumberGenerator.new()
 var _world: Dictionary = {}
@@ -68,6 +73,7 @@ func generate_roster(count: int, division: Divisions.Id = Divisions.Id.MIDDLEWEI
 		used_names.append(boxer.last_name)
 		roster.append(boxer)
 
+	_assign_showboats(roster)
 	_assign_nicknames(roster, avoid_nicknames)
 	return roster
 
@@ -96,15 +102,9 @@ func generate_boxer(avoid_trunks: Array[int] = [], division: Divisions.Id = Divi
 	b.trunks_index = _pick_trunks(avoid_trunks)
 
 	# --- Fighting style and skills ---------------------------------------------
-	b.style = _rng.randi_range(0, BoxerData.STYLE_NAMES.size() - 1) as BoxerData.Style
-	var bias: Array = STYLE_BIAS[b.style]
-	b.power        = _roll_skill(bias[0])
-	b.speed        = _roll_skill(bias[1])
-	b.stamina      = _roll_skill(bias[2])
-	b.chin         = _roll_skill(bias[3])
-	b.strength     = _roll_skill(bias[4])
-	b.intelligence = _roll_skill(bias[5])
-	b.recovery     = _roll_skill(0)
+	# Showboats are added afterwards, a few per roster (_assign_showboats).
+	b.style = _rng.randi_range(0, BoxerData.Style.SHOWBOAT - 1) as BoxerData.Style
+	_roll_skills(b)
 
 	# --- Career record (placeholder) ------------------------------------------------
 	_roll_record(b)
@@ -196,6 +196,37 @@ func _pick_country_code() -> String:
 
 ## Skills centre on 60 with a spread of roughly +-15, nudged by style.
 ## Most land between 35 and 85; a rare few dip under 30 as asked.
+## The six skills (and recovery), centred on the style's strengths.
+func _roll_skills(b: BoxerData) -> void:
+	var bias: Array = STYLE_BIAS[b.style]
+	b.power        = _roll_skill(bias[0])
+	b.speed        = _roll_skill(bias[1])
+	b.stamina      = _roll_skill(bias[2])
+	b.chin         = _roll_skill(bias[3])
+	b.strength     = _roll_skill(bias[4])
+	b.intelligence = _roll_skill(bias[5])
+	b.recovery     = _roll_skill(0)
+
+
+## Turns one or two boxers in a roster into showboats: they keep their name
+## and body but get a showboat's skills and a career to match.
+func _assign_showboats(roster: Array[BoxerData]) -> void:
+	var picks: Array = []
+	if roster.size() >= 6:
+		var order: Array = range(roster.size())
+		_shuffle(order)
+		picks = order.slice(0, _rng.randi_range(SHOWBOATS_PER_ROSTER.x, SHOWBOATS_PER_ROSTER.y))
+	else:
+		for i in roster.size():
+			if _rng.randf() < SHOWBOAT_CHANCE:
+				picks.append(i)
+	for i in picks:
+		var b: BoxerData = roster[i]
+		b.style = BoxerData.Style.SHOWBOAT
+		_roll_skills(b)
+		_roll_record(b)
+
+
 func _roll_skill(bias: int) -> int:
 	var value := _rng.randfn(60.0 + bias, 13.0)
 	return clampi(roundi(value), 20, 97)

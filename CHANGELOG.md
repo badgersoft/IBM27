@@ -4,6 +4,26 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.3
+
+* Sound: the start-of-round bell is a single shorter, lower, softer ring;
+  the end-of-round bell is a little quieter.
+* The judges' read-out is a second slower per judge and has no ding; the
+  crowd gives a small cheer for a fair-looking score and an "oooh" for one
+  that seems wrong.
+* Boxers list: the line-up picture is gone and the table fills the screen,
+  with taller rows and more room for nicknames. Columns are evenly spaced,
+  W / L / D / KO are centred under their headings, styles are shortened
+  (BRL, SLG, BOX, CNR, EVA, SHW), the individual skills are replaced by the
+  overall rating, and the RECORD heading sits clear of its rule.
+* New boxer profile screen: choose a boxer in the list to see his portrait,
+  details and all six skills, with PREV / NEXT through the division.
+* New style, SHOWBOAT (one or two per division): quick reactions and good
+  at slipping punches, but drops his guard and taunts a lot, so he gets
+  caught.
+* The trainers are no longer drawn between rounds; their advice bubbles
+  point down to the corners.
+
 ## 0.1.2
 
 * Fight screen name plates are bigger (520 x 56): the record and nickname

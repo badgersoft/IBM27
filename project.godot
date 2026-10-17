@@ -12,7 +12,7 @@ config_version=5
 
 config/name="International Boxing Manager 2027"
 config/description="An ode to 1985's Barry McGuigan World Championship Boxing. By Badger-soft."
-config/version="0.1.2"
+config/version="0.1.3"
 run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 boot_splash/bg_color=Color(0.051, 0.063, 0.125, 1)

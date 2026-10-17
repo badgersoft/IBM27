@@ -224,7 +224,10 @@
 			            "Cold Blood", "The Puzzle", "Second Strike"],
 			"EVASIVE": ["The Ghost", "The Phantom", "Slick", "Lightning", "The Shadow", "Quicksilver",
 			            "The Eel", "Smoke", "Mirage", "Rubber Man", "Twinkle Toes", "Whisper",
-			            "The Dancer", "Zigzag", "The Escape Artist"]
+			            "The Dancer", "Zigzag", "The Escape Artist"],
+			"SHOWBOAT":["The Showman", "Razzle Dazzle", "The Peacock", "Hollywood", "The Magician",
+			            "Disco", "The Ringmaster", "Glitter", "Jazz Hands", "Fancy Feet",
+			            "Mr Entertainment", "Showstopper"]
 		},
 		"division": {
 			"LIGHTWEIGHT":  ["The Hummingbird", "The Wasp", "Little Thunder", "Pocket Rocket", "The Firecracker",
@@ -237,7 +240,7 @@
 			                 "Mammoth", "The Tower"]
 		},
 		"any": ["The Natural", "Lucky", "The Comeback Kid", "The Machine", "Rocket", "The Outlaw",
-		        "Big Time", "The Showman", "Danger", "Crowd Pleaser", "The Iron Horse", "Rebel",
+		        "Big Time", "Danger", "Crowd Pleaser", "The Iron Horse", "Rebel",
 		        "The Kingpin", "Sundance", "Hot Shot", "The Phoenix",
 		        "The {city} Kid", "{city} Express"]
 	}

@@ -22,8 +22,12 @@ func _initialize() -> void:
 			division = int(arg.trim_prefix("--division=")) as Divisions.Id
 
 	var methods := {}
-	var by_style_wins := [0, 0, 0, 0, 0]
-	var by_style_fights := [0, 0, 0, 0, 0]
+	var by_style_wins: Array = []
+	var by_style_fights: Array = []
+	by_style_wins.resize(BoxerData.STYLE_NAMES.size())
+	by_style_wins.fill(0)
+	by_style_fights.resize(BoxerData.STYLE_NAMES.size())
+	by_style_fights.fill(0)
 	var totals := {"thrown": 0.0, "landed": 0.0, "blocked": 0.0, "big": 0.0, "knockdowns": 0.0, "end_health": 0.0, "end_energy": 0.0, "clinches": 0.0}
 	var rounds_ended := [0, 0, 0, 0]
 	# Judging: how often the official result differs from a neutral card.
@@ -98,7 +102,7 @@ func _initialize() -> void:
 		var p: Array = pundits[pname]
 		print("  %-15s %5.1f%%  (%d fights)" % [pname, 100.0 * p[0] / maxf(p[1], 1), p[1]])
 	print("------------------------------------------")
-	for s in 5:
+	for s in BoxerData.STYLE_NAMES.size():
 		var pct: float = 100.0 * by_style_wins[s] / maxf(by_style_fights[s], 1.0)
 		print("  %-8s wins %5.1f%% of %d fights" % [BoxerData.STYLE_NAMES[s], pct, by_style_fights[s]])
 	print("")

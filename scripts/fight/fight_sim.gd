@@ -40,9 +40,12 @@ const MIN_GAP := 0.34                 ## Closest the boxers' centres get, in bod
 
 ## Brawlers and sluggers "don't mind getting hit": less stun and wear per
 ## shot, and a little extra on their own power punches.
-## Order matches BoxerData.Style: Brawler, Slugger, Boxer, Counter, Evasive.
-const STYLE_TOUGHNESS: Array[float] = [0.82, 0.85, 1.00, 1.00, 1.00]
-const STYLE_POWER:     Array[float] = [1.08, 1.12, 1.00, 1.00, 1.00]
+## Order matches BoxerData.Style: Brawler, Slugger, Boxer, Counter, Evasive,
+## Showboat.
+const STYLE_TOUGHNESS: Array[float] = [0.82, 0.85, 1.00, 1.00, 1.00, 1.00]
+const STYLE_POWER:     Array[float] = [1.08, 1.12, 1.00, 1.00, 1.00, 1.00]
+## Showboats have quick reactions: a little extra chance to slip a punch.
+const SHOWBOAT_SLIP := 0.08
 
 ## Big punches: an occasional power punch that lands with much more on it.
 ## Chances add up from what led to it (see _big_punch_chance).
@@ -322,6 +325,8 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	slip -= d.hurt_level() * 0.10
 	if d.state == State.MOVE and d.move_dir < 0:
 		slip += 0.20
+	if d.data.style == BoxerData.Style.SHOWBOAT:
+		slip += SHOWBOAT_SLIP
 	if d.state in [State.PUNCH, State.TAUNT, State.CLINCH]:
 		slip = 0.0          # Caught square.
 	elif d.state in [State.HURT, State.ROPES]:

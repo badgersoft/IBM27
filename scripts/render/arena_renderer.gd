@@ -8,7 +8,8 @@ extends Node2D
 ##   RingBack    - canvas, back posts, back and side ropes.
 ##   Fighters    - the two BoxerRigs are added here by ArenaView.
 ##   RingFront   - semi-transparent front ropes, front posts, apron, floor.
-##   Fx          - corner man and his speech bubble between rounds.
+##   Fx          - big-punch flashes, and the trainers' advice bubbles between
+##                 rounds (the trainers themselves are off screen).
 ##
 ## The ring geometry below is shared by every venue, so the ring is always the
 ## same size; the venue only changes its colours and finish.
@@ -40,7 +41,8 @@ const FLOOR_COLOURS: Array[Color] = [Color("3a2818"), Color("2a2c34"), Color("08
 const AISLES: Array[float] = [110.0, 314.0]
 ## Speech bubbles sit above the tallest boxer's head (which tops out near y 46).
 const BUBBLE_TOP := 24.0
-const BUBBLE_TAIL_Y := 56.0
+const BUBBLE_TAIL_Y := 50.0
+const BUBBLE_EDGE := 8.0        ## Gap between a bubble and the screen edge.
 const FRONT_ROPE_ALPHA := 0.45
 const FLASH_SECONDS := 0.15     ## How long a big punch's impact flash shows.
 
@@ -65,7 +67,7 @@ var _rope_shake := [0.0, 0.0]
 var _time := 0.0
 var _flash_rng := RandomNumberGenerator.new()
 var _crowd_clock := 0.0
-var _advice_text := ["", ""]   # What each corner man is saying ("" = not shown).
+var _advice_text := ["", ""]   # What each trainer is saying ("" = not shown).
 var _advice_time := [0.0, 0.0]
 var _flash_pos := Vector2.ZERO
 var _flash_time := 0.0
@@ -117,7 +119,7 @@ func impact_flash(at: Vector2) -> void:
 	_fx.queue_redraw()
 
 
-## Shows the corner man for [param corner] with a speech bubble.
+## Shows the trainer's advice for [param corner] in a speech bubble.
 func show_corner_advice(corner: int, text: String, seconds: float) -> void:
 	_advice_text[corner] = text
 	_advice_time[corner] = seconds
@@ -677,10 +679,11 @@ func _draw_fx(c: CanvasItem) -> void:
 	for corner in 2:
 		if _advice_text[corner].is_empty():
 			continue
+		# The trainer is off screen by his corner post; his bubble's tail
+		# points down towards him.
 		var dir := 1.0 if corner == 0 else -1.0
-		var x := 13.0 if corner == 0 else SIZE.x - 13.0
-		_draw_corner_man(c, x, dir)
-		_draw_bubble(c, _advice_text[corner], Vector2(x + dir * 6.0, BUBBLE_TAIL_Y), dir)
+		var x := BUBBLE_EDGE if corner == 0 else SIZE.x - BUBBLE_EDGE
+		_draw_bubble(c, _advice_text[corner], Vector2(x, BUBBLE_TAIL_Y), dir)
 
 
 ## An eight-point star: long spikes up, down and sideways, short diagonals,
@@ -696,36 +699,8 @@ func _draw_impact(c: CanvasItem, at: Vector2, life: float) -> void:
 	c.draw_circle(at, size * 0.3, Color.WHITE)
 
 
-## The trainer stands on the floor by the corner post, leaning in to talk.
-func _draw_corner_man(c: CanvasItem, x: float, dir: float) -> void:
-	var skin: Color = Palette.SKIN_TONES[1][0]
-	var shirt := Color("e8e4d8")
-	var shirt_shade := Color("b4b0a6")
-	# Body (shirt) - the legs are hidden below the bottom of the screen.
-	var body := PackedVector2Array([
-		Vector2(x - 7, 168), Vector2(x - 7, 116), Vector2(x - 3, 110),
-		Vector2(x + 4, 110), Vector2(x + 8, 116), Vector2(x + 8, 168),
-	])
-	c.draw_polyline(_closed(body), Palette.OUTLINE, 2.0)
-	c.draw_colored_polygon(body, shirt)
-	c.draw_rect(Rect2(x - 7 if dir < 0 else x + 4, 116, 3, 52), shirt_shade)
-	# Towel over the shoulder.
-	c.draw_rect(Rect2(x - 6, 110, 4, 16), Color("c83030") if dir > 0 else Color("3060c8"))
-	# Head.
-	var head := Vector2(x + dir * 1.0, 103)
-	c.draw_circle(head, 6.0, Palette.OUTLINE)
-	c.draw_circle(head, 5.0, skin)
-	c.draw_circle(head + Vector2(0, -2), 4.5, Color("5a5a5a"))
-	c.draw_circle(head + Vector2(dir * 1.0, 1), 4.0, skin)
-	c.draw_rect(Rect2(head.x + dir * 2.0, head.y - 1, 1, 1), Palette.EYE)
-	# Arm pointing into the ring.
-	var shoulder := Vector2(x + dir * 5.0, 114)
-	var hand := Vector2(x + dir * 17.0, 104)
-	c.draw_line(shoulder, hand, Palette.OUTLINE, 5.0)
-	c.draw_line(shoulder, hand, shirt, 3.0)
-	c.draw_circle(hand, 2.0, skin)
-
-
+## A speech bubble starting at [param anchor].x and growing in direction
+## [param dir], with its tail pointing down to [param anchor].
 func _draw_bubble(c: CanvasItem, text: String, anchor: Vector2, dir: float) -> void:
 	var width := text.length() * FONT_SIZE + 10.0
 	var height := 15.0

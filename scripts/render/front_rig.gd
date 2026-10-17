@@ -99,6 +99,13 @@ func setup_boxer(boxer: BoxerData, corner_index: int, wear_gloves: bool = true, 
 	solve()
 
 
+## Gives a boxer gloves in other colours ([base, shadow, highlight]), e.g. to
+## match his trunks in a portrait where he has no corner.
+func set_glove_tones(tones: Array) -> void:
+	_gloves = tones
+	queue_redraw()
+
+
 ## The referee: white shirt, black bow tie and trousers, grey hair.
 func setup_referee(skin_index: int, size: float = 1.0) -> void:
 	kind = Kind.REFEREE

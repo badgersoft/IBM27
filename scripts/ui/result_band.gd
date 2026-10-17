@@ -38,12 +38,11 @@ const BUTTON_W := 256
 const BUTTON_H := 48
 const BUTTON_GAP := 32
 
-## Seconds into the announcement when each step happens.
-## Each wait is a second longer than a ring announcer strictly needs: the
-## pause is the drama.
+## Seconds into the announcement when each step happens. The waits are
+## longer than a ring announcer strictly needs: the pause is the drama.
 const FIRST_JUDGE_AT := 2.0
-const JUDGE_EVERY := 3.6
-const SCORE_AFTER := 2.0        ## Judge's name first, then his score.
+const JUDGE_EVERY := 4.6
+const SCORE_AFTER := 2.5        ## Judge's name first, then his score.
 const WINNER_PAUSE := 2.4       ## Drum roll between "and the winner..." and the name.
 const STOPPAGE_VERDICT_AT := 0.4
 const BUTTONS_AFTER := 1.0
@@ -148,6 +147,7 @@ func _plan_decision(result: Dictionary, boxers: Array, judges: Judges) -> void:
 			colour = Palette.corner_color(leader)
 		_at(at + SCORE_AFTER, _say.bind(who, line, colour))
 		_at(at + SCORE_AFTER, judge_revealed.emit.bind(j))
+		_at(at + SCORE_AFTER, _crowd_reacts.bind(card, judges.fair_totals()))
 
 	var verdict_at := FIRST_JUDGE_AT + judges.panel.size() * JUDGE_EVERY
 	var winner: int = result["winner"]
@@ -185,7 +185,21 @@ func _at(time: float, action: Callable) -> void:
 func _say(lead: String, payoff: String, colour: Color) -> void:
 	_set_text(_lead, lead, Palette.UI_TEXT, UiTheme.LARGE)
 	_set_text(_payoff, payoff, colour, UiTheme.TITLE)
-	Sfx.reveal()
+
+
+## The crowd hears a judge's score: a small cheer if it looks fair, an
+## "oooh" if it does not. "Fair" is judged against a neutral card of the
+## fight (what the crowd saw): the same boxer ahead (or both level) and no
+## more than 2 points out - or, in a toss-up fight, any close card.
+func _crowd_reacts(card: Array, fair: Array) -> void:
+	var judge_margin: int = card[0] - card[1]
+	var fair_margin: int = fair[0] - fair[1]
+	var same_call := signi(judge_margin) == signi(fair_margin) and absi(judge_margin - fair_margin) <= 2
+	var toss_up := absi(fair_margin) <= 1 and absi(judge_margin) <= 1
+	if same_call or toss_up:
+		Sfx.cheer()
+	else:
+		Sfx.oooh()
 
 
 func _announce(lead: String, verdict: String, colour: Color) -> void:

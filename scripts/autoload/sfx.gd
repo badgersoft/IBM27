@@ -3,7 +3,10 @@ extends Node
 ##
 ## Every sound is synthesised in code when the game starts, so there are no
 ## audio files to manage or license:
-##   bell   - a boxing bell "ding" built from a few inharmonic partials
+##   bell   - a boxing bell "ding" built from a few inharmonic partials; the
+##            start-of-round bell is a shorter, lower, softer single ring
+##   cheer  - a short burst of cheering and clapping
+##   oooh   - the crowd's doubtful "oooh" (many voices, a falling pitch)
 ##   punch  - a low thud with a slap of noise on top
 ##   block  - a short, higher "pap" of gloves hitting gloves
 ##   crowd  - a looping murmur, louder in bigger venues
@@ -12,6 +15,9 @@ extends Node
 const RATE := 22050
 
 var _bell: AudioStreamWAV
+var _start_bell: AudioStreamWAV
+var _cheer: AudioStreamWAV
+var _oooh: AudioStreamWAV
 var _punch: AudioStreamWAV
 var _block: AudioStreamWAV
 var _crowd: AudioStreamWAV
@@ -27,6 +33,9 @@ var _rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	_rng.seed = 27
 	_bell = _make_wav(_synth_bell())
+	_start_bell = _make_wav(_synth_start_bell())
+	_cheer = _make_wav(_synth_cheer())
+	_oooh = _make_wav(_synth_oooh())
 	_punch = _make_wav(_synth_punch())
 	_block = _make_wav(_synth_block())
 	_crowd = _make_wav(_synth_crowd(), true)
@@ -44,10 +53,15 @@ func _ready() -> void:
 	add_child(_roar_player)
 
 
-## Rings the bell [param strikes] times (1 to start a round, 3 to end it).
+## Rings the bell [param strikes] times. One strike starts a round with the
+## short, soft start bell; several (3 to end a round, 5 for a stoppage) use
+## the full ring.
 func bell(strikes: int = 1) -> void:
+	if strikes == 1:
+		_play(_start_bell, -11.0, 1.0)
+		return
 	for i in strikes:
-		_play(_bell, -4.0, 1.0)
+		_play(_bell, -7.0, 1.0)
 		if i < strikes - 1:
 			await get_tree().create_timer(0.32).timeout
 
@@ -65,9 +79,14 @@ func big_hit() -> void:
 	roar(0.7)
 
 
-## A light "ting" as each judge's score is read out.
-func reveal() -> void:
-	_play(_bell, -16.0, 2.0)
+## The crowd approves of a judge's score.
+func cheer() -> void:
+	_play(_cheer, -13.0, _rng.randf_range(0.97, 1.03))
+
+
+## The crowd is not so sure about a judge's score.
+func oooh() -> void:
+	_play(_oooh, -17.0, _rng.randf_range(0.97, 1.03))
 
 
 func block() -> void:
@@ -123,6 +142,82 @@ func _synth_bell() -> PackedFloat32Array:
 		if t < 0.006:
 			v += _rng.randf_range(-0.6, 0.6) * (1.0 - t / 0.006)   # Strike click.
 		out[i] = v * 0.4
+	return out
+
+
+## The start-of-round bell: one ring, lower and rounder than the full bell
+## (fewer high partials, a softer strike) and gone in under a second.
+func _synth_start_bell() -> PackedFloat32Array:
+	var length := int(RATE * 0.75)
+	var out := PackedFloat32Array()
+	out.resize(length)
+	var base := 600.0
+	var partials := [[1.00, 1.00, 0.45], [2.32, 0.30, 0.25], [4.25, 0.06, 0.12]]
+	for i in length:
+		var t := float(i) / RATE
+		var v := 0.0
+		for p in partials:
+			v += sin(TAU * base * p[0] * t) * p[1] * exp(-t / p[2])
+		if t < 0.004:
+			v += _rng.randf_range(-0.25, 0.25) * (1.0 - t / 0.004)
+		v *= minf(t / 0.003, 1.0)                                   # No hard click.
+		v *= minf((length - i) / (RATE * 0.05), 1.0)               # Fade the tail.
+		out[i] = v * 0.4
+	return out
+
+
+## A short cheer: a bright swell of voices with scattered claps on top.
+func _synth_cheer() -> PackedFloat32Array:
+	var length := int(RATE * 1.4)
+	var out := PackedFloat32Array()
+	out.resize(length)
+	var smooth := 0.0
+	var low := 0.0
+	var clap := 0.0
+	for i in length:
+		var t := float(i) / RATE
+		smooth = lerpf(smooth, _rng.randf_range(-1.0, 1.0), 0.35)
+		low = lerpf(low, smooth, 0.25)
+		var voices := smooth - low * 0.6
+		if _rng.randf() < 0.004:
+			clap = 1.0
+		clap *= 0.93
+		var env := minf(t / 0.08, 1.0) * exp(-maxf(t - 0.25, 0.0) / 0.35)
+		out[i] = (voices * 0.8 + _rng.randf_range(-1.0, 1.0) * clap * 0.5) * env
+	return out
+
+
+## "Oooh": a crowd of voices on an "oo" vowel (harmonics through a heavy
+## low-pass), drifting down in pitch as doubt sets in.
+func _synth_oooh() -> PackedFloat32Array:
+	var length := int(RATE * 1.5)
+	var out := PackedFloat32Array()
+	out.resize(length)
+	var voices := 16
+	var freqs: Array[float] = []
+	var phases: Array[float] = []
+	var wobble: Array[float] = []
+	for v in voices:
+		freqs.append(_rng.randf_range(170.0, 290.0))
+		phases.append(_rng.randf() * TAU)
+		wobble.append(_rng.randf_range(4.0, 6.5))
+	var lp := 0.0
+	var peak := 0.0
+	for i in length:
+		var t := float(i) / RATE
+		var glide := lerpf(1.06, 0.88, minf(t / 1.2, 1.0))
+		var v := 0.0
+		for k in voices:
+			var f: float = freqs[k] * glide * (1.0 + 0.012 * sin(TAU * wobble[k] * t))
+			phases[k] += TAU * f / RATE
+			var ph: float = phases[k]
+			v += sin(ph) + 0.45 * sin(ph * 2.0) + 0.2 * sin(ph * 3.0)
+		lp = lerpf(lp, v, 0.12)
+		var env := minf(t / 0.22, 1.0) * clampf((1.5 - t) / 0.6, 0.0, 1.0)
+		out[i] = lp * env
+		peak = maxf(peak, absf(out[i]))
+	for i in length:
+		out[i] = out[i] / maxf(peak, 0.001) * 0.8
 	return out
 
 

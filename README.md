@@ -46,11 +46,13 @@ preset under *Project > Export*.
   bell.
 * Three rounds. Each round is **1 minute of real time**, but the clock shows
   **3:00** and counts down at three times real speed.
-* The **bell** rings to start each round, and three times to end it.
-* Between rounds the boxers walk back to their corners. Each trainer picks
-  one of four instructions (*attack more*, *defend more*, *keep it up*,
-  *go all out*), and it appears in a speech bubble. It changes how the boxer
-  fights the next round.
+* The **bell** rings once (a short, soft ring) to start each round, and
+  three times to end it.
+* Between rounds the boxers walk back to their corners. Each trainer (off
+  screen by the corner post) picks one of four instructions (*attack more*,
+  *defend more*, *keep it up*, *go all out*), and it appears in a speech
+  bubble pointing down to the corner. It changes how the boxer fights the
+  next round.
 * Punches can land clean, be slipped, or be **blocked**. A boxer who covers
   up blocks most head shots (and catches some body shots on his elbows);
   how well depends on his intelligence and speed against the puncher's
@@ -69,7 +71,9 @@ preset under *Project > Export*.
   after three rounds the judges' cards are read **one at a time**, like a
   ring announcer ("Judge H. Pemberton scores the bout..." then "29-28 in
   favour of Johnson"), and each judge's row fills in on the official
-  scorecard under the ring as it is read. Then the winner: by unanimous
+  scorecard under the ring as it is read. The crowd gives a small cheer for
+  a score that looks fair and an "oooh" for one that doesn't (judged against
+  a neutral card of the fight). Then the winner: by unanimous
   (3-0), split (2-1) or majority (2-0 with one even) decision, or a
   unanimous, majority or split draw. As the name is called the referee
   **lifts the winner's arm** (both arms for a draw) and the loser drops his
@@ -124,13 +128,14 @@ Every boxer has six skills from 1 to 99 and a fighting style.
 | Strength     | How little being hit drains energy and wears down the other skills   |
 | Intelligence | Blocking, slipping, counter-punching, knowing when to back off       |
 
-| Style    | Behaviour                                                                   |
-|----------|-----------------------------------------------------------------------------|
-| Brawler  | Plants himself at mid range and trades; rarely steps back                    |
-| Slugger  | Walks forward to close range; hooks and uppercuts                            |
-| Boxer    | Jab-led; throws, steps out, comes back in when it suits him                  |
-| Counter  | Waits outside range and punishes misses; trades when he is on top            |
-| Evasive  | Stays away and jabs, saving himself, then comes forward in the last round    |
+| Style    | Behaviour                                                                            |
+|----------|--------------------------------------------------------------------------------------|
+| Brawler  | Plants himself at mid range and trades; rarely steps back                            |
+| Slugger  | Walks forward to close range; hooks and uppercuts                                    |
+| Boxer    | Jab-led; throws, steps out, comes back in when it suits him                          |
+| Counter  | Waits outside range and punishes misses; trades when he is on top                    |
+| Evasive  | Stays away and jabs, saving himself, then comes forward in the last round            |
+| Showboat | Quick reactions and slips punches, but drops his guard and taunts; can be caught out |
 
 As a boxer is hurt (low health or rocked by a head shot) he throws less, covers
 up and backs off. When he is badly hurt and close, he holds on in a clinch.
@@ -159,15 +164,21 @@ rather than big ones: weights are skewed towards the light end of the range
 (in the default roster eight of the ten weigh under 245 lb), with a couple of
 big men near 290 lb. The heaviest are drawn heavy rather than obese.
 
-**BOXERS** on the main menu has a tab per division: a table of country, age,
-record, style, height, weight, all six skills and an overall rating (with any
-nickname under the name), and the whole division lined up face-on in the ring
-underneath, weigh-in style, numbered to match the table.
+Showboats are rarer than the other styles: one or two per division.
+
+**BOXERS** on the main menu has a tab per division listing each boxer's
+country, age, record (W, L, D and KO, each centred under its heading),
+style (BRL, SLG, BOX, CNR, EVA or SHW), height, weight and overall rating,
+with any nickname under the name. Choose a boxer to open his **profile**: a
+portrait, his details and all six skills as bars, with PREV and NEXT to step
+through the division.
 
 Over 400 simulated fights per division, stoppages ended about 22% of
 lightweight fights, 23% of middleweight fights and 38% of heavyweight fights.
 
 ![The Boxers](docs/screenshots/boxers_heavyweight.png)
+
+![A boxer's profile](docs/screenshots/profile.png)
 
 ### Records (placeholders for now)
 
@@ -206,7 +217,8 @@ assets/fonts/                 Press Start 2P pixel font (SIL Open Font License)
 scenes/
   main_menu.tscn              START and BOXERS
   fight.tscn
-  roster.tscn                 The Boxers screen (table + line-up)
+  roster.tscn                 The Boxers screen (one table per division)
+  profile.tscn                One boxer's profile: portrait, details, skills
   debug/                      Developer tools: pose sheet, venue preview
 scripts/
   autoload/
@@ -225,11 +237,12 @@ scripts/
     punch_types.gd            The five punches and their numbers
   render/
     arena_view.gd             The low-res SubViewport holding ring + boxers
-    arena_renderer.gd         Venues, crowd, ring, ropes, corner man
+    arena_renderer.gd         Venues, crowd, ring, ropes, advice bubbles
     venues.gd                 Venue colours and crowd layout
     boxer_rig.gd              Draws and animates a boxer (side-on)
     front_rig.gd              A boxer or the referee seen face-on
     ceremony.gd               Boxers and referee waiting for the verdict
+    portrait_backdrop.gd      The studio backdrop behind a profile portrait
     boxer_skeleton.gd         Pose -> joint positions (two-bone IK)
     boxer_poses.gd            Pose and animation library
   ui/                         Theme, menus, name plates, score bug, scorecard...
@@ -252,7 +265,7 @@ body is then drawn from outlined, three-tone shaded shapes.
   Taller boxers at the same weight look rangier.
 * Skin, hair (and hair style), trunks, boots are colours. Gloves are always
   red or blue by corner, so the two boxers are easy to tell apart.
-* Seen **face-on** (the weigh-in line-up and the verdict) a boxer is drawn by
+* Seen **face-on** (his profile portrait and the verdict) a boxer is drawn by
   `front_rig.gd` from the same proportions, build and colours, so he is
   recognisably the same man; the build is toned down a little because a big
   man looks less wide from the front than from the side. The referee uses
@@ -292,23 +305,24 @@ godot --headless --path . -s tools/simulate_fights.gd -- --fights=200 --division
 # Every pose and every skin/hair/size combination on one sheet
 godot --path . scenes/debug/pose_sheet.tscn -- --capture=poses.png
 
-# Screenshot a fight. --show can be intro, fight, break, count or result.
+# Screenshot a fight. --show can be intro, fight, big, break, count, announce or result.
 godot --path . scenes/fight.tscn -- --venue=2 --seed=21 --show=fight --capture=fight.png
 ```
 
 Command-line options read by the game (after `--`):
 
-| Option             | Meaning                                                                                                                  |
-|--------------------|--------------------------------------------------------------------------------------------------------------------------|
-| `--seed=<n>`       | Fixed random seed (same match-up and fight every time)                                                                   |
-| `--roster=<n>`     | Different starting rosters                                                                                               |
-| `--division=<0-2>` | 0 Lightweight, 1 Middleweight, 2 Heavyweight                                                                             |
-| `--tab=<0-2>`      | Which division tab the Boxers screen opens on                                                                            |
-| `--venue=<0-3>`    | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena                                                               |
-| `--capture=<png>`  | Fast-forward, save a screenshot and quit                                                                                 |
-| `--show=<moment>`  | What to capture: `menu`, `roster`, `intro`, `fight`, `big` (a big punch landing), `break`, `count`, `announce`, `result` |
-| `--wait=<seconds>` | Real seconds to wait before the shot (e.g. mid read-out)                                                                 |
-| `--at=<seconds>`   | Earliest real second of round 1 to capture (default 20)                                                                  |
+| Option             | Meaning                                                                                                                             |
+|--------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| `--seed=<n>`       | Fixed random seed (same match-up and fight every time)                                                                              |
+| `--roster=<n>`     | Different starting rosters                                                                                                          |
+| `--division=<0-2>` | 0 Lightweight, 1 Middleweight, 2 Heavyweight                                                                                        |
+| `--tab=<0-2>`      | Which division tab the Boxers screen opens on                                                                                       |
+| `--index=<0-9>`    | Which boxer's profile opens (with `--division`)                                                                                     |
+| `--venue=<0-3>`    | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena                                                                          |
+| `--capture=<png>`  | Fast-forward, save a screenshot and quit                                                                                            |
+| `--show=<moment>`  | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch landing), `break`, `count`, `announce`, `result` |
+| `--wait=<seconds>` | Real seconds to wait before the shot (e.g. mid read-out)                                                                            |
+| `--at=<seconds>`   | Earliest real second of round 1 to capture (default 20)                                                                             |
 
 ### Code style
 

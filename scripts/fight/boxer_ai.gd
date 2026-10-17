@@ -9,7 +9,9 @@ extends RefCounted
 ##   3. Is there an opening? (pick a punch that suits my style and the range)
 ##   4. Am I at my favourite distance? (step in or step out)
 ##
-## Style decides the favourite distance and punch choice. Intelligence decides
+## Style decides the favourite distance and punch choice (and, for a
+## showboat, how often he drops his hands and plays to the crowd).
+## Intelligence decides
 ## how often the boxer makes the sensible choice. Speed decides how often he
 ## gets to think at all.
 
@@ -19,10 +21,10 @@ const Advice := Fighter.Advice
 const P := PunchTypes.Type
 
 ## How keen each style is to attack (0 - 1). Order matches BoxerData.Style.
-const BASE_AGGRESSION: Array[float] = [0.62, 0.72, 0.52, 0.34, 0.30]
+const BASE_AGGRESSION: Array[float] = [0.62, 0.72, 0.52, 0.34, 0.30, 0.50]
 
 ## Favourite distance from the opponent, in body heights.
-const PREFERRED_RANGE: Array[float] = [0.48, 0.40, 0.52, 0.62, 0.68]
+const PREFERRED_RANGE: Array[float] = [0.48, 0.40, 0.52, 0.62, 0.68, 0.56]
 
 ## Punch preferences per style: JAB, CROSS, HOOK, UPPERCUT, BODY.
 const PUNCH_WEIGHTS: Array = [
@@ -31,7 +33,14 @@ const PUNCH_WEIGHTS: Array = [
 	[0.45, 0.30, 0.10, 0.05, 0.10],   # Boxer
 	[0.22, 0.38, 0.20, 0.10, 0.10],   # Counter
 	[0.60, 0.25, 0.05, 0.02, 0.08],   # Evasive
+	[0.30, 0.28, 0.20, 0.14, 0.08],   # Showboat
 ]
+
+## Showboats: how long between taunts, how often a quiet moment becomes one,
+## and how often they drop their hands when settling.
+const SHOWBOAT_TAUNT_COOLDOWN := 6.0
+const SHOWBOAT_TAUNT_CHANCE := 0.35
+const SHOWBOAT_HANDS_DOWN := 0.45
 
 ## Natural follow-ups when a boxer is quick-witted enough to combine punches.
 const COMBOS := {
@@ -78,6 +87,8 @@ func think(me: Fighter, opp: Fighter, round_number: int, dt: float) -> void:
 		var react := 0.10 + intel * 0.45 + me.skill("speed") / 99.0 * 0.15 + hurt * 0.15
 		if me.advice == Advice.DEFEND_MORE:
 			react += 0.10
+		if me.data.style == Style.SHOWBOAT:
+			react += 0.10   # Quick reactions.
 		if rng.randf() < react:
 			_defend(me, opp)
 			return
@@ -123,13 +134,20 @@ func think(me: Fighter, opp: Fighter, round_number: int, dt: float) -> void:
 		_move(me, -1, rng.randf_range(0.2, 0.45))
 		return
 
-	# Opponent hurt and we are ahead and flashy? Showboat for a moment.
-	if me.taunt_cooldown <= 0.0 and opp.hurt_level() > 0.5 and dist > me.height_px * 0.6 \
-			and rng.randf() < 0.25 * (1.0 - intel * 0.5):
-		var taunt := "taunt_skip" if me.data.style == Style.EVASIVE else "taunt_one"
-		me.set_state(State.TAUNT, taunt, rng.randf_range(0.8, 1.4))
-		me.taunt_cooldown = 15.0
-		return
+	# Opponent hurt and we are ahead and flashy? Showboat for a moment. A
+	# showboat does it far more often, hurt opponent or not.
+	var showboat := me.data.style == Style.SHOWBOAT
+	if me.taunt_cooldown <= 0.0 and dist > me.height_px * 0.6:
+		var wants := opp.hurt_level() > 0.5 and rng.randf() < 0.25 * (1.0 - intel * 0.5)
+		if showboat:
+			wants = opp.hurt_level() > 0.15 or rng.randf() < SHOWBOAT_TAUNT_CHANCE
+		if wants:
+			var taunt := "taunt_skip" if me.data.style == Style.EVASIVE else "taunt_one"
+			if showboat and rng.randf() < 0.5:
+				taunt = "taunt_skip"
+			me.set_state(State.TAUNT, taunt, rng.randf_range(0.8, 1.4))
+			me.taunt_cooldown = SHOWBOAT_TAUNT_COOLDOWN if showboat else 15.0
+			return
 
 	_settle(me, opp, hurt)
 
@@ -220,6 +238,8 @@ func _defend(me: Fighter, opp: Fighter) -> void:
 	var step_back_chance := 0.25
 	if style == Style.BOXER or style == Style.EVASIVE:
 		step_back_chance = 0.65
+	elif style == Style.SHOWBOAT:
+		step_back_chance = 0.55
 	elif style == Style.COUNTER:
 		step_back_chance = 0.40
 	if _can_back_off(me) and rng.randf() < step_back_chance:
@@ -236,15 +256,18 @@ func _move(me: Fighter, dir: int, seconds: float) -> void:
 	me.set_state(State.MOVE, anim_name, seconds)
 
 
-## Neutral moment: stance, guard or (when tired) hands dropped.
+## Neutral moment: stance, guard or (when tired, or a showboat) hands dropped.
 func _settle(me: Fighter, opp: Fighter, hurt: float) -> void:
 	var guard_chance := 0.15 + hurt * 0.5
 	if me.data.style == Style.COUNTER or me.advice == Advice.DEFEND_MORE:
 		guard_chance += 0.15
+	var showboat := me.data.style == Style.SHOWBOAT
+	if showboat:
+		guard_chance = maxf(guard_chance - 0.10, 0.05)
 	var dist := absf(opp.x - me.x)
 	if dist < me.height_px * 0.6 and rng.randf() < guard_chance:
 		me.set_state(State.GUARD, "guard", rng.randf_range(0.3, 0.7))
-	elif me.fatigue() > 0.65:
+	elif me.fatigue() > 0.65 or (showboat and rng.randf() < SHOWBOAT_HANDS_DOWN):
 		me.set_state(State.IDLE, "ready", 0.0)
 	else:
 		me.set_state(State.IDLE, "stance", 0.0)

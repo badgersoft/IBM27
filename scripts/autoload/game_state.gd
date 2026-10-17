@@ -11,6 +11,7 @@ extends Node
 ##   --division=<0-2> force a division (0 light, 1 middle, 2 heavy)
 ##   --venue=<0-3>   force a venue (0 town gym, 1 city gym, 2 boxing hall, 3 grand arena)
 ##   --capture=<png> take a screenshot during the fight and quit (see CaptureTool)
+##   --index=<0-9>   which boxer's profile to open (with --division)
 
 ## Boxers per division.
 const ROSTER_SIZE := 10
@@ -25,6 +26,11 @@ var blue: BoxerData
 var division: int = Divisions.Id.MIDDLEWEIGHT
 var venue_id := 0
 
+## The Boxers screen remembers its tab, and which boxer's profile is open.
+var roster_tab: int = Divisions.Id.MIDDLEWEIGHT
+var profile_division: int = Divisions.Id.MIDDLEWEIGHT
+var profile_index := 0
+
 ## Options parsed from the command line.
 var options := {}
 
@@ -38,6 +44,9 @@ func _ready() -> void:
 		_rng.seed = seed_value
 	else:
 		_rng.randomize()
+	if options.has("division"):
+		profile_division = clampi(int(options["division"]), 0, Divisions.count() - 1)
+	profile_index = clampi(int(options.get("index", 0)), 0, ROSTER_SIZE - 1)
 	_build_rosters()
 
 

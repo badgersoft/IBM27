@@ -6,9 +6,11 @@ extends Resource
 ## energy, position...) live on Fighter instead. Keeping the two apart means a
 ## boxer can be saved, loaded or reused for another fight without clean-up.
 
-enum Style { BRAWLER, SLUGGER, BOXER, COUNTER, EVASIVE }
+enum Style { BRAWLER, SLUGGER, BOXER, COUNTER, EVASIVE, SHOWBOAT }
 
-const STYLE_NAMES: Array[String] = ["Brawler", "Slugger", "Boxer", "Counter", "Evasive"]
+const STYLE_NAMES: Array[String] = ["Brawler", "Slugger", "Boxer", "Counter", "Evasive", "Showboat"]
+## Three-letter short forms for tight tables (the Boxers list).
+const STYLE_SHORT: Array[String] = ["BRL", "SLG", "BOX", "CNR", "EVA", "SHW"]
 
 ## Short one-line description of each style, shown in the tale of the tape.
 const STYLE_BLURBS: Array[String] = [
@@ -17,6 +19,7 @@ const STYLE_BLURBS: Array[String] = [
 	"Hits, moves back, and picks his moments.",
 	"Waits, slips, and punishes mistakes.",
 	"Stays on the move and saves himself late.",
+	"Quick and flashy; drops his guard to play to the crowd.",
 ]
 
 # --- Identity --------------------------------------------------------------
@@ -87,6 +90,10 @@ func division_name() -> String:
 
 func style_name() -> String:
 	return STYLE_NAMES[style]
+
+
+func style_short() -> String:
+	return STYLE_SHORT[style]
 
 
 ## "22-3-1"  (wins - losses - draws, the usual boxing order).
