@@ -262,7 +262,8 @@ of heavyweight fights; lightweights stop least.
 
 Every division is ranked from top to bottom. Each has one title, the **IBC**
 title, held to begin with by its best man. The champion is listed first as
-**C** with the belt (black, with a silver centre plate and a smaller silver
+**C** with the belt (a black strap with silver stitching, a big oval silver
+centre plate engraved with a ring and a star, and a smaller riveted silver
 plate either side) next to his name: in the Boxers list, on his profile, on
 his name plate in the ring and in the tale of the tape. The other boxers are
 numbered contenders, and the order is split into thirds, which are the

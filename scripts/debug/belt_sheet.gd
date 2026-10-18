@@ -1,6 +1,7 @@
 extends Control
-## Developer tool: the IBC belt designs side by side, to choose from. The
-## current belt (BeltIcon) is first, then the candidates, each at the sizes
+## Developer tool: the IBC belt designs side by side. The current belt
+## (BeltIcon, the Classic design) is first, then the other designs that were
+## considered (to swap in, copy one's rows into BeltIcon.ART), each at the sizes
 ## the game uses (x2 on the name plates, x3 in the Boxers list, x4 on the
 ## profile) and in a Boxers list row next to a champion's name.
 ##
@@ -18,7 +19,6 @@ const LIST_X := 736
 const LIST_W := 496
 
 const NOTES := [
-	"Strap with square plates",
 	"Oval plate, engraved ring and star",
 	"Shield plate engraved IBC",
 	"Round plate engraved with a globe",
@@ -39,20 +39,6 @@ const PALETTE := {
 	"r": Color("ff7078"),
 }
 const DESIGNS := [
-	["CLASSIC", [
-		".............oooooo.............",
-		"...........oowwwsssoo...........",
-		"...oooo...owwwwsssssso...oooo...",
-		".KowwwwoKKowwwggggsssoKKowwwwoK.",
-		"kkowssdoxowwsgswwsgsssokowssdokk",
-		"kkowggdokowsgswwwwsgddokowggdokk",
-		"kkowggdokossgswwwwsgddokowggdokk",
-		"kkowssdoxosssgswwsgdddokowssdokk",
-		".zowdddozzosssggggdddozzowdddoz.",
-		"...oooo...osssssdddddo...oooo...",
-		"...........oossddddoo...........",
-		".............oooooo.............",
-	]],
 	["CREST", [
 		"..........ooooooooooooo.........",
 		".........owwwwwwwwwwwwwo........",

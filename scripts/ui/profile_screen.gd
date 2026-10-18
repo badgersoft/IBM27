@@ -145,9 +145,9 @@ func _show() -> void:
 	UiTheme.fit(title, 744)
 	_content.add_child(UiTheme.place(title, 24, 24, 744, UiTheme.TITLE))
 	if GameState.is_champion(b):
-		# The belt (x4, 96 x 32) just after the name, level with its capitals.
+		# The belt (x4, 128 x 48) just after the name, centred on its capitals.
 		var belt := BeltIcon.new(4)
-		belt.position = Vector2(24 + b.display_name().length() * UiTheme.TITLE + 16, 24)
+		belt.position = Vector2(24 + b.display_name().length() * UiTheme.TITLE + 16, 24 + UiTheme.TITLE / 2.0 - belt.size.y / 2.0)
 		_content.add_child(belt)
 	if not b.nickname.is_empty():
 		var nick := UiTheme.label("\"%s\"" % b.nickname.to_upper(), UiTheme.BODY, Palette.UI_GOLD)

@@ -119,7 +119,7 @@ func _row(f: Fixture, y: float, stripe: bool, rankings: Array[Rankings], clickab
 	if f.title:
 		var belt := BeltIcon.new(2)
 		var mid: Array = COLUMNS[3]
-		belt.position = Vector2(mid[1] + (mid[2] - belt.size.x) / 2.0, y + VALUE_Y + 4)
+		belt.position = Vector2(mid[1] + (mid[2] - belt.size.x) / 2.0, y + VALUE_Y + 12 - belt.size.y / 2.0)
 		_rows.add_child(belt)
 
 

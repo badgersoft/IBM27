@@ -65,7 +65,7 @@ const COL_NAME := 1
 const COL_FROM := 2
 const COL_LEVEL := 10
 const COL_OVERALL := 11
-## The champion's belt follows his name (BeltIcon at x3: 72 x 24), so his
+## The champion's belt follows his name (BeltIcon at x3: 96 x 36), so his
 ## name is kept to CHAMPION_NAME_CHARS to leave room for it.
 const BELT_PIXEL := 3
 const BELT_GAP := 16
@@ -76,7 +76,7 @@ const ORDER_W := 224
 ## Longest name shown in full; longer names are shortened to an initial and
 ## surname so every name is the same size and clear of the FROM column.
 const NAME_CHARS := 18
-const CHAMPION_NAME_CHARS := 16
+const CHAMPION_NAME_CHARS := 15
 
 var _frame: Control
 var _tabs: Array[Button] = []

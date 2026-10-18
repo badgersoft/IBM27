@@ -4,6 +4,15 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.13
+
+* The new IBC belt, design B (Classic): a black strap, lit along its top
+  edge and stitched in silver so it stands out on the dark screens. It has
+  a big oval silver centre plate, engraved with a ring and a star, and a
+  smaller riveted silver plate either side. It is drawn a little bigger:
+  64 x 24 on the name plates and fixtures, 96 x 36 in the Boxers list and
+  128 x 48 on the profile.
+
 ## 0.1.12
 
 * Developer tool: `scenes/debug/belt_sheet.tscn` shows the current IBC

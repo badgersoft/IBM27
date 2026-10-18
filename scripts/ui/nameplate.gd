@@ -10,7 +10,7 @@ extends Control
 ## plate reads from the left with its stripe on the left; the blue corner's
 ## plate is the mirror image. A name too long to share the line with the
 ## record is shortened to an initial and surname ("T. WASHINGTON"). A
-## champion's IBC belt (BeltIcon, 48 x 16) sits under his record, at the far
+## champion's IBC belt (BeltIcon, 64 x 24) sits under his record, at the far
 ## end of the nickname line, so it never squeezes the name.
 ##
 ## Rows (measured on screen): 8 px border-to-name, 8 px name-to-nickname and
@@ -51,10 +51,10 @@ func setup(boxer: BoxerData, corner: int) -> void:
 	var name_x := text_x if left_side else text_x + text_w - name_w
 	add_child(UiTheme.place(name_label, name_x, NAME_Y, name_w, UiTheme.ROW_H))
 	if GameState.is_champion(boxer):
-		# Level with the nickname's capitals (4 px into its 24 px row).
+		# Centred on the nickname's capitals (rows 4 - 20 of its 24 px row).
 		var belt := BeltIcon.new(2)
 		var belt_x: float = text_x + text_w - belt.size.x if left_side else text_x
-		belt.position = Vector2(belt_x, NICK_Y + 4)
+		belt.position = Vector2(belt_x, NICK_Y + 12 - belt.size.y / 2.0)
 		add_child(belt)
 
 	if not boxer.nickname.is_empty():
