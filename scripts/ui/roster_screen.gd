@@ -3,19 +3,19 @@ extends Control
 ## division's ten boxers. Choosing a boxer opens his profile (all his skills
 ## and a portrait). Records shown include any fights played this session.
 ##
-## Layout (1280 x 720 frame):
+## Layout (1280 x 800 frame):
 ##   y  16  THE BOXERS                                        [ BACK ]
 ##   y  80  [ LIGHTWEIGHT ][ MIDDLEWEIGHT ][ HEAVYWEIGHT ]    size range
-##   y 120  table panel (1248 x 584), joined to the selected tab
+##   y 120  table panel (1248 x 664), joined to the selected tab
 ##
 ## After the name, the columns are 80 px cells on an even rhythm. Every value
 ## is centred under its heading, so W, L, D and KO each sit squarely beneath
 ## their letter. Each row has the name on its first line and any nickname
 ## under it, with plenty of room either side.
 
-const FRAME_SIZE := Vector2(1280, 720)
-const PANEL := Rect2(16, 120, 1248, 584)
-const ROW_H := 52
+const FRAME_SIZE := Vector2(1280, 800)
+const PANEL := Rect2(16, 120, 1248, 664)
+const ROW_H := 60
 const FIRST_ROW_Y := 56          # Inside the panel.
 ## Group caption ("RECORD") and its rule. An 8 px caption label draws its
 ## capitals 7 px below its top, so the rule sits 3 px under the letters.
@@ -23,10 +23,10 @@ const GROUP_Y := 10
 const GROUP_RULE_Y := 27
 const HEADER_Y := 32             # Column captions.
 ## Inside a row: the main line (a 24 px label, so the 16 px capitals sit on
-## rows 12 - 25) and the nickname under it (capitals on rows 33 - 39), which
-## leaves 12 px above the name and below the nickname.
-const VALUE_Y := 8
-const NICK_Y := 26
+## rows 16 - 29) and the nickname under it (capitals on rows 37 - 43), which
+## leaves 16 px above the name and below the nickname.
+const VALUE_Y := 12
+const NICK_Y := 30
 
 # --- Tabs ----------------------------------------------------------------------------
 const TAB_Y := 80

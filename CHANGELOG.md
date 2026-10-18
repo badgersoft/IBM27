@@ -4,6 +4,15 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.7
+
+* The game is now laid out for a 1280 x 800 window (was 1280 x 720), with
+  16 px margins round the fight screen so it feels less squashed.
+* The panels under the ring are taller and show THROWN again, on its own
+  row, between ENERGY and LANDED, with SIG. STRIKES below.
+* The Boxers list rows, the profile portrait and skills, and the main menu
+  all use the extra height.
+
 ## 0.1.6
 
 * Showboats show off much less often, at two levels: during the fight they

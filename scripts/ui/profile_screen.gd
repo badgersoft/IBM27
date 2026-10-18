@@ -3,26 +3,26 @@ extends Control
 ## about him, including all six skills. PREV and NEXT step through his
 ## division; BACK returns to the list on the same tab.
 ##
-## Layout (1280 x 720 frame):
+## Layout (1280 x 800 frame):
 ##   y  16  BOBBY WALKER                   [< PREV] [NEXT >] [  BACK  ]
 ##   y  72  "THE OUTLAW"                          HEAVYWEIGHT  -  1 OF 10
 ##   y 112  +-- portrait --+  +-- details (832 x 240) ------------------+
-##          |  400 x 592   |  +-- skills  (832 x 336) ------------------+
-##   y 704  +--------------+
+##          |  400 x 672   |  +-- skills  (832 x 416) ------------------+
+##   y 784  +--------------+
 ##
 ## The portrait is drawn at the same pixel scale for everyone (x3, like the
 ## arena), so a heavyweight fills more of the frame than a lightweight.
 
-const FRAME_SIZE := Vector2(1280, 720)
+const FRAME_SIZE := Vector2(1280, 800)
 
-const PORTRAIT := Rect2(16, 112, 400, 592)
-const PORTRAIT_VIEW := Vector2i(128, 176)    ## Low-res pixels, shown at x3.
+const PORTRAIT := Rect2(16, 112, 400, 672)
+const PORTRAIT_VIEW := Vector2i(128, 200)    ## Low-res pixels, shown at x3.
 const PORTRAIT_SCALE := 3
 const FIGURE_SIZE := 1.6                     ## Drawn larger than in the ring.
-const FEET_Y := 164.0
+const FEET_Y := 186.0
 
 const DETAILS := Rect2(432, 112, 832, 240)
-const SKILLS := Rect2(432, 368, 832, 336)
+const SKILLS := Rect2(432, 368, 832, 416)
 const PAD := 16
 const CAPTION_Y := 10
 
@@ -42,7 +42,7 @@ const BLURB_Y := 200
 
 # Skills: label, bar, value.
 const SKILL_ROW_Y := 28
-const SKILL_ROW_H := 42
+const SKILL_ROW_H := 54
 const SKILL_LABEL_W := 224
 const BAR_X := 256
 const BAR_W := 448

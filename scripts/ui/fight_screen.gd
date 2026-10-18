@@ -5,19 +5,19 @@ extends Control
 ## official cards across the whole bottom row, filled in judge by judge as
 ## the verdict is read out).
 ##
-## Layout (1280 x 720 design frame, 8 px margins between every block):
+## Layout (1280 x 800 design frame, 16 px margins round every block):
 ##
-##   y   8 - 64   [ RED NAMEPLATE ] [ SCORE BUG ] [ BLUE NAMEPLATE ]
-##   y  72 - 576  [                ARENA (424 x 168 x3)              ]
-##   y 584 - 712  [ RED PANEL ]     [ SCORECARD ]     [ BLUE PANEL ]
+##   y  16 -  72  [ RED NAMEPLATE ] [ SCORE BUG ] [ BLUE NAMEPLATE ]
+##   y  88 - 592  [                ARENA (424 x 168 x3)              ]
+##   y 608 - 784  [ RED PANEL ]     [ SCORECARD ]     [ BLUE PANEL ]
 ##
 ## This script only wires things together. The fight itself is FightSim, the
 ## ring and boxers are ArenaView, and each panel is its own small widget.
 
-const FRAME_SIZE := Vector2(1280, 720)
+const FRAME_SIZE := Vector2(1280, 800)
 const ARENA_SCALE := 3
-const ARENA_POS := Vector2(4, 72)
-const MARGIN := 8
+const ARENA_POS := Vector2(4, 88)
+const MARGIN := 16
 const INTRO_AUTO_START := 12.0   ## Seconds before the fight starts by itself.
 const RESULT_DELAY := 3.0        ## Seconds after the final bell before the verdict.
 const SCORECARD_REFRESH := 0.25
@@ -110,7 +110,7 @@ func _build_layout(red: BoxerData, blue: BoxerData) -> void:
 	add_child(UiTheme.block(Palette.UI_BACKGROUND, 0, 0, 0, 0))
 	get_child(-1).set_anchors_preset(Control.PRESET_FULL_RECT)
 
-	# Everything is laid out inside a fixed 1280 x 720 frame kept centred, so
+	# Everything is laid out inside a fixed 1280 x 800 frame kept centred, so
 	# wider or taller screens simply get more background around it.
 	_frame = Control.new()
 	_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE

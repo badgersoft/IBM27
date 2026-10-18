@@ -1,6 +1,6 @@
 class_name Scorecard
 extends Control
-## The panel under the ring during the fight (512 x 128). It has two faces:
+## The panel under the ring during the fight (512 x 176). It has two faces:
 ##
 ## TODAY'S JUDGES (before the first bell) - who is judging and how fair they are:
 ##   TODAY'S JUDGES
@@ -23,14 +23,23 @@ extends Control
 enum Mode { JUDGES, PUNDIT }
 
 const W := 512
-const H := 128
+const H := 176
 const PAD := 16
-const HEADER_Y := 27
-const FIRST_ROW_Y := 43
+## Every face has its caption on the same line as the condition panels'
+## captions; what is under it is centred in the rest of the panel.
+const CAPTION_Y := 8
+## Today's judges: column captions, then a row per judge.
+const HEADER_Y := 42
+const FIRST_ROW_Y := 64
+const JUDGE_ROW_H := 32
 ## Pundit's card: the round strip centred in the space left of the total,
 ## round numbers over the boxes, the total in its own block on the right.
 const STRIP_AREA := Vector2(PAD, 368)       ## x from / to.
-const STRIP_Y := 46                         ## Boxes centred on the score row.
+const PUNDIT_HEADER_Y := 46                 ## Round numbers and "TOTAL".
+const PUNDIT_ROW_Y := 68                    ## The total's score.
+const STRIP_Y := 71                         ## Boxes centred on the score row.
+const DIVIDER_Y := 107
+const VERDICT_Y := 125
 const STRIP_STEPS := [48, 40, 32, 28]
 const TOTAL_X := 384
 const TOTAL_W := 112
@@ -71,14 +80,14 @@ func show_judges(judges: Judges) -> void:
 	var face: Control = _faces[Mode.JUDGES]
 	for child in face.get_children():
 		child.queue_free()
-	face.add_child(UiTheme.place(UiTheme.label("TODAY'S JUDGES", UiTheme.CAPTION, Palette.UI_GOLD), PAD, 7, 240, UiTheme.CAPTION))
+	face.add_child(UiTheme.place(UiTheme.label("TODAY'S JUDGES", UiTheme.CAPTION, Palette.UI_GOLD), PAD, CAPTION_Y, 240, UiTheme.CAPTION))
 	face.add_child(UiTheme.place(UiTheme.label("JUDGE", UiTheme.CAPTION, Palette.UI_TEXT_DIM), PAD, HEADER_Y, JUDGE_NAME_W, UiTheme.CAPTION))
 	face.add_child(UiTheme.place(UiTheme.label("FROM", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), COUNTRY_X, HEADER_Y, COUNTRY_W, UiTheme.CAPTION))
 	face.add_child(UiTheme.place(UiTheme.label("FAIRNESS", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), FAIR_X, HEADER_Y, FAIR_W, UiTheme.CAPTION))
 	for j in judges.panel.size():
 		var judge: Dictionary = judges.panel[j]
 		var fairness := int(judge["fairness"])
-		var y := FIRST_ROW_Y + j * UiTheme.ROW_H
+		var y := FIRST_ROW_Y + j * JUDGE_ROW_H
 		var name_label := UiTheme.label(Officials.short_name(judge))
 		UiTheme.fit(name_label, JUDGE_NAME_W)
 		face.add_child(UiTheme.place(name_label, PAD, y, JUDGE_NAME_W, UiTheme.ROW_H))
@@ -108,9 +117,9 @@ func _face() -> Control:
 func _build_pundit(face: Control, judges: Judges) -> void:
 	for child in face.get_children():
 		child.queue_free()
-	face.add_child(UiTheme.place(UiTheme.label("RINGSIDE PUNDIT  -  UNOFFICIAL", UiTheme.CAPTION, Palette.UI_TEXT_DIM), PAD, 7, 288, UiTheme.CAPTION))
+	face.add_child(UiTheme.place(UiTheme.label("RINGSIDE PUNDIT  -  UNOFFICIAL", UiTheme.CAPTION, Palette.UI_TEXT_DIM), PAD, CAPTION_Y, 288, UiTheme.CAPTION))
 	_pundit_name = UiTheme.label(str(judges.pundit["name"]).to_upper(), UiTheme.CAPTION, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_RIGHT)
-	face.add_child(UiTheme.place(_pundit_name, W - PAD - 192, 7, 192, UiTheme.CAPTION))
+	face.add_child(UiTheme.place(_pundit_name, W - PAD - 192, CAPTION_Y, 192, UiTheme.CAPTION))
 
 	_pundit_strip = RoundStrip.new()
 	_pundit_strip.setup(judges.rounds, STRIP_AREA.y - STRIP_AREA.x, STRIP_STEPS)
@@ -120,21 +129,21 @@ func _build_pundit(face: Control, judges: Judges) -> void:
 	for r in judges.rounds:
 		var number := UiTheme.label(str(r + 1), UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER)
 		var x := strip_x + _pundit_strip.number_x(r) - _pundit_strip.step / 2.0
-		face.add_child(UiTheme.place(number, x, HEADER_Y, _pundit_strip.step, UiTheme.CAPTION))
+		face.add_child(UiTheme.place(number, x, PUNDIT_HEADER_Y, _pundit_strip.step, UiTheme.CAPTION))
 
 	# Total: a thin divider, its caption over the score.
-	face.add_child(UiTheme.block(Color(Palette.UI_TEXT_DIM, 0.4), TOTAL_X - 8, HEADER_Y + 4, 1, 36))
+	face.add_child(UiTheme.block(Color(Palette.UI_TEXT_DIM, 0.4), TOTAL_X - 8, PUNDIT_HEADER_Y + 4, 1, 40))
 	var caption := UiTheme.label("TOTAL", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER)
-	face.add_child(UiTheme.place(caption, TOTAL_X, HEADER_Y, TOTAL_W, UiTheme.CAPTION))
+	face.add_child(UiTheme.place(caption, TOTAL_X, PUNDIT_HEADER_Y, TOTAL_W, UiTheme.CAPTION))
 	var digits := 3 if judges.rounds * 10 >= 100 else 2
 	_pundit_total = ScorePair.new(digits)
-	_pundit_total.position = Vector2(TOTAL_X + (TOTAL_W - ScorePair.width_for(digits)) / 2.0, FIRST_ROW_Y)
+	_pundit_total.position = Vector2(TOTAL_X + (TOTAL_W - ScorePair.width_for(digits)) / 2.0, PUNDIT_ROW_Y)
 	_pundit_total.clear()
 	face.add_child(_pundit_total)
 
-	face.add_child(UiTheme.block(Color(Palette.UI_TEXT_DIM, 0.4), PAD, 79, W - PAD * 2, 1))
+	face.add_child(UiTheme.block(Color(Palette.UI_TEXT_DIM, 0.4), PAD, DIVIDER_Y, W - PAD * 2, 1))
 	_verdict = UiTheme.label("", UiTheme.BODY, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
-	face.add_child(UiTheme.place(_verdict, PAD, 91, W - PAD * 2, UiTheme.ROW_H))
+	face.add_child(UiTheme.place(_verdict, PAD, VERDICT_Y, W - PAD * 2, UiTheme.ROW_H))
 
 
 func _refresh_pundit(sim: FightSim) -> void:

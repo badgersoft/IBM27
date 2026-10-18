@@ -1,7 +1,7 @@
 class_name OfficialCard
 extends Control
 ## The judges' official scorecards, shown across the whole bottom of the
-## fight screen while the verdict is read (1248 x 128). Each judge's row is
+## fight screen while the verdict is read (1248 x 176). Each judge's row is
 ## filled in as his score is read out (see reveal_judges).
 ##
 ##   OFFICIAL SCORECARDS                    RED  BLUE  EVEN  GOLD EDGE 10-8
@@ -14,11 +14,12 @@ extends Control
 ## a full-size score with room for three digits in the longer fights.
 
 const W := 1248
-const H := 128
+const H := 176
 const PAD := 16
-const CAPTION_Y := 7
-const HEADER_Y := 27
-const FIRST_ROW_Y := 43
+const CAPTION_Y := 8
+const HEADER_Y := 42
+const FIRST_ROW_Y := 64
+const ROW_H := 32
 const NAME_W := 240
 const STRIP_AREA := Vector2(272, 1048)      ## x from / to.
 const STRIP_STEPS := [128, 96, 72, 64]
@@ -59,7 +60,7 @@ func setup(judges: Judges) -> void:
 	var digits := 3 if judges.rounds * 10 >= 100 else 2
 
 	for j in judges.panel.size():
-		var y := FIRST_ROW_Y + j * UiTheme.ROW_H
+		var y := FIRST_ROW_Y + j * ROW_H
 		var name_label := UiTheme.label(Officials.short_name(judges.panel[j]), UiTheme.BODY, Palette.UI_TEXT)
 		add_child(UiTheme.place(name_label, PAD, y, NAME_W, UiTheme.ROW_H))
 		_names.append(name_label)

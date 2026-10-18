@@ -62,7 +62,7 @@ preset under *Project > Export*.
   intelligence.
 * Hard, clean power shots that really hurt count as **significant strikes**
   (about one landed punch in five). The panels under the ring show each
-  boxer's punches landed out of thrown and his significant strikes. Some
+  boxer's punches thrown, landed and significant strikes. Some
   judges weight a significant strike well above an ordinary landed punch;
   others just count it as another punch landed.
 * Now and then a **big punch** lands: far more damage, twice the chance of a
@@ -359,8 +359,9 @@ Command-line options read by the game (after `--`):
   function.
 * Tables of numbers are column-aligned so they can be read and tuned at a
   glance.
-* UI sits on an 8 px grid with 16 px margins, using only the font sizes 8, 16,
-  24, 32 and 48 (multiples of the pixel font's 8 px design grid). Numbers in
+* UI is laid out in a 1280 x 800 frame on an 8 px grid with 16 px margins,
+  using only the font sizes 8, 16, 24, 32 and 48 (multiples of the pixel
+  font's 8 px design grid). Numbers in
   tables are right-aligned, and scores always keep the dash in the same
   column.
 
