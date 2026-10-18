@@ -112,6 +112,7 @@ func _notification(what: int) -> void:
 
 func _go_back() -> void:
 	GameState.roster_tab = _division
+	GameState.roster_page = floori(float(_index) / RosterScreen.PAGE_SIZE)   # The page he is on.
 	get_tree().change_scene_to_file("res://scenes/roster.tscn")
 
 

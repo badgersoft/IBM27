@@ -35,6 +35,8 @@ const ADVICE_TEXT: Array[String] = ["", "ATTACK MORE!", "DEFEND MORE!", "KEEP IT
 
 const MAX_HEALTH := 100.0
 const MAX_ENERGY := 100.0
+## Footwork speed multiplier while walking out of the corner at the bell.
+const COME_OUT_SPEED := 1.8
 
 var data: BoxerData
 var corner := 0
@@ -72,6 +74,9 @@ var counter_window := 0.0       ## Time left to punish an opponent's miss.
 var streak := 0                 ## Clean punches landed in a row (feeds big punches).
 var idle_time := 0.0            ## Seconds since he last threw a punch.
 var celebrates_knockdown := false ## Showboating over the man he has just put down.
+var coming_out := false         ## Walking briskly out of his corner at the bell.
+var one_two := false            ## The jab in the air is the first half of a one-two.
+var one_two_window := 0.0       ## Time left for the cross after a one-two jab landed.
 var advice: Advice = Advice.NONE
 
 # --- Knockdowns -----------------------------------------------------------------
@@ -102,6 +107,7 @@ static func _empty_stats() -> Dictionary:
 		"blocked": 0,        # Punches that hit the gloves.
 		"big": 0,            # Big punches landed (the rare, huge ones).
 		"significant": 0,    # Significant strikes: hard clean shots that hurt.
+		"one_twos": 0,       # One-twos landed (the jab and the cross both clean).
 		"score": 0.0,        # Judges' "clean punching" points.
 		"damage": 0.0,       # Health damage dealt.
 		"pressure": 0.0,     # Seconds spent coming forward.
@@ -161,7 +167,8 @@ func punch_duration_scale() -> float:
 
 ## Footwork speed in arena pixels per second.
 func move_speed() -> float:
-	return lerpf(16.0, 28.0, skill("speed") / 99.0) * (0.75 + 0.25 * (1.0 - fatigue())) / _division_speed()
+	var walk_out := COME_OUT_SPEED if coming_out else 1.0
+	return lerpf(16.0, 28.0, skill("speed") / 99.0) * (0.75 + 0.25 * (1.0 - fatigue())) / _division_speed() * walk_out
 
 
 ## Heavier divisions move and punch a little slower, lighter ones quicker.

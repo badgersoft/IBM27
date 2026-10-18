@@ -43,7 +43,8 @@ var _card_clock := 0.0
 var _result_clock := -1.0
 var _capturing := false
 var _big_landing := false        # A big punch's punch_landed is on its way.
-var _big_this_step := false     # The screenshot tool waits for a big punch.
+var _big_this_step := false     # The screenshot tool waits for a big punch...
+var _one_two_this_step := false # ...or a one-two.
 
 
 func _ready() -> void:
@@ -190,6 +191,7 @@ func _connect_sim() -> void:
 	sim.round_ended.connect(_on_round_ended)
 	sim.punch_landed.connect(_on_punch_landed)
 	sim.big_punch.connect(_on_big_punch)
+	sim.one_two_landed.connect(_on_one_two)
 	sim.knocked_down.connect(_on_knocked_down)
 	sim.count_changed.connect(func(_c: int, n: int) -> void: _show_banner(str(n), 0.9, Palette.UI_TEXT))
 	sim.fighter_rose.connect(func(_c: int) -> void: view.arena.excitement = 0.8)
@@ -240,6 +242,16 @@ func _on_big_punch(corner: int, type: int) -> void:
 	view.arena.impact_flash(at.round())
 	view.arena.excitement = 1.0
 	Sfx.big_hit()
+
+
+## A one-two landed: a call-out over the man who threw it and a lift from the crowd.
+func _on_one_two(corner: int) -> void:
+	_one_two_this_step = true
+	var a: Fighter = sim.fighters[corner]
+	var head_top := ArenaRenderer.FIGHT_Y - a.height_px - 10.0
+	view.arena.callout("ONE-TWO!", Vector2(a.x, head_top))
+	view.arena.excitement = minf(view.arena.excitement + 0.4, 1.0)
+	Sfx.roar(0.6)
 
 
 func _on_knocked_down(_corner: int) -> void:
@@ -357,7 +369,7 @@ func _update_banner(delta: float) -> void:
 # ============================================================================
 #  Screenshot mode (developer tool)
 # ============================================================================
-## Run with:  -- --capture=<file.png> [--show=intro|fight|big|taunt|break|count|announce|result] [--at=<seconds>]
+## Run with:  -- --capture=<file.png> [--show=intro|fight|big|onetwo|taunt|break|count|announce|result] [--at=<seconds>]
 ## The fight is fast-forwarded (rigs stepped in lock-step with the fight) to a
 ## moment worth showing, frozen, and the whole screen saved as a PNG.
 
@@ -375,18 +387,20 @@ func _run_capture() -> void:
 		var limit := (FightSim.REAL_ROUND_SECONDS + FightSim.BREAK_SECONDS) * sim.rounds + 120.0
 		while t < limit:
 			_big_this_step = false
+			_one_two_this_step = false
 			sim.step(dt)
 			_sync_rigs()
 			for rig in view.rigs:
 				rig.advance(dt)
+			view.arena.advance(dt)
 			_update_banner(dt)
 			t += dt
 			if t >= at and _is_capture_moment(show):
 				break
 		for rig in view.rigs:
 			rig.set_process(false)
-		if show == "big":
-			view.arena.set_process(false)   # Hold the impact flash for the shot.
+		if show == "big" or show == "onetwo":
+			view.arena.set_process(false)   # Hold the impact flash or call-out for the shot.
 		_refresh_hud()
 		if show in ["result", "announce"] and sim.phase == FightSim.Phase.FINISHED:
 			_show_result()
@@ -398,7 +412,7 @@ func _run_capture() -> void:
 	await get_tree().create_timer(float(GameState.options.get("wait", "0.5"))).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(path)
-	print("Captured ", path)
+	print("Captured ", path, "  (", sim.result.get("method", "fight on"), ")")
 	get_tree().quit()
 
 
@@ -412,6 +426,8 @@ func _is_capture_moment(show: String) -> bool:
 			return sim.phase == FightSim.Phase.FINISHED and sim._finish_timer > 1.0
 		"big":
 			return _big_this_step
+		"onetwo":
+			return _one_two_this_step
 		"taunt":
 			for f in sim.fighters:
 				if f.state == Fighter.State.TAUNT and f.state_time > 0.35:

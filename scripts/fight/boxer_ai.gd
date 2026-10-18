@@ -57,6 +57,23 @@ const IDLE_BEFORE_CLOSING := 2.0
 const CLOSE_IN_RATE := 0.05
 const MAX_CLOSE_IN := 0.22
 
+## The one-two: a jab followed straight away by a cross. Both landing clean
+## does extra damage (FightSim.ONE_TWO_DAMAGE). A skilled boxer (quick hands
+## and a good head) throws it now and then as a lead; a counter-puncher who
+## has just slipped or blocked a punch fires it back as his counter.
+## ONE_TWO_LEAD is the chance at full skill, ONE_TWO_STYLE adds per style
+## (Brawler, Slugger, Boxer, Counter, Evasive, Showboat), and
+## ONE_TWO_COUNTER is a counter-puncher's chance after a dodge.
+const ONE_TWO_LEAD := 0.22
+const ONE_TWO_STYLE: Array[float] = [0.00, 0.00, 0.10, 0.06, 0.04, 0.04]
+const ONE_TWO_COUNTER := 0.60
+
+## At the bell both boxers walk briskly to the middle (Fighter.COME_OUT_SPEED)
+## until they are COME_OUT_SLACK body heights outside their favourite
+## distance. A really defensive boxer (evasive, told to defend, or still
+## badly hurt) takes his time as usual.
+const COME_OUT_SLACK := 0.10
+
 ## Natural follow-ups when a boxer is quick-witted enough to combine punches.
 const COMBOS := {
 	P.JAB:      [P.JAB, P.CROSS],
@@ -81,6 +98,7 @@ func think(me: Fighter, opp: Fighter, round_number: int, dt: float) -> void:
 	me.reset_timer = maxf(me.reset_timer - dt, 0.0)
 	me.counter_window = maxf(me.counter_window - dt, 0.0)
 	me.clinch_cooldown = maxf(me.clinch_cooldown - dt, 0.0)
+	me.one_two_window = maxf(me.one_two_window - dt, 0.0)
 	me.taunt_cooldown = maxf(me.taunt_cooldown - dt, 0.0)
 
 	# Finish a combination before anything else.
@@ -90,6 +108,9 @@ func think(me: Fighter, opp: Fighter, round_number: int, dt: float) -> void:
 			me.start_punch(next)
 			return
 		me.combo.clear()
+
+	if me.coming_out and _come_out(me, opp, round_number):
+		return
 
 	if me.think_timer > 0.0:
 		return
@@ -134,6 +155,13 @@ func think(me: Fighter, opp: Fighter, round_number: int, dt: float) -> void:
 		if me.counter_window > 0.0:
 			chance = maxf(chance, 0.55 + intel * 0.35)   # Punish a miss.
 		if rng.randf() < chance:
+			if P.JAB in options and P.CROSS in options and rng.randf() < _one_two_chance(me):
+				me.start_punch(P.JAB)
+				me.combo.assign([P.CROSS])
+				me.one_two = true
+				if me.data.style == Style.BOXER or me.data.style == Style.EVASIVE:
+					me.reset_timer = rng.randf_range(0.6, 1.2)
+				return
 			var type := _choose_punch(me, options)
 			me.start_punch(type)
 			_maybe_queue_combo(me, type)
@@ -283,10 +311,24 @@ func _defend(me: Fighter, opp: Fighter) -> void:
 		me.counter_window = 0.7
 
 
+## Keeps walking out of the corner; false once he is there (or would rather not).
+func _come_out(me: Fighter, opp: Fighter, round_number: int) -> bool:
+	var defensive := me.data.style == Style.EVASIVE or me.advice == Advice.DEFEND_MORE or me.hurt_level() > 0.5
+	var want := (_preferred_distance(me, round_number) + COME_OUT_SLACK) * me.height_px
+	if defensive or absf(opp.x - me.x) <= want:
+		me.coming_out = false
+		return false
+	if me.state != State.MOVE:
+		_move(me, 1, 0.6)
+	return true
+
+
 func _move(me: Fighter, dir: int, seconds: float) -> void:
 	me.move_dir = dir
 	var anim_name := "move_forward" if dir > 0 else "move_back"
-	me.set_state(State.MOVE, anim_name, seconds)
+	# Quicker steps to match a brisk walk out of the corner.
+	var anim_scale := 1.0 / Fighter.COME_OUT_SPEED if me.coming_out else 1.0
+	me.set_state(State.MOVE, anim_name, seconds, anim_scale)
 
 
 ## Neutral moment: stance, guard or (when tired, or a showboat) hands dropped.
@@ -332,6 +374,19 @@ func _choose_punch(me: Fighter, options: Array[int]) -> int:
 	return options[-1]
 
 
+## How likely [param me] is to open with a one-two right now.
+func _one_two_chance(me: Fighter) -> float:
+	var skill := (me.skill("intelligence") + me.skill("speed")) / 198.0
+	var chance := ONE_TWO_LEAD * skill * skill + ONE_TWO_STYLE[me.data.style]
+	if me.counter_window > 0.0:
+		# Fresh from slipping or blocking one: the counter-puncher's favourite reply.
+		if me.data.style == Style.COUNTER:
+			chance = maxf(chance, ONE_TWO_COUNTER)
+		else:
+			chance += me.skill("intelligence") / 99.0 * 0.20
+	return chance
+
+
 func _maybe_queue_combo(me: Fighter, first: int) -> void:
 	var skill := (me.skill("intelligence") + me.skill("speed")) / 198.0
 	var chance := skill * 0.55
@@ -340,5 +395,6 @@ func _maybe_queue_combo(me: Fighter, first: int) -> void:
 	if rng.randf() < chance:
 		var follow: Array = COMBOS[first]
 		me.combo.append(follow[rng.randi_range(0, follow.size() - 1)])
+		me.one_two = first == P.JAB and me.combo[0] == P.CROSS
 		if rng.randf() < chance * 0.5:
 			me.combo.append(P.CROSS if me.combo[-1] != P.CROSS else P.HOOK)

@@ -4,6 +4,28 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.8
+
+* Thirty boxers in every division (was ten). The Boxers list shows them
+  best first by overall rating, ten to a page, with arrows beside the tabs
+  (or Page Up / Page Down) to turn the pages. PREV and NEXT on a profile
+  step through the division in the same order, and BACK returns to the
+  page he is on. Each division has two or three showboats.
+* The one-two: skilled boxers now throw a jab followed straight away by a
+  cross, and counter-punchers fire one back after slipping or blocking a
+  punch. If the jab lands clean, the cross does 25% more damage and is a
+  little likelier to be a big punch. A landed one-two shows "ONE-TWO!"
+  over the boxer and gets a roar from the crowd.
+* At the bell the boxers walk briskly to the middle of the ring, meeting
+  in about 3 seconds instead of 8 or 9. A really defensive boxer (evasive,
+  told to defend, or still badly hurt) still takes his time.
+* The legs no longer look back to front. The front leg is now the long,
+  nearly straight one, and the back leg is bent with the heel just off the
+  floor, so the boxers stand in a proper stance.
+* Knockdowns are a touch rarer, to keep stoppage rates where they were with
+  the extra action (about 26% light, 37% middle, 53% heavy over six
+  rounds).
+
 ## 0.1.7
 
 * The game is now laid out for a 1280 x 800 window (was 1280 x 720), with

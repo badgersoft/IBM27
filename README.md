@@ -50,7 +50,10 @@ preset under *Project > Export*.
   **1 minute of real time**, but the clock shows
   **3:00** and counts down at three times real speed.
 * The **bell** rings once (a short, soft ring) to start each round, and
-  three times to end it.
+  three times to end it. At the bell both boxers walk briskly out of their
+  corners and meet in the middle in about 3 seconds; only a really
+  defensive boxer (an evasive one, one told to defend, or one still badly
+  hurt) takes his time.
 * Between rounds the boxers walk back to their corners. Each trainer (off
   screen by the corner post) picks one of four instructions (*attack more*,
   *defend more*, *keep it up*, *go all out*), and it appears in a speech
@@ -65,6 +68,16 @@ preset under *Project > Export*.
   boxer's punches thrown, landed and significant strikes. Some
   judges weight a significant strike well above an ordinary landed punch;
   others just count it as another punch landed.
+* Skilled boxers (quick hands and a good head) throw the **one-two**, a jab
+  followed straight away by a cross, and a counter-puncher loves to fire one
+  back the moment he has slipped or blocked a punch. When the jab lands
+  clean the cross catches the other man still reeling: it does 25% more
+  damage and is a little likelier to be a big punch. A landed one-two shows
+  "ONE-TWO!" over the boxer and gets a roar from the crowd (about three per
+  boxer in a six-round fight).
+
+  ![A one-two](docs/screenshots/one_two.png)
+
 * Now and then a **big punch** lands: far more damage, twice the chance of a
   knockdown, a flash where it lands, a heavy thud and the crowd roaring in
   anticipation. They are rare (about one every two rounds per boxer) and come
@@ -168,7 +181,7 @@ taken, depending on his **recovery** stat (shown on his profile).
 
 ### Weight divisions and the roster
 
-There are three divisions, ten boxers in each. Every fight is between two
+There are three divisions, thirty boxers in each. Every fight is between two
 boxers from the same division (picked at random, like the venue).
 
 | Division     | Height       | Weight       | In the ring                                         |
@@ -181,25 +194,27 @@ Each division's roster is the same every run (seeds 1983, 1985 and 2025 in
 `scripts/data/divisions.gd`; pass `--roster=<n>` for a different set).
 Heavyweights have no upper limit in real life, and most are well-toned men
 rather than big ones: weights are skewed towards the light end of the range
-(in the default roster eight of the ten weigh under 245 lb), with a couple of
+(in the default roster most weigh under 245 lb), with a few
 big men near 290 lb. The heaviest are drawn heavy rather than obese.
 
-Showboats are rarer than the other styles: one or two per division. They
+Showboats are rarer than the other styles: two or three per division. They
 show off at two levels: now and then during a fight they point a glove at
 the other man or drop their hands and stick out the chin; in the second half
 of a fight, when they are on top, they throw both arms in the air. Half the
 time they do the same over a man they have just knocked down.
 
-**BOXERS** on the main menu has a tab per division listing each boxer's
-country, age, record (W, L, D and KO, each centred under its heading),
-style (BRL, SLG, BOX, CNR, EVA or SHW), height, weight and overall rating,
-with any nickname under the name. Choose a boxer to open his **profile**: a
-portrait, his details and all six skills as bars, with PREV and NEXT to step
-through the division.
+**BOXERS** on the main menu has a tab per division listing its boxers best
+first (by overall rating), ten to a page: the arrows beside the tabs (or
+Page Up / Page Down) turn the pages. Each row shows the boxer's country,
+age, record (W, L, D and KO, each centred under its heading), style (BRL,
+SLG, BOX, CNR, EVA or SHW), height, weight and overall rating, with any
+nickname under the name. Choose a boxer to open his **profile**: a
+portrait, his details and all six skills as bars, with PREV and NEXT to
+step through the division in the same order.
 
-Over 200 simulated six-round fights per division, stoppages ended about 28%
-of lightweight fights, 38% of middleweight fights and 51% of heavyweight
-fights. About 8% are draws (a 3-3 split of rounds is possible over six).
+Over 120 simulated six-round fights per division, stoppages ended about 26%
+of lightweight fights, 37% of middleweight fights and 53% of heavyweight
+fights. About 6% are draws (a 3-3 split of rounds is possible over six).
 
 ![The Boxers](docs/screenshots/boxers_heavyweight.png)
 
@@ -338,20 +353,21 @@ godot --path . scenes/fight.tscn -- --venue=2 --seed=21 --show=fight --capture=f
 
 Command-line options read by the game (after `--`):
 
-| Option                   | Meaning                                                                                                                                                            |
-|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--seed=<n>`             | Fixed random seed (same match-up and fight every time)                                                                                                             |
-| `--roster=<n>`           | Different starting rosters                                                                                                                                         |
-| `--division=<0-2>`       | 0 Lightweight, 1 Middleweight, 2 Heavyweight                                                                                                                       |
-| `--red=<n>` `--blue=<n>` | Pick the boxers by their number in the division (1-10)                                                                                                             |
-| `--tab=<0-2>`            | Which division tab the Boxers screen opens on                                                                                                                      |
-| `--index=<0-9>`          | Which boxer's profile opens (with `--division`)                                                                                                                    |
-| `--venue=<0-3>`          | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena                                                                                                         |
-| `--rounds=<n>`           | Fight length: 3, 6, 10 or 12 rounds (default 6)                                                                                                                    |
-| `--capture=<png>`        | Fast-forward, save a screenshot and quit                                                                                                                           |
-| `--show=<moment>`        | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch landing), `taunt` (someone showing off), `break`, `count`, `announce`, `result` |
-| `--wait=<seconds>`       | Real seconds to wait before the shot (e.g. mid read-out)                                                                                                           |
-| `--at=<seconds>`         | Earliest real second of round 1 to capture (default 20)                                                                                                            |
+| Option                   | Meaning                                                                                                                                                                  |
+|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--seed=<n>`             | Fixed random seed (same match-up and fight every time)                                                                                                                   |
+| `--roster=<n>`           | Different starting rosters                                                                                                                                               |
+| `--division=<0-2>`       | 0 Lightweight, 1 Middleweight, 2 Heavyweight                                                                                                                             |
+| `--red=<n>` `--blue=<n>` | Pick the boxers by their number in the division (1-30, best first)                                                                                                       |
+| `--tab=<0-2>`            | Which division tab the Boxers screen opens on                                                                                                                            |
+| `--page=<1-3>`           | Which page of the division the Boxers screen opens on                                                                                                                    |
+| `--index=<0-29>`         | Which boxer's profile opens (with `--division`)                                                                                                                          |
+| `--venue=<0-3>`          | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena                                                                                                               |
+| `--rounds=<n>`           | Fight length: 3, 6, 10 or 12 rounds (default 6)                                                                                                                          |
+| `--capture=<png>`        | Fast-forward, save a screenshot and quit                                                                                                                                 |
+| `--show=<moment>`        | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch), `onetwo` (a one-two), `taunt` (showing off), `break`, `count`, `announce`, `result` |
+| `--wait=<seconds>`       | Real seconds to wait before the shot (e.g. mid read-out)                                                                                                                 |
+| `--at=<seconds>`         | Earliest real second of round 1 to capture (default 20)                                                                                                                  |
 
 ### Code style
 

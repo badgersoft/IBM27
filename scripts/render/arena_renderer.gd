@@ -45,6 +45,8 @@ const BUBBLE_TAIL_Y := 50.0
 const BUBBLE_EDGE := 8.0        ## Gap between a bubble and the screen edge.
 const FRONT_ROPE_ALPHA := 0.45
 const FLASH_SECONDS := 0.15     ## How long a big punch's impact flash shows.
+const CALLOUT_SECONDS := 1.0    ## How long a "ONE-TWO!" call-out shows.
+const CALLOUT_RISE := 6.0       ## Pixels it drifts up while it shows.
 
 const FONT := preload("res://assets/fonts/PressStart2P.woff2")
 const FONT_SIZE := 8
@@ -67,6 +69,9 @@ var _advice_text := ["", ""]   # What each trainer is saying ("" = not shown).
 var _advice_time := [0.0, 0.0]
 var _flash_pos := Vector2.ZERO
 var _flash_time := 0.0
+var _callout_text := ""
+var _callout_pos := Vector2.ZERO
+var _callout_time := 0.0
 
 var _static_back: Node2D
 var _crowd_layer: Node2D
@@ -113,6 +118,16 @@ func impact_flash(at: Vector2) -> void:
 	_fx.queue_redraw()
 
 
+## A short gold call-out ("ONE-TWO!") centred on [param at], drifting up
+## and fading.
+func callout(text: String, at: Vector2) -> void:
+	var half := text.length() * FONT_SIZE / 2.0 + 2.0
+	_callout_text = text
+	_callout_pos = Vector2(clampf(at.x, half, SIZE.x - half), at.y).round()
+	_callout_time = CALLOUT_SECONDS
+	_fx.queue_redraw()
+
+
 ## Shows the trainer's advice for [param corner] in a speech bubble.
 func show_corner_advice(corner: int, text: String, seconds: float) -> void:
 	_advice_text[corner] = text
@@ -127,6 +142,12 @@ func hide_corner_advice() -> void:
 
 
 func _process(delta: float) -> void:
+	advance(delta)
+
+
+## Moves the crowd, ropes and effects on by [param delta] seconds (called
+## every frame, and by the screenshot tool while it fast-forwards a fight).
+func advance(delta: float) -> void:
 	_time += delta
 	excitement = maxf(excitement - delta * 0.25, 0.0)
 
@@ -143,6 +164,9 @@ func _process(delta: float) -> void:
 
 	if _flash_time > 0.0:
 		_flash_time -= delta
+		_fx.queue_redraw()
+	if _callout_time > 0.0:
+		_callout_time -= delta
 		_fx.queue_redraw()
 
 	for corner in 2:
@@ -654,6 +678,8 @@ func _draw_apron(c: CanvasItem) -> void:
 func _draw_fx(c: CanvasItem) -> void:
 	if _flash_time > 0.0:
 		_draw_impact(c, _flash_pos, _flash_time / FLASH_SECONDS)
+	if _callout_time > 0.0:
+		_draw_callout(c)
 	for corner in 2:
 		if _advice_text[corner].is_empty():
 			continue
@@ -675,6 +701,19 @@ func _draw_impact(c: CanvasItem, at: Vector2, life: float) -> void:
 		pts.append(at + Vector2(cos(a), sin(a)) * r)
 	c.draw_colored_polygon(pts, Color(1.0, 0.92, 0.55, 0.9))
 	c.draw_circle(at, size * 0.3, Color.WHITE)
+
+
+func _draw_callout(c: CanvasItem) -> void:
+	var life := _callout_time / CALLOUT_SECONDS
+	var width := _callout_text.length() * FONT_SIZE
+	var y := roundf(_callout_pos.y - (1.0 - life) * CALLOUT_RISE)
+	var area := Rect2(_callout_pos.x - width / 2.0, y - FONT_SIZE / 2.0, width, FONT_SIZE)
+	var alpha := clampf(life * 3.0, 0.0, 1.0)   # Fades out over the last third.
+	var baseline := area.position.y + GLYPH_H
+	c.draw_string_outline(FONT, Vector2(area.position.x, baseline), _callout_text, HORIZONTAL_ALIGNMENT_CENTER,
+			area.size.x, FONT_SIZE, 2, Color(Palette.OUTLINE, alpha))
+	c.draw_string(FONT, Vector2(area.position.x, baseline), _callout_text, HORIZONTAL_ALIGNMENT_CENTER,
+			area.size.x, FONT_SIZE, Color(Palette.UI_GOLD, alpha))
 
 
 ## A speech bubble starting at [param anchor].x and growing in direction

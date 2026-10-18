@@ -1,11 +1,13 @@
+class_name RosterScreen
 extends Control
 ## The Boxers screen: one tab per weight division, each listing that
-## division's ten boxers. Choosing a boxer opens his profile (all his skills
-## and a portrait). Records shown include any fights played this session.
+## division's thirty boxers, best first (by overall rating), ten to a page.
+## Choosing a boxer opens his profile (all his skills and a portrait).
+## Records shown include any fights played this session.
 ##
 ## Layout (1280 x 800 frame):
-##   y  16  THE BOXERS                                        [ BACK ]
-##   y  80  [ LIGHTWEIGHT ][ MIDDLEWEIGHT ][ HEAVYWEIGHT ]    size range
+##   y  16  THE BOXERS                         size range    [ BACK ]
+##   y  80  [ LIGHTWEIGHT ][ MIDDLEWEIGHT ][ HEAVYWEIGHT ]  [<] 1-10 OF 30 [>]
 ##   y 120  table panel (1248 x 664), joined to the selected tab
 ##
 ## After the name, the columns are 80 px cells on an even rhythm. Every value
@@ -32,6 +34,12 @@ const NICK_Y := 30
 const TAB_Y := 80
 const TAB_SIZE := Vector2(256, 40)
 const TAB_GAP := 16
+
+# --- Pages: [< PREV] 11 - 20 OF 30 [NEXT >] to the right of the tabs ----------------
+const PAGE_SIZE := 10
+const PAGER_X := 832
+const PAGER_BUTTON_W := 96
+const PAGER_LABEL_W := 208      ## Between the buttons, 16 px either side.
 
 ## [caption, x, width] - x and width are inside the panel. Everything after
 ## the name is centred in its cell.
@@ -64,6 +72,10 @@ var _caption: Label
 var _content: Control            # Rebuilt whenever the tab changes.
 var _rows: Array[Button] = []
 var _division := Divisions.Id.MIDDLEWEIGHT
+var _page := 0
+var _page_label: Label
+var _prev: Button
+var _next: Button
 
 
 func _ready() -> void:
@@ -97,21 +109,57 @@ func _ready() -> void:
 		tab.pressed.connect(_select.bind(id))
 		_frame.add_child(tab)
 		_tabs.append(tab)
+	# Size range and a hint, right-aligned against the BACK button, level
+	# with the title.
+	var caption_x := 640.0
+	var caption_w := back.position.x - 16 - caption_x
 	_caption = UiTheme.label("", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_RIGHT)
-	_frame.add_child(UiTheme.place(_caption, 832, TAB_Y + 4, PANEL.end.x - 832, UiTheme.CAPTION))
+	_frame.add_child(UiTheme.place(_caption, caption_x, 24, caption_w, UiTheme.CAPTION))
 	var hint := UiTheme.label("CHOOSE A BOXER FOR HIS PROFILE", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_RIGHT)
-	_frame.add_child(UiTheme.place(hint, 832, TAB_Y + 20, PANEL.end.x - 832, UiTheme.CAPTION))
+	_frame.add_child(UiTheme.place(hint, caption_x, 40, caption_w, UiTheme.CAPTION))
+
+	_prev = _pager_button("<", PAGER_X, _turn.bind(-1))
+	_page_label = UiTheme.label("", UiTheme.BODY, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
+	var label_x := PAGER_X + PAGER_BUTTON_W + 16
+	_frame.add_child(UiTheme.place(_page_label, label_x, TAB_Y + (TAB_SIZE.y - UiTheme.ROW_H) / 2.0, PAGER_LABEL_W, UiTheme.ROW_H))
+	_next = _pager_button(">", label_x + PAGER_LABEL_W + 16, _turn.bind(1))
 
 	var start := int(GameState.options.get("tab", GameState.roster_tab))
-	_select(clampi(start, 0, Divisions.count() - 1))
+	_page = int(GameState.options.get("page", GameState.roster_page + 1)) - 1
+	_select(clampi(start, 0, Divisions.count() - 1), true)
 	_tabs[_division].grab_focus()
 
 	if GameState.options.has("capture") and GameState.options.get("show", "") == "roster":
 		_capture(GameState.options["capture"])
 
 
-## Shows one division's tab.
-func _select(id: int) -> void:
+func _pager_button(text: String, x: float, action: Callable) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.focus_mode = Control.FOCUS_ALL
+	UiTheme.place(b, x, TAB_Y, PAGER_BUTTON_W, TAB_SIZE.y)
+	b.pressed.connect(action)
+	_frame.add_child(b)
+	return b
+
+
+func _page_count() -> int:
+	return ceili(GameState.boxers_in(_division).size() / float(PAGE_SIZE))
+
+
+## Shows the previous (-1) or next (+1) page of the division.
+func _turn(dir: int) -> void:
+	var page := clampi(_page + dir, 0, _page_count() - 1)
+	if page == _page:
+		return
+	_page = page
+	_build_page()
+
+
+## Shows one division's tab, from its first page unless [param keep_page].
+func _select(id: int, keep_page: bool = false) -> void:
+	if not keep_page:
+		_page = 0
 	_division = id as Divisions.Id
 	GameState.roster_tab = id
 	for i in _tabs.size():
@@ -120,6 +168,18 @@ func _select(id: int) -> void:
 	var h: Array = div["height_cm"]
 	var w: Array = div["weight_lb"]
 	_caption.text = "%d - %d CM   %d - %d LB" % [h[0], h[1], w[0], w[1]]
+	_build_page()
+
+
+## Rebuilds the table for the current division and page.
+func _build_page() -> void:
+	_page = clampi(_page, 0, _page_count() - 1)
+	GameState.roster_page = _page
+	var total := GameState.boxers_in(_division).size()
+	var first := _page * PAGE_SIZE
+	_page_label.text = "%d - %d OF %d" % [first + 1, mini(first + PAGE_SIZE, total), total]
+	_prev.disabled = _page == 0
+	_next.disabled = _page >= _page_count() - 1
 	if _content != null:
 		_content.queue_free()
 	_content = Control.new()
@@ -144,6 +204,13 @@ func _style_tab(tab: Button, selected: bool) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		_go_back()
+	elif event is InputEventKey and event.pressed and not event.echo:
+		# Page Up / Page Down turn the pages from anywhere on the screen.
+		match (event as InputEventKey).keycode:
+			KEY_PAGEUP:
+				_turn(-1)
+			KEY_PAGEDOWN:
+				_turn(1)
 
 
 func _notification(what: int) -> void:
@@ -155,7 +222,7 @@ func _go_back() -> void:
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 
 
-## Opens boxer [param index]'s profile.
+## Opens boxer [param index]'s profile (his place in the whole division).
 func _open_profile(index: int) -> void:
 	GameState.profile_division = _division
 	GameState.profile_index = index
@@ -180,9 +247,10 @@ func _build_table(frame: Control) -> void:
 
 	_rows.clear()
 	var roster := GameState.boxers_in(_division)
-	for i in roster.size():
+	var first := _page * PAGE_SIZE
+	for i in range(first, mini(first + PAGE_SIZE, roster.size())):
 		var b: BoxerData = roster[i]
-		var y := FIRST_ROW_Y + i * ROW_H
+		var y := FIRST_ROW_Y + (i - first) * ROW_H
 		if i % 2 == 0:
 			panel.add_child(UiTheme.block(Color(1, 1, 1, 0.04), 8, y, PANEL.size.x - 16, ROW_H))
 		_rows.append(_row_button(panel, i, y))

@@ -17,6 +17,7 @@ signal punch_landed(corner: int, type: int, damage: float, blocked: bool)
 ## A big, significant punch from [param corner] is about to land (emitted just
 ## before its punch_landed) - the crowd roars.
 signal big_punch(corner: int, type: int)
+signal one_two_landed(corner: int)
 signal punch_missed(corner: int, type: int)
 signal knocked_down(corner: int)
 signal count_changed(corner: int, count: int)
@@ -51,13 +52,19 @@ const CORNER_HEAL_MIN := 0.12
 const CORNER_HEAL_MAX := 0.28
 ## Chance of a knockdown from a clean power shot to the head, per point of
 ## damage over 0.5 (then scaled by chin, stun and health).
-const KNOCKDOWN_CHANCE := 0.024
+const KNOCKDOWN_CHANCE := 0.020
 ## Extra seconds on the count for each earlier knockdown in the fight.
 const EARLIER_KNOCKDOWN_COUNT := 1.4
 ## A clean power punch doing at least this much damage (times the division's
 ## power, so a heavyweight's has to be heavier) is a significant strike:
 ## roughly one landed punch in five.
 const SIGNIFICANT_DAMAGE := 1.05
+## A one-two (see BoxerAI.ONE_TWO_LEAD) whose jab lands clean leaves the
+## opponent open for ONE_TWO_WINDOW seconds; a cross landing in that time
+## does ONE_TWO_DAMAGE times the damage and is a little likelier to be big.
+const ONE_TWO_WINDOW := 0.9
+const ONE_TWO_DAMAGE := 1.25
+const ONE_TWO_BIG := 0.02
 ## Chance a showboat throws his arms up over an opponent he has knocked down.
 const SHOWBOAT_KNOCKDOWN_SHOW := 0.5
 ## Showboats have quick reactions: a little extra chance to slip a punch.
@@ -167,6 +174,7 @@ func _start_round() -> void:
 		f.combo.clear()
 		f.streak = 0
 		f.idle_time = 0.0
+		f.coming_out = true
 		f.think_timer = rng.randf_range(0.2, 0.6)
 		f.set_state(State.IDLE, "stance")
 	bell.emit(1)
@@ -334,6 +342,11 @@ func _keep_apart() -> void:
 func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	a.punch_resolved = true
 	var type := a.punch_type
+	# The two halves of a one-two: this jab opens it, this cross finishes it.
+	var one := type == PunchTypes.Type.JAB and a.one_two
+	var two := type == PunchTypes.Type.CROSS and a.one_two_window > 0.0
+	a.one_two = false
+	a.one_two_window = 0.0
 	var dist := absf(d.x - a.x)
 	var reach := a.reach_px(type) + d.height_px * 0.08
 
@@ -372,6 +385,8 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	var caught_punching := d.state == State.PUNCH and not d.punch_resolved
 	if caught_punching:
 		dmg *= 1.3   # Walked onto it.
+	if two:
+		dmg *= ONE_TWO_DAMAGE
 
 	# Blocked? A high guard stops most head shots and, on the elbows, some body
 	# shots; the normal stance catches a few head shots. How well depends on
@@ -397,7 +412,8 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 		return
 
 	# A big one? Rare, but it does far more damage and can end things.
-	var big := PunchTypes.is_power_punch(type) and rng.randf() < _big_punch_chance(a, d, caught_punching)
+	var big_chance := _big_punch_chance(a, d, caught_punching) + (ONE_TWO_BIG if two else 0.0)
+	var big := PunchTypes.is_power_punch(type) and rng.randf() < big_chance
 	if big:
 		dmg *= rng.randf_range(BIG_DAMAGE.x, BIG_DAMAGE.y)
 		a.add_stat("big", 1)
@@ -422,6 +438,11 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 		d.stun += dmg * 12.0 * (1.5 - d.data.chin / 99.0) * PunchTypes.STUN[type] * STYLE_TOUGHNESS[d.data.style]
 	d.combo.clear()
 	d.x -= d.facing * (1.0 + dmg * 2.5)
+	if one:
+		a.one_two_window = ONE_TWO_WINDOW
+	elif two:
+		a.add_stat("one_twos", 1)
+		one_two_landed.emit(a.corner)
 	punch_landed.emit(a.corner, type, dmg, false)
 
 	# Down he goes?

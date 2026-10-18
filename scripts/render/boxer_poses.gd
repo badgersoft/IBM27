@@ -25,8 +25,8 @@ const BASE_POSE := {
 	"rear_hand": Vector2(0.16, 0.13),   ## Rear glove, relative to rear shoulder.
 	"lead_bend": 1.0,                   ## +1 elbow below the arm, -1 elbow above.
 	"rear_bend": 1.0,
-	"lead_foot": Vector2(0.12, 0.02),   ## Ankle positions (x, height).
-	"rear_foot": Vector2(-0.13, 0.02),
+	"lead_foot": Vector2(0.15, 0.02),   ## Ankle positions (x, height).
+	"rear_foot": Vector2(-0.10, 0.035),  ## Rear heel a little off the floor.
 	"lift":      0.0,                   ## Whole body raised off the floor (skipping).
 	"twist":     0.0,                   ## Torso rotation into a rear-hand punch (0 - 1).
 }
@@ -49,19 +49,19 @@ const POSE_DEFS := {
 	"dejected":     {"base": "relaxed", "lean": 6.0, "head": 28.0},
 
 	# --- Footwork ---------------------------------------------------------------
-	"step_f1":      {"hip": Vector2(0.02, 0.450), "lead_foot": Vector2(0.19, 0.035)},
-	"step_f2":      {"hip": Vector2(0.01, 0.455), "lead_foot": Vector2(0.13, 0.02), "rear_foot": Vector2(-0.07, 0.03)},
-	"step_b1":      {"hip": Vector2(-0.02, 0.450), "rear_foot": Vector2(-0.20, 0.035)},
-	"step_b2":      {"hip": Vector2(-0.01, 0.455), "lead_foot": Vector2(0.07, 0.03), "rear_foot": Vector2(-0.14, 0.02)},
+	"step_f1":      {"hip": Vector2(0.02, 0.450), "lead_foot": Vector2(0.22, 0.035)},
+	"step_f2":      {"hip": Vector2(0.01, 0.455), "lead_foot": Vector2(0.16, 0.02), "rear_foot": Vector2(-0.05, 0.04)},
+	"step_b1":      {"hip": Vector2(-0.02, 0.450), "rear_foot": Vector2(-0.17, 0.045)},
+	"step_b2":      {"hip": Vector2(-0.01, 0.455), "lead_foot": Vector2(0.10, 0.03), "rear_foot": Vector2(-0.12, 0.035)},
 
 	# --- Punches ------------------------------------------------------------------
 	"jab_wind":     {"lean": 7.0, "lead_hand": Vector2(0.09, 0.11)},
 	"jab_hit":      {"hip": Vector2(0.02, 0.455), "lean": 12.0, "head": 6.0,
-					 "lead_hand": Vector2(0.34, 0.08), "lead_foot": Vector2(0.15, 0.02)},
+					 "lead_hand": Vector2(0.34, 0.08), "lead_foot": Vector2(0.18, 0.02)},
 	"cross_wind":   {"hip": Vector2(-0.01, 0.455), "lean": 3.0, "rear_hand": Vector2(0.10, 0.11)},
 	"cross_hit":    {"hip": Vector2(0.05, 0.450), "lean": 22.0, "head": 8.0, "twist": 1.0,
 					 "rear_hand": Vector2(0.42, 0.07), "lead_hand": Vector2(0.08, 0.13),
-					 "rear_foot": Vector2(-0.10, 0.045)},
+					 "rear_foot": Vector2(-0.08, 0.055)},
 	"hook_wind":    {"hip": Vector2(-0.01, 0.450), "lean": 2.0, "head": 6.0,
 					 "lead_hand": Vector2(0.00, 0.06)},
 	"hook_hit":     {"hip": Vector2(0.03, 0.450), "lean": 16.0, "head": 8.0,
@@ -69,7 +69,7 @@ const POSE_DEFS := {
 	"upper_wind":   {"hip": Vector2(0.00, 0.410), "lean": 4.0, "head": 8.0,
 					 "rear_hand": Vector2(0.07, -0.14)},
 	"upper_hit":    {"hip": Vector2(0.03, 0.470), "lean": 6.0, "head": 0.0, "twist": 0.8,
-					 "rear_hand": Vector2(0.19, 0.22), "rear_foot": Vector2(-0.11, 0.03)},
+					 "rear_hand": Vector2(0.19, 0.22), "rear_foot": Vector2(-0.09, 0.045)},
 	"body_wind":    {"hip": Vector2(0.00, 0.420), "lean": 16.0, "rear_hand": Vector2(0.07, 0.02)},
 	"body_hit":     {"hip": Vector2(0.04, 0.395), "lean": 28.0, "head": 6.0, "twist": 0.8,
 					 "rear_hand": Vector2(0.38, -0.10), "lead_hand": Vector2(0.09, 0.16)},
@@ -81,7 +81,7 @@ const POSE_DEFS := {
 					 "lead_hand": Vector2(0.08, -0.04), "rear_hand": Vector2(0.07, -0.02)},
 	"kd_stagger":   {"hip": Vector2(-0.04, 0.440), "lean": -26.0, "head": -26.0,
 					 "lead_hand": Vector2(0.06, 0.20), "rear_hand": Vector2(-0.04, 0.22),
-					 "lead_foot": Vector2(0.14, 0.02), "rear_foot": Vector2(-0.12, 0.02)},
+					 "lead_foot": Vector2(0.16, 0.02), "rear_foot": Vector2(-0.10, 0.03)},
 	"kd_fall":      {"hip": Vector2(-0.12, 0.240), "lean": -55.0, "head": -10.0,
 					 "lead_hand": Vector2(-0.06, 0.18), "rear_hand": Vector2(-0.10, 0.14),
 					 "lead_foot": Vector2(0.16, 0.02), "rear_foot": Vector2(0.02, 0.02)},

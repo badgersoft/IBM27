@@ -11,14 +11,15 @@ extends Node
 ##   --division=<0-2> force a division (0 light, 1 middle, 2 heavy)
 ##   --venue=<0-3>   force a venue (0 town gym, 1 city gym, 2 boxing hall, 3 grand arena)
 ##   --capture=<png> take a screenshot during the fight and quit (see CaptureTool)
-##   --index=<0-9>   which boxer's profile to open (with --division)
+##   --index=<0-29>  which boxer's profile to open (with --division)
 ##   --rounds=<n>    fight length: 3, 6, 10 or 12 (default 6)
-##   --red=<n> --blue=<n>  pick the boxers by number in the division (1-10)
+##   --red=<n> --blue=<n>  pick the boxers by number in the division (1-30)
 
 ## Boxers per division.
-const ROSTER_SIZE := 10
+const ROSTER_SIZE := 30
 
-## rosters[division] = that division's boxers. Each division's starting roster
+## rosters[division] = that division's boxers, best first (by overall rating,
+## see BoxerData.overall()). Each division's starting roster
 ## is the same every run (its roster_seed in Divisions; the middleweights use
 ## 1985, after the original game). Fights and venues are still random. Pass
 ## --roster=<n> for a different set of boxers.
@@ -32,6 +33,7 @@ var venue_id := 0
 
 ## The Boxers screen remembers its tab, and which boxer's profile is open.
 var roster_tab: int = Divisions.Id.MIDDLEWEIGHT
+var roster_page := 0
 var profile_division: int = Divisions.Id.MIDDLEWEIGHT
 var profile_index := 0
 
@@ -104,7 +106,18 @@ func _build_rosters() -> void:
 			used_names.append(b.last_name)
 			if not b.nickname.is_empty():
 				used_nicknames.append(b.nickname)
+		roster.sort_custom(_better)
 		rosters[id] = roster
+
+
+## Sort order for a division: higher overall rating first, then more wins,
+## then by surname so the order never depends on chance.
+static func _better(a: BoxerData, b: BoxerData) -> bool:
+	if a.overall() != b.overall():
+		return a.overall() > b.overall()
+	if a.wins != b.wins:
+		return a.wins > b.wins
+	return a.last_name < b.last_name
 
 
 ## A seed for the fight itself (punch luck, AI choices).

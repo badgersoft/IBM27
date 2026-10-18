@@ -35,10 +35,13 @@ const STYLE_BIAS := {
 	BoxerData.Style.EVASIVE: [-6,  10,  12,  -4,  -4,   6],
 	BoxerData.Style.SHOWBOAT:[ 0,  12,  -2,  -4,  -2,  -2],
 }
-## Showboats are rare: one or two in a full roster (smaller groups, such as
-## the simulator's pairs, get one now and then).
-const SHOWBOATS_PER_ROSTER := Vector2i(1, 2)
+## Showboats are rare: about one boxer in twelve (two or three in a division
+## of thirty), always at least one in a roster of six or more. Smaller groups,
+## such as the simulator's pairs, get one now and then.
+const SHOWBOAT_SHARE := Vector2(0.06, 0.10)
 const SHOWBOAT_CHANCE := 0.15
+## Tries at a fresh surname before settling for a repeat.
+const NAME_ATTEMPTS := 40
 
 var _rng := RandomNumberGenerator.new()
 var _world: Dictionary = {}
@@ -66,7 +69,7 @@ func generate_roster(count: int, division: Divisions.Id = Divisions.Id.MIDDLEWEI
 		var boxer := generate_boxer(used_trunks, division)
 		# Avoid two boxers with the same surname.
 		var attempts := 0
-		while used_names.has(boxer.last_name) and attempts < 10:
+		while used_names.has(boxer.last_name) and attempts < NAME_ATTEMPTS:
 			boxer = generate_boxer(used_trunks, division)
 			attempts += 1
 		used_trunks.append(boxer.trunks_index)
@@ -208,14 +211,16 @@ func _roll_skills(b: BoxerData) -> void:
 	b.recovery     = _roll_skill(0)
 
 
-## Turns one or two boxers in a roster into showboats: they keep their name
-## and body but get a showboat's skills and a career to match.
+## Turns a few boxers in a roster into showboats (see SHOWBOAT_SHARE): they
+## keep their name and body but get a showboat's skills and a career to match.
 func _assign_showboats(roster: Array[BoxerData]) -> void:
 	var picks: Array = []
 	if roster.size() >= 6:
 		var order: Array = range(roster.size())
 		_shuffle(order)
-		picks = order.slice(0, _rng.randi_range(SHOWBOATS_PER_ROSTER.x, SHOWBOATS_PER_ROSTER.y))
+		var low := maxi(roundi(roster.size() * SHOWBOAT_SHARE.x), 1)
+		var high := maxi(roundi(roster.size() * SHOWBOAT_SHARE.y), low)
+		picks = order.slice(0, _rng.randi_range(low, high))
 	else:
 		for i in roster.size():
 			if _rng.randf() < SHOWBOAT_CHANCE:
