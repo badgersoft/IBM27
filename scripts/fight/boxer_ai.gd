@@ -42,6 +42,15 @@ const SHOWBOAT_TAUNT_COOLDOWN := 6.0
 const SHOWBOAT_TAUNT_CHANCE := 0.35
 const SHOWBOAT_HANDS_DOWN := 0.45
 
+## A boxer who has not thrown for a while edges closer, so two cautious
+## styles (say a counter-puncher and an evasive boxer, who both like to stay
+## out of range) still end up fighting: after IDLE_BEFORE_CLOSING seconds his
+## favourite distance shrinks by CLOSE_IN_RATE body heights a second, up to
+## MAX_CLOSE_IN.
+const IDLE_BEFORE_CLOSING := 2.0
+const CLOSE_IN_RATE := 0.05
+const MAX_CLOSE_IN := 0.22
+
 ## Natural follow-ups when a boxer is quick-witted enough to combine punches.
 const COMBOS := {
 	P.JAB:      [P.JAB, P.CROSS],
@@ -181,7 +190,7 @@ func _think_interval(me: Fighter) -> float:
 func _aggression(me: Fighter, opp: Fighter, round_number: int) -> float:
 	var intel := me.skill("intelligence") / 99.0
 	var a: float = BASE_AGGRESSION[me.data.style]
-	if me.data.style == Style.EVASIVE and round_number >= 3:
+	if me.data.style == Style.EVASIVE and round_number >= FightSim.ROUNDS:
 		a += 0.28   # Evasive boxers save themselves for the last round.
 	match me.advice:
 		Advice.ATTACK_MORE:
@@ -200,12 +209,13 @@ func _aggression(me: Fighter, opp: Fighter, round_number: int) -> float:
 
 func _preferred_distance(me: Fighter, round_number: int) -> float:
 	var d: float = PREFERRED_RANGE[me.data.style]
-	if me.data.style == Style.EVASIVE and round_number >= 3:
+	if me.data.style == Style.EVASIVE and round_number >= FightSim.ROUNDS:
 		d = 0.52
 	if me.reset_timer > 0.0:
 		d = maxf(d, 0.66)   # Hit and move.
 	if me.advice == Advice.ALL_OUT or me.advice == Advice.ATTACK_MORE:
 		d -= 0.04
+	d -= clampf((me.idle_time - IDLE_BEFORE_CLOSING) * CLOSE_IN_RATE, 0.0, MAX_CLOSE_IN)
 	return d
 
 

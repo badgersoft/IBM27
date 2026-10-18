@@ -6,8 +6,8 @@ extends Control
 ## Layout (1280 x 720 frame):
 ##   y  16  BOBBY WALKER                   [< PREV] [NEXT >] [  BACK  ]
 ##   y  72  "THE OUTLAW"                          HEAVYWEIGHT  -  1 OF 10
-##   y 112  +-- portrait --+  +-- details (832 x 200) ------------------+
-##          |  400 x 592   |  +-- skills  (832 x 376) ------------------+
+##   y 112  +-- portrait --+  +-- details (832 x 240) ------------------+
+##          |  400 x 592   |  +-- skills  (832 x 336) ------------------+
 ##   y 704  +--------------+
 ##
 ## The portrait is drawn at the same pixel scale for everyone (x3, like the
@@ -21,24 +21,28 @@ const PORTRAIT_SCALE := 3
 const FIGURE_SIZE := 1.6                     ## Drawn larger than in the ring.
 const FEET_Y := 164.0
 
-const DETAILS := Rect2(432, 112, 832, 200)
-const SKILLS := Rect2(432, 328, 832, 376)
+const DETAILS := Rect2(432, 112, 832, 240)
+const SKILLS := Rect2(432, 368, 832, 336)
 const PAD := 16
 const CAPTION_Y := 10
 
-# Details: two columns of label / value pairs.
+# Details: the hometown across the panel, then two columns of label / value
+# pairs, then the style's one-line description. Every value is 16 px text,
+# and each column is wide enough for its longest possible value
+# ("SANTIAGO DE CUBA, CUB", "5' 10\"  (178 CM)", "24  (100%)").
 const DETAIL_ROW_Y := 36
 const DETAIL_ROW_H := 32
+const FROM_LABEL_W := 128
 ## Each column's labels get just the room they need ("KNOCKOUTS" is the
 ## longest), leaving the left values room for "5' 10\"  (177 CM)".
 const DETAIL_LABEL_W := [128, 176]
 const DETAIL_COLUMN_X := [PAD, 432]
 const DETAIL_COLUMN_END := [416, 816]
-const BLURB_Y := 166
+const BLURB_Y := 200
 
 # Skills: label, bar, value.
-const SKILL_ROW_Y := 32
-const SKILL_ROW_H := 48
+const SKILL_ROW_Y := 28
+const SKILL_ROW_H := 42
 const SKILL_LABEL_W := 224
 const BAR_X := 256
 const BAR_W := 448
@@ -191,15 +195,17 @@ func _build_details(b: BoxerData) -> void:
 	var panel := _panel(DETAILS, "DETAILS")
 	var fights := b.total_fights()
 	var ko_share := roundi(100.0 * b.kos / maxf(b.wins, 1.0))
+	_detail(panel, PAD, DETAIL_ROW_Y, FROM_LABEL_W, DETAILS.size.x - PAD * 2 - FROM_LABEL_W,
+			"FROM", "%s, %s" % [b.city.to_upper(), b.country_code])
 	var columns := [
-		[["FROM", "%s, %s" % [b.city.to_upper(), b.country_code]],
-		 ["AGE", str(b.age)],
+		[["AGE", str(b.age)],
 		 ["HEIGHT", "%s  (%d CM)" % [b.height_imperial(), b.height_cm]],
-		 ["WEIGHT", "%d LB" % b.weight_lb]],
+		 ["WEIGHT", "%d LB" % b.weight_lb],
+		 ["FIGHTS", str(fights)]],
 		[["STYLE", b.style_name().to_upper()],
 		 ["RECORD", b.record()],
 		 ["KNOCKOUTS", "%d  (%d%%)" % [b.kos, ko_share]],
-		 ["FIGHTS", str(fights)]],
+		 ["RECOVERY", str(b.recovery)]],
 	]
 	for c in columns.size():
 		var x: float = DETAIL_COLUMN_X[c]
@@ -207,13 +213,15 @@ func _build_details(b: BoxerData) -> void:
 		var value_w: float = DETAIL_COLUMN_END[c] - x - label_w
 		var rows: Array = columns[c]
 		for r in rows.size():
-			var y := DETAIL_ROW_Y + r * DETAIL_ROW_H
-			panel.add_child(UiTheme.place(UiTheme.label(rows[r][0], UiTheme.BODY, Palette.UI_TEXT_DIM), x, y, label_w, UiTheme.ROW_H))
-			var value := UiTheme.label(rows[r][1], UiTheme.BODY, Palette.UI_TEXT)
-			UiTheme.fit(value, value_w)
-			panel.add_child(UiTheme.place(value, x + label_w, y, value_w, UiTheme.ROW_H))
-	var blurb := UiTheme.label(BoxerData.STYLE_BLURBS[b.style].to_upper(), UiTheme.CAPTION, Palette.UI_GOLD)
-	panel.add_child(UiTheme.place(blurb, PAD, BLURB_Y, DETAILS.size.x - PAD * 2, UiTheme.CAPTION))
+			_detail(panel, x, DETAIL_ROW_Y + (r + 1) * DETAIL_ROW_H, label_w, value_w, rows[r][0], rows[r][1])
+	var blurb := UiTheme.label(BoxerData.STYLE_BLURBS[b.style].to_upper(), UiTheme.BODY, Palette.UI_GOLD)
+	panel.add_child(UiTheme.place(blurb, PAD, BLURB_Y, DETAILS.size.x - PAD * 2, UiTheme.ROW_H))
+
+
+## One label / value pair, both 16 px.
+func _detail(panel: Control, x: float, y: float, label_w: float, value_w: float, label: String, value: String) -> void:
+	panel.add_child(UiTheme.place(UiTheme.label(label, UiTheme.BODY, Palette.UI_TEXT_DIM), x, y, label_w, UiTheme.ROW_H))
+	panel.add_child(UiTheme.place(UiTheme.label(value, UiTheme.BODY, Palette.UI_TEXT), x + label_w, y, value_w, UiTheme.ROW_H))
 
 
 # ============================================================================

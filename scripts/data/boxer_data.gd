@@ -12,14 +12,15 @@ const STYLE_NAMES: Array[String] = ["Brawler", "Slugger", "Boxer", "Counter", "E
 ## Three-letter short forms for tight tables (the Boxers list).
 const STYLE_SHORT: Array[String] = ["BRL", "SLG", "BOX", "CNR", "EVA", "SHW"]
 
-## Short one-line description of each style, shown in the tale of the tape.
+## Short one-line description of each style, shown on the boxer's profile.
+## At most 50 characters so it fits the profile at full size.
 const STYLE_BLURBS: Array[String] = [
 	"Plants his feet and trades from mid range.",
 	"Walks forward and fights toe to toe.",
 	"Hits, moves back, and picks his moments.",
 	"Waits, slips, and punishes mistakes.",
 	"Stays on the move and saves himself late.",
-	"Quick and flashy; drops his guard to play to the crowd.",
+	"Quick and flashy; drops his guard for the crowd.",
 ]
 
 # --- Identity --------------------------------------------------------------
@@ -63,7 +64,8 @@ const STYLE_BLURBS: Array[String] = [
 # --- Condition ---------------------------------------------------------------
 ## Health going into the fight (percent). Linked to fitness and pain tolerance.
 @export_range(1.0, 100.0) var start_health: float = 92.0
-## Reserved for future builds: how quickly health returns between fights.
+## How much damage he shakes off in the corner between rounds (and, in
+## future builds, how quickly health returns between fights).
 @export_range(1, 99) var recovery: int = 50
 
 

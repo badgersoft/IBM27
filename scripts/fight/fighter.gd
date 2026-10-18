@@ -70,6 +70,7 @@ var taunt_cooldown := 8.0
 var reset_timer := 0.0          ## Boxer style: time left backing off after a combo.
 var counter_window := 0.0       ## Time left to punish an opponent's miss.
 var streak := 0                 ## Clean punches landed in a row (feeds big punches).
+var idle_time := 0.0            ## Seconds since he last threw a punch.
 var advice: Advice = Advice.NONE
 
 # --- Knockdowns -----------------------------------------------------------------
@@ -209,6 +210,7 @@ func start_punch(type: int) -> void:
 		cost *= 1.25
 	spend_energy(cost)
 	add_stat("thrown", 1)
+	idle_time = 0.0
 
 
 func spend_energy(amount: float) -> void:

@@ -4,6 +4,25 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.4
+
+* Fights are now 6 rounds. The pundit's card shows the rounds in two rows
+  of three beside the total; at the verdict a full-width official card
+  (all six rounds for each judge) takes over the bottom of the screen.
+* Balance for the longer fights: the late-round damage boost is spread over
+  the whole fight, boxers shake off 12-28% of their damage in the corner
+  (by their recovery stat, now shown on the profile), knockdowns are a
+  little less likely and earlier knockdowns slow the count less.
+* Fix: two cautious boxers (e.g. a counter-puncher against an evasive
+  boxer) could stand out of range for whole rounds. A boxer who has not
+  thrown for a couple of seconds now edges closer.
+* In simulation, stoppages now end about 28% of lightweight, 38% of
+  middleweight and 51% of heavyweight six-round fights.
+* Face-on boxers: narrower, lower, more natural shoulders without the
+  rounded "pads".
+* Profile: every line is now the same 16 px size (the hometown has its own
+  row, the style description is full size and shortened to fit).
+
 ## 0.1.3
 
 * Sound: the start-of-round bell is a single shorter, lower, softer ring;

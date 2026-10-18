@@ -29,7 +29,9 @@ func _initialize() -> void:
 	by_style_fights.resize(BoxerData.STYLE_NAMES.size())
 	by_style_fights.fill(0)
 	var totals := {"thrown": 0.0, "landed": 0.0, "blocked": 0.0, "big": 0.0, "knockdowns": 0.0, "end_health": 0.0, "end_energy": 0.0, "clinches": 0.0}
-	var rounds_ended := [0, 0, 0, 0]
+	var rounds_ended: Array = []
+	rounds_ended.resize(FightSim.ROUNDS + 1)
+	rounds_ended.fill(0)
 	# Judging: how often the official result differs from a neutral card.
 	var judging := {"decisions": 0, "differs": 0, "robbery": 0, "all_agree": 0, "pundit_right": 0, "split_rounds": 0, "rounds": 0}
 	var pundits := {}   # name -> [calls matching a neutral card, fights]
@@ -42,7 +44,7 @@ func _initialize() -> void:
 		sim.knocked_down.connect(func(_c: int) -> void: totals["knockdowns"] += 1.0)
 		sim.start_fight()
 		var guard := 0
-		while sim.phase != FightSim.Phase.FINISHED and guard < 60 * 400:
+		while sim.phase != FightSim.Phase.FINISHED and guard < 60 * 900:
 			var before_clinch := sim.red.state == Fighter.State.CLINCH
 			sim.step(STEP)
 			if not before_clinch and sim.red.state == Fighter.State.CLINCH:
@@ -78,7 +80,10 @@ func _initialize() -> void:
 	for m in ["KO", "TKO", "UD", "MD", "SD", "DRAW"]:
 		print("  %-6s %5d   %5.1f%%" % [m, methods.get(m, 0), 100.0 * methods.get(m, 0) / fights])
 	print("------------------------------------------")
-	print("  Ended in round 1/2/3:  %d / %d / %d" % [rounds_ended[1], rounds_ended[2], rounds_ended[3]])
+	var by_round: Array[String] = []
+	for r in range(1, FightSim.ROUNDS + 1):
+		by_round.append(str(rounds_ended[r]))
+	print("  Ended in rounds 1-%d:  %s" % [FightSim.ROUNDS, " / ".join(by_round)])
 	print("  Punches thrown / boxer  %6.1f" % (totals["thrown"] / boxers))
 	print("  Punches landed / boxer  %6.1f" % (totals["landed"] / boxers))
 	print("  Punches blocked / boxer %6.1f" % (totals["blocked"] / boxers))

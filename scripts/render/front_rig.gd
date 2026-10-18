@@ -16,8 +16,8 @@ extends Node2D
 enum Kind { BOXER, REFEREE }
 
 ## Half the shoulder width (centre to shoulder joint) for a 1.0 build.
-const SHOULDER_X := 0.108
-const SHOULDER_Y := 0.790
+const SHOULDER_X := 0.100
+const SHOULDER_Y := 0.770
 const HIP_X := 0.046
 const HIP_Y := 0.500
 const KNEE_Y := 0.270
@@ -360,8 +360,9 @@ func _draw_torso() -> void:
 	var b := _belly
 	# Right half from the neck down to the waist, mirrored for the left.
 	var body := _torso_poly(_mirrored([
-		Vector2(0.034 * _neck, 0.822), Vector2(0.090 * bk, 0.806),
-		Vector2(0.112 * bk, 0.778), Vector2(0.104 * bk, 0.730),
+		Vector2(0.034 * _neck, 0.822), Vector2(0.080 * bk, 0.810),
+		Vector2(0.102 * bk, 0.797), Vector2(0.110 * bk, 0.776),
+		Vector2(0.104 * bk, 0.730),
 		Vector2(0.094 * bk + 0.010 * b, 0.680), Vector2(0.082 * bk + 0.022 * b, 0.630),
 		Vector2(0.080 * bk + 0.016 * b, 0.586), Vector2(0.0, 0.586),
 	]))
@@ -376,7 +377,7 @@ func _draw_torso() -> void:
 	# Shading: the outer edges in shadow, a lit centre.
 	for out in [-1.0, 1.0]:
 		draw_colored_polygon(_torso_poly([
-			Vector2(0.104 * bk * out, 0.770), Vector2((0.094 * bk + 0.010 * b) * out, 0.680),
+			Vector2(0.106 * bk * out, 0.770), Vector2((0.094 * bk + 0.010 * b) * out, 0.680),
 			Vector2((0.080 * bk + 0.016 * b) * out, 0.588), Vector2((0.066 * bk + 0.012 * b) * out, 0.588),
 			Vector2((0.078 * bk + 0.008 * b) * out, 0.680), Vector2(0.088 * bk * out, 0.760),
 		]), tones[1])
@@ -530,7 +531,8 @@ func _draw_arm(side: int) -> void:
 	_shade(elbow, hand_p, fore_w, tones, out)
 	draw_line(inner_from + normal * upper_w * 0.30, elbow + normal * upper_w * 0.30, tones[1], maxf(upper_w * 0.30, 1.0))
 	# Rounded shoulder in the body's own tone so the arm grows out of it.
-	draw_circle(sh, upper_w * 0.62, tones[0])
+	# Kept small enough that its top stays under the slope of the shoulder.
+	draw_circle(sh, upper_w * 0.5, tones[0])
 	if kind == Kind.REFEREE:
 		# Shirt cuff, then the hand shows below it.
 		var back := (elbow - hand_p).normalized()

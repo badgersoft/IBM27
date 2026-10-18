@@ -27,7 +27,7 @@ signal fight_finished(result: Dictionary)
 
 enum Phase { INTRO, ROUND, COUNT, BREAK, FINISHED }
 
-const ROUNDS := 3
+const ROUNDS := 6
 const REAL_ROUND_SECONDS := 60.0
 const GAME_ROUND_SECONDS := 180.0
 const CLOCK_SPEED := GAME_ROUND_SECONDS / REAL_ROUND_SECONDS
@@ -44,6 +44,17 @@ const MIN_GAP := 0.34                 ## Closest the boxers' centres get, in bod
 ## Showboat.
 const STYLE_TOUGHNESS: Array[float] = [0.82, 0.85, 1.00, 1.00, 1.00, 1.00]
 const STYLE_POWER:     Array[float] = [1.08, 1.12, 1.00, 1.00, 1.00, 1.00]
+## Punches land harder as a fight wears on: this much extra by the last round
+## (spread evenly over the rounds, however many there are).
+const LATE_ROUND_DAMAGE := 0.12
+## Share of lost health a boxer recovers in the corner (by his recovery stat).
+const CORNER_HEAL_MIN := 0.12
+const CORNER_HEAL_MAX := 0.28
+## Chance of a knockdown from a clean power shot to the head, per point of
+## damage over 0.5 (then scaled by chin, stun and health).
+const KNOCKDOWN_CHANCE := 0.024
+## Extra seconds on the count for each earlier knockdown in the fight.
+const EARLIER_KNOCKDOWN_COUNT := 1.4
 ## Showboats have quick reactions: a little extra chance to slip a punch.
 const SHOWBOAT_SLIP := 0.08
 
@@ -146,6 +157,7 @@ func _start_round() -> void:
 		f.reset_round_stats()
 		f.combo.clear()
 		f.streak = 0
+		f.idle_time = 0.0
 		f.think_timer = rng.randf_range(0.2, 0.6)
 		f.set_state(State.IDLE, "stance")
 	bell.emit(1)
@@ -178,7 +190,10 @@ func _end_round() -> void:
 func _corner_recovery(f: Fighter) -> void:
 	var recover := lerpf(0.35, 0.60, f.data.stamina / 99.0)
 	f.energy = minf(f.energy + (Fighter.MAX_ENERGY - f.energy) * recover, Fighter.MAX_ENERGY)
-	f.health = minf(f.health + 2.0, f.data.start_health)
+	# Some of the damage is shaken off in the corner (CORNER_HEAL_MIN - MAX of
+	# what he has lost, depending on his recovery).
+	var lost := f.data.start_health - f.health
+	f.health = minf(f.health + lost * lerpf(CORNER_HEAL_MIN, CORNER_HEAL_MAX, f.data.recovery / 99.0), f.data.start_health)
 	f.stun = 0.0
 	f.wear *= 0.85
 
@@ -208,6 +223,7 @@ func _update_fighter(f: Fighter, o: Fighter, dt: float) -> void:
 	# Head clears and breath returns a little all the time.
 	f.stun = maxf(f.stun - dt * lerpf(5.0, 9.0, f.data.chin / 99.0), 0.0)
 	f.spend_energy(0.28 * f.energy_drain_scale() * dt)
+	f.idle_time += dt
 	if f.state in [State.IDLE, State.GUARD, State.CLINCH]:
 		f.energy = minf(f.energy + dt * (0.25 + f.data.stamina / 99.0 * 0.55), Fighter.MAX_ENERGY)
 
@@ -339,7 +355,7 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	var power := a.skill("power")
 	var dmg := PunchTypes.DAMAGE[type] * (0.45 + power / 99.0 * 0.95) * rng.randf_range(0.8, 1.2)
 	dmg *= Divisions.get_division(a.data.division)["power_scale"]   # Heavyweights hit harder.
-	dmg *= 1.0 + d.fatigue() * 0.6 + (round_number - 1) * 0.06
+	dmg *= 1.0 + d.fatigue() * 0.6 + (round_number - 1) / float(ROUNDS - 1) * LATE_ROUND_DAMAGE
 	if a.advice == Fighter.Advice.ALL_OUT:
 		dmg *= 1.1
 	if PunchTypes.is_power_punch(type):
@@ -401,7 +417,7 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 		_knockdown(d, a)
 		return
 	if to_head and PunchTypes.is_power_punch(type):
-		var chance := (dmg - 0.5) * 0.04 * (1.5 - d.data.chin / 99.0)
+		var chance := (dmg - 0.5) * KNOCKDOWN_CHANCE * (1.5 - d.data.chin / 99.0)
 		chance *= (1.0 + d.stun / 60.0) * (1.6 - d.health / Fighter.MAX_HEALTH)
 		if big:
 			chance *= BIG_KNOCKDOWN
@@ -458,7 +474,7 @@ func _knockdown(d: Fighter, a: Fighter) -> void:
 
 	# How long until he can beat the count? 99 = he is not getting up.
 	var t := 3.0 + d.stun / 30.0 + (1.0 - d.health / Fighter.MAX_HEALTH) * 7.5
-	t += -d.data.chin / 99.0 * 2.0 + d.knockdowns_total * 1.8 + rng.randf_range(-1.0, 2.0)
+	t += -d.data.chin / 99.0 * 2.0 + d.knockdowns_total * EARLIER_KNOCKDOWN_COUNT + rng.randf_range(-1.0, 2.0)
 	if d.health <= 0.0:
 		t = 99.0
 	d.getup_count = clampi(ceili(t), 3, 99)

@@ -2,7 +2,8 @@ extends Control
 ## The fight screen: the ring in the middle, name plates and the score bug
 ## above it, the boxers' condition and the scorecard panel below it (today's
 ## judges before the bell, the TV pundit's card during the fight, and the
-## official cards, filled in judge by judge as the verdict is read out).
+## official cards across the whole bottom row, filled in judge by judge as
+## the verdict is read out).
 ##
 ## Layout (1280 x 720 design frame, 8 px margins between every block):
 ##
@@ -28,6 +29,7 @@ var _frame: Control
 var _overlay: Control
 var _bug: ScoreBug
 var _scorecard: Scorecard
+var _official: OfficialCard
 var _panels: Array[FighterPanel] = []
 var _banner: Label
 var _banner_time := 0.0
@@ -153,6 +155,12 @@ func _build_layout(red: BoxerData, blue: BoxerData) -> void:
 	_scorecard.position = Vector2((FRAME_SIZE.x - Scorecard.W) / 2.0, bottom_y)
 	_frame.add_child(_scorecard)
 	_scorecard.show_judges(sim.judges)
+	# At the verdict the official cards take over the whole bottom row.
+	_official = OfficialCard.new()
+	_official.position = Vector2((FRAME_SIZE.x - OfficialCard.W) / 2.0, bottom_y)
+	_official.setup(sim.judges)
+	_official.visible = false
+	_frame.add_child(_official)
 
 	# Overlay over the arena for banners and pop-up panels.
 	_overlay = Control.new()
@@ -279,13 +287,17 @@ func _show_result() -> void:
 	_result.menu_pressed.connect(_go_to_menu)
 	_result.judge_revealed.connect(_on_judge_revealed)
 	_result.winner_announced.connect(_on_winner_announced)
-	# The official cards replace the pundit's, filled in judge by judge.
-	_scorecard.set_mode(Scorecard.Mode.OFFICIAL)
-	_scorecard.reveal_judges(0, sim)
+	# The official cards replace the condition panels and the pundit's card,
+	# filled in judge by judge.
+	for panel in _panels:
+		panel.visible = false
+	_scorecard.visible = false
+	_official.visible = true
+	_official.reveal_judges(0, sim)
 
 
 func _on_judge_revealed(index: int) -> void:
-	_scorecard.reveal_judges(index + 1, sim)
+	_official.reveal_judges(index + 1, sim)
 
 
 func _on_winner_announced() -> void:
@@ -360,7 +372,7 @@ func _run_capture() -> void:
 		_begin_fight()
 		var dt := 1.0 / 60.0
 		var t := 0.0
-		var limit := 60.0 * 5.0
+		var limit := (FightSim.REAL_ROUND_SECONDS + FightSim.BREAK_SECONDS) * FightSim.ROUNDS + 120.0
 		while t < limit:
 			_big_this_step = false
 			sim.step(dt)

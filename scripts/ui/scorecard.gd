@@ -1,6 +1,6 @@
 class_name Scorecard
 extends Control
-## The panel under the ring (512 x 128). It has three faces:
+## The panel under the ring during the fight (512 x 128). It has two faces:
 ##
 ## TODAY'S JUDGES (before the first bell) - who is judging and how fair they are:
 ##   TODAY'S JUDGES
@@ -9,24 +9,31 @@ extends Control
 ##
 ## PUNDIT (during the fight) - the official cards are secret, so this shows a
 ## ringside TV pundit's unofficial card. Like a real card, each round is only
-## scored when the bell ends it:
+## scored when the bell ends it. Six rounds sit in two rows of three:
 ##   RINGSIDE PUNDIT - UNOFFICIAL                 SALLY BRENNAN
-##              ROUND 1   ROUND 2   ROUND 3    TOTAL
-##   CARD        10-9      9-10       -        19-19
+##   R1  10-9    R2  9-10    R3  10-9     |     TOTAL
+##   R4   -      R5   -      R6   -       |     29-28
 ##   --------------------------------------------------
-##              SCORES IT LEVEL  19-19
+##              SCORES IT 29-28  JOHNSON
 ##
-## OFFICIAL (after the final bell) - the judges' real cards, each row filled
-## in as that judge's score is read out (see reveal_judges).
+## The judges' official cards are shown on OfficialCard once the verdict is
+## being read.
 
-enum Mode { JUDGES, PUNDIT, OFFICIAL }
+enum Mode { JUDGES, PUNDIT }
 
 const W := 512
 const H := 128
 const PAD := 16
-const COL_W := 96                 # Score columns are all the same width.
 const HEADER_Y := 27
 const FIRST_ROW_Y := 43
+## Pundit's card: rounds in rows of three, each cell a dim round number and
+## the score; the total in its own block on the right.
+const ROUNDS_PER_ROW := 3
+const ROUND_ROW_Y := 26
+const ROUND_LABEL_W := 32
+const ROUND_PITCH := 120
+const TOTAL_X := 384
+const TOTAL_W := 112
 ## "Today's judges" columns: name, country, fairness band. Only the band
 ## (FAIR / SO-SO / WILD) is shown - the number behind it stays hidden.
 const JUDGE_NAME_W := 256
@@ -38,12 +45,10 @@ const FAIR_W := 128
 var mode: Mode = Mode.JUDGES
 
 var _faces := {}                  # Mode -> Control holding that face.
-var _pundit_cells: Array = []     # 3 rounds + total.
+var _pundit_cells: Array = []     # One per round.
+var _pundit_total: ScorePair
 var _verdict: Label
-var _official_cells: Array = []   # [judge][column], column 3 = total.
-var _official_names: Array = []
 var _pundit_name: Label
-var _revealed := 3                # Official rows shown (the rest stay blank).
 
 
 func _init() -> void:
@@ -52,9 +57,7 @@ func _init() -> void:
 	add_child(UiTheme.panel(0, 0, W, H))
 	_faces[Mode.JUDGES] = _face()
 	_faces[Mode.PUNDIT] = _face()
-	_faces[Mode.OFFICIAL] = _face()
 	_build_pundit(_faces[Mode.PUNDIT])
-	_build_official(_faces[Mode.OFFICIAL])
 	set_mode(Mode.JUDGES)
 
 
@@ -84,17 +87,12 @@ func show_judges(judges: Judges) -> void:
 		var band := UiTheme.label(Officials.fairness_label(fairness), UiTheme.BODY, Officials.fairness_color(fairness), HORIZONTAL_ALIGNMENT_CENTER)
 		face.add_child(UiTheme.place(band, FAIR_X, y, FAIR_W, UiTheme.ROW_H))
 	_pundit_name.text = str(judges.pundit["name"]).to_upper()
-	for j in judges.panel.size():
-		_official_names[j].text = Officials.surname(judges.panel[j])
 
 
-## Updates whichever face is showing.
+## Updates the pundit's card (the judges face never changes).
 func refresh(sim: FightSim) -> void:
-	match mode:
-		Mode.PUNDIT:
-			_refresh_pundit(sim)
-		Mode.OFFICIAL:
-			_refresh_official(sim)
+	if mode == Mode.PUNDIT:
+		_refresh_pundit(sim)
 
 
 # ============================================================================
@@ -108,50 +106,37 @@ func _face() -> Control:
 	return face
 
 
-## Column headings shared by the pundit and official faces.
-func _round_headers(face: Control) -> void:
-	var headers := ["ROUND 1", "ROUND 2", "ROUND 3", "TOTAL"]
-	for c in headers.size():
-		var h := UiTheme.label(headers[c], UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER)
-		face.add_child(UiTheme.place(h, PAD + COL_W * (c + 1), HEADER_Y, COL_W, UiTheme.CAPTION))
-
-
-func _score_row(face: Control, y: float) -> Array:
-	var row: Array = []
-	for c in 4:
-		var cell := ScorePair.new()
-		cell.position = Vector2(PAD + COL_W * (c + 1) + (COL_W - ScorePair.WIDTH) / 2.0, y)
-		cell.clear()
-		face.add_child(cell)
-		row.append(cell)
-	return row
-
-
 func _build_pundit(face: Control) -> void:
 	face.add_child(UiTheme.place(UiTheme.label("RINGSIDE PUNDIT  -  UNOFFICIAL", UiTheme.CAPTION, Palette.UI_TEXT_DIM), PAD, 7, 288, UiTheme.CAPTION))
 	_pundit_name = UiTheme.label("", UiTheme.CAPTION, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_RIGHT)
 	face.add_child(UiTheme.place(_pundit_name, W - PAD - 192, 7, 192, UiTheme.CAPTION))
-	_round_headers(face)
-	face.add_child(UiTheme.place(UiTheme.label("CARD", UiTheme.CAPTION), PAD, FIRST_ROW_Y, COL_W, UiTheme.ROW_H))
-	_pundit_cells = _score_row(face, FIRST_ROW_Y)
+
+	for r in FightSim.ROUNDS:
+		var x := PAD + (r % ROUNDS_PER_ROW) * ROUND_PITCH
+		var y := ROUND_ROW_Y + (r / ROUNDS_PER_ROW) * UiTheme.ROW_H
+		# An 8 px label draws its capitals 7 px down, which centres them on
+		# the 16 px score beside it.
+		var number := UiTheme.label("R%d" % (r + 1), UiTheme.CAPTION, Palette.UI_TEXT_DIM)
+		face.add_child(UiTheme.place(number, x, y, ROUND_LABEL_W, UiTheme.CAPTION))
+		var cell := ScorePair.new()
+		cell.position = Vector2(x + ROUND_LABEL_W, y)
+		cell.clear()
+		face.add_child(cell)
+		_pundit_cells.append(cell)
+
+	# Total: a thin divider, the caption over the first row, the score under it.
+	var rows := ceili(FightSim.ROUNDS / float(ROUNDS_PER_ROW))
+	face.add_child(UiTheme.block(Color(Palette.UI_TEXT_DIM, 0.4), TOTAL_X - 8, ROUND_ROW_Y + 4, 1, rows * UiTheme.ROW_H - 8))
+	var caption := UiTheme.label("TOTAL", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER)
+	face.add_child(UiTheme.place(caption, TOTAL_X, ROUND_ROW_Y, TOTAL_W, UiTheme.CAPTION))
+	_pundit_total = ScorePair.new()
+	_pundit_total.position = Vector2(TOTAL_X + (TOTAL_W - ScorePair.WIDTH) / 2.0, ROUND_ROW_Y + UiTheme.ROW_H)
+	_pundit_total.clear()
+	face.add_child(_pundit_total)
+
 	face.add_child(UiTheme.block(Color(Palette.UI_TEXT_DIM, 0.4), PAD, 79, W - PAD * 2, 1))
 	_verdict = UiTheme.label("", UiTheme.BODY, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
 	face.add_child(UiTheme.place(_verdict, PAD, 91, W - PAD * 2, UiTheme.ROW_H))
-
-
-func _build_official(face: Control) -> void:
-	face.add_child(UiTheme.place(UiTheme.label("OFFICIAL SCORECARDS", UiTheme.CAPTION, Palette.UI_GOLD), PAD, 7, 240, UiTheme.CAPTION))
-	var blue_key := UiTheme.label("BLUE", UiTheme.CAPTION, Palette.UI_BLUE, HORIZONTAL_ALIGNMENT_RIGHT)
-	var red_key := UiTheme.label("RED", UiTheme.CAPTION, Palette.UI_RED, HORIZONTAL_ALIGNMENT_RIGHT)
-	face.add_child(UiTheme.place(blue_key, W - PAD - 32, 7, 32, UiTheme.CAPTION))
-	face.add_child(UiTheme.place(red_key, W - PAD - 32 - 8 - 24, 7, 24, UiTheme.CAPTION))
-	_round_headers(face)
-	for j in 3:
-		var y := FIRST_ROW_Y + j * UiTheme.ROW_H
-		var name_label := UiTheme.label("", UiTheme.CAPTION)
-		face.add_child(UiTheme.place(name_label, PAD, y, COL_W, UiTheme.ROW_H))
-		_official_names.append(name_label)
-		_official_cells.append(_score_row(face, y))
 
 
 func _refresh_pundit(sim: FightSim) -> void:
@@ -165,14 +150,13 @@ func _refresh_pundit(sim: FightSim) -> void:
 			any = true
 		else:
 			cell.clear()
-	var total_cell: ScorePair = _pundit_cells[3]
 	if not any:
-		total_cell.clear()
+		_pundit_total.clear()
 		_verdict.text = "SCORED AFTER EACH ROUND"
 		_verdict.add_theme_color_override("font_color", Palette.UI_TEXT_DIM)
 		return
 	var t := judges.pundit_totals()
-	total_cell.set_score(t[0], t[1])
+	_pundit_total.set_score(t[0], t[1])
 	if t[0] == t[1]:
 		_verdict.text = "SCORES IT LEVEL  %d-%d" % [t[0], t[1]]
 		_verdict.add_theme_color_override("font_color", Palette.UI_TEXT)
@@ -182,27 +166,3 @@ func _refresh_pundit(sim: FightSim) -> void:
 		_verdict.text = "SCORES IT %d-%d  %s" % [maxi(t[0], t[1]), mini(t[0], t[1]), boxer.last_name.to_upper()]
 		_verdict.add_theme_color_override("font_color", Palette.corner_color(leader))
 	UiTheme.fit(_verdict, W - PAD * 2)
-
-
-## How many judges' rows of the official face are filled in.
-func reveal_judges(count: int, sim: FightSim) -> void:
-	_revealed = count
-	refresh(sim)
-
-
-func _refresh_official(sim: FightSim) -> void:
-	var judges := sim.judges
-	for j in judges.panel.size():
-		if j >= _revealed:
-			for cell in _official_cells[j]:
-				(cell as ScorePair).clear()
-			continue
-		for r in judges.rounds:
-			var cell: ScorePair = _official_cells[j][r]
-			var score: Array = judges.cards[j][r]
-			if score.is_empty():
-				cell.clear()
-			else:
-				cell.set_score(score[0], score[1])
-		var t := judges.totals(j)
-		_official_cells[j][3].set_score(t[0], t[1])

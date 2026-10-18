@@ -44,7 +44,7 @@ preset under *Project > Export*.
   random.
 * The **tale of the tape** compares them. Tap, or wait 12 seconds, to ring the
   bell.
-* Three rounds. Each round is **1 minute of real time**, but the clock shows
+* Six rounds. Each round is **1 minute of real time**, but the clock shows
   **3:00** and counts down at three times real speed.
 * The **bell** rings once (a short, soft ring) to start each round, and
   three times to end it.
@@ -59,7 +59,7 @@ preset under *Project > Export*.
   intelligence.
 * Now and then a **big punch** lands: far more damage, twice the chance of a
   knockdown, a flash where it lands, a heavy thud and the crowd roaring in
-  anticipation. They are rare (one or two per boxer in a fight) and come
+  anticipation. They are rare (about one every two rounds per boxer) and come
   from a run of clean punches, an opponent running out of gas, a dropped
   guard (hurt, showboating or hands down) or a good counter; harder
   punchers and smarter boxers make more of them.
@@ -68,10 +68,10 @@ preset under *Project > Export*.
 * When the fight ends, both boxers and the referee turn to face the crowd in
   the middle of the ring, the referee holding each man by the wrist. A slim
   two-line band over the crowd does the announcing, so nothing covers them:
-  after three rounds the judges' cards are read **one at a time**, like a
-  ring announcer ("Judge H. Pemberton scores the bout..." then "29-28 in
+  after six rounds the judges' cards are read **one at a time**, like a
+  ring announcer ("Judge H. Pemberton scores the bout..." then "58-56 in
   favour of Johnson"), and each judge's row fills in on the official
-  scorecard under the ring as it is read. The crowd gives a small cheer for
+  scorecards, which take over the whole bottom of the screen. The crowd gives a small cheer for
   a score that looks fair and an "oooh" for one that doesn't (judged against
   a neutral card of the fight). Then the winner: by unanimous
   (3-0), split (2-1) or majority (2-0 with one even) decision, or a
@@ -100,9 +100,10 @@ The official cards are **secret until the final bell**. During the fight the
 panel shows a **TV pundit's unofficial card** instead. Five pundits share the
 job, each with a secret accuracy rating: they score like a neutral judge with
 a little error, so the card is a good guide with the occasional bad call.
-Like a real card it is only filled in when the bell ends each round. The
-official cards replace it when the verdict is read, one judge at a time,
-with a pause before each score and before the winner's name.
+Like a real card it is only filled in when the bell ends each round; the six
+rounds sit in two rows of three beside the running total. The official cards
+replace it when the verdict is read, one judge at a time, with a pause
+before each score and before the winner's name.
 
 Knockdown rounds are scored the way real judges do it: the boxer who scored the
 knockdown wins the round, 10-8 if he was clearly winning it anyway, otherwise
@@ -137,14 +138,20 @@ Every boxer has six skills from 1 to 99 and a fighting style.
 | Evasive  | Stays away and jabs, saving himself, then comes forward in the last round            |
 | Showboat | Quick reactions and slips punches, but drops his guard and taunts; can be caught out |
 
+Nobody can win by hiding: a boxer who has not thrown for a couple of seconds
+edges closer, so two cautious styles (a counter-puncher and an evasive boxer,
+say) still end up exchanging.
+
 As a boxer is hurt (low health or rocked by a head shot) he throws less, covers
 up and backs off. When he is badly hurt and close, he holds on in a clinch.
 Clever boxers do this sooner; reckless ones keep swinging. Punches do more
-damage later in the fight and to tired boxers.
+damage later in the fight (up to 12% more by the last round) and to tired
+boxers.
 
 Each boxer starts with health a little below 100, set by his fitness (stamina,
-strength and chin). A `recovery` stat is already stored for future builds,
-where injuries will carry over between fights.
+strength and chin). In the corner between rounds he gets back some of his
+breath (more with good stamina) and shakes off 12-28% of the damage he has
+taken, depending on his **recovery** stat (shown on his profile).
 
 ### Weight divisions and the roster
 
@@ -173,8 +180,9 @@ with any nickname under the name. Choose a boxer to open his **profile**: a
 portrait, his details and all six skills as bars, with PREV and NEXT to step
 through the division.
 
-Over 400 simulated fights per division, stoppages ended about 22% of
-lightweight fights, 23% of middleweight fights and 38% of heavyweight fights.
+Over 200 simulated six-round fights per division, stoppages ended about 28%
+of lightweight fights, 38% of middleweight fights and 51% of heavyweight
+fights. About 8% are draws (a 3-3 split of rounds is possible over six).
 
 ![The Boxers](docs/screenshots/boxers_heavyweight.png)
 
