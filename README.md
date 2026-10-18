@@ -523,6 +523,9 @@ All of these run from the project folder. `godot` is your Godot 4.7 executable.
 # Run 200 fights with no graphics and print the balance summary
 godot --headless --path . -s tools/simulate_fights.gd -- --fights=200 --division=1 --rounds=6
 
+# The IBC belt designs side by side (current and candidates)
+godot --path . scenes/debug/belt_sheet.tscn -- --capture=belts.png
+
 # Every pose and every skin/hair/size combination on one sheet
 godot --path . scenes/debug/pose_sheet.tscn -- --capture=poses.png
 

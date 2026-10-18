@@ -4,6 +4,13 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.12
+
+* Developer tool: `scenes/debug/belt_sheet.tscn` shows the current IBC
+  belt and four candidate designs (Classic, Crest, Globe, Jewel) at the
+  sizes the game uses and in a Boxers list row, so one can be chosen. The
+  pictures are in `docs/design/`. The game itself is unchanged.
+
 ## 0.1.11
 
 * Big punches spray blood instead of flashing: drops fly off away from the
