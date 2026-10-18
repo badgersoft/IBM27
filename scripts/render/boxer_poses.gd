@@ -109,6 +109,14 @@ const POSE_DEFS := {
 					 "lead_hand": Vector2(0.07, 0.31), "rear_hand": Vector2(0.12, -0.04),
 					 "lead_foot": Vector2(0.09, 0.02), "rear_foot": Vector2(-0.09, 0.02)},
 	"taunt_one_b":  {"base": "taunt_one", "lead_hand": Vector2(0.09, 0.30), "hip": Vector2(0.00, 0.462)},
+	# Level one (during the fight): point a glove at him, or drop the hands
+	# and push the chin out as if to say "hit me".
+	"point_a":      {"hip": Vector2(0.00, 0.465), "lean": -3.0, "head": -8.0,
+					 "lead_hand": Vector2(0.30, 0.06), "rear_hand": Vector2(0.10, -0.10)},
+	"point_b":      {"base": "point_a", "lead_hand": Vector2(0.31, 0.09), "hip": Vector2(0.00, 0.460)},
+	"chin_a":       {"hip": Vector2(0.00, 0.470), "lean": 13.0, "head": -28.0,
+					 "lead_hand": Vector2(0.03, -0.27), "rear_hand": Vector2(0.01, -0.27)},
+	"chin_b":       {"base": "chin_a", "lean": 15.0, "head": -32.0, "hip": Vector2(0.00, 0.466)},
 	"victory_a":    {"hip": Vector2(0.00, 0.480), "lean": -5.0, "head": -14.0,
 					 "lead_hand": Vector2(0.10, 0.30), "rear_hand": Vector2(-0.06, 0.30),
 					 "lead_foot": Vector2(0.08, 0.02), "rear_foot": Vector2(-0.08, 0.02)},
@@ -147,6 +155,10 @@ const ANIMS := {
 	# Showboating -------------------------------------------------------------------
 	"taunt_skip":   {"loop": true,  "steps": [["skip_a", 0.14], ["skip_b", 0.14], ["skip_c", 0.14], ["skip_b", 0.14]]},
 	"taunt_one":    {"loop": true,  "steps": [["taunt_one", 0.20], ["taunt_one_b", 0.40], ["taunt_one", 0.40]]},
+	"taunt_point":  {"loop": true,  "steps": [["point_a", 0.18], ["point_b", 0.30], ["point_a", 0.30]]},
+	"taunt_chin":   {"loop": true,  "steps": [["chin_a", 0.20], ["chin_b", 0.35], ["chin_a", 0.35]]},
+	# Level two (on top late on, or over a knocked-down man): arms in the air.
+	"taunt_arms":   {"loop": true,  "steps": [["victory_a", 0.18], ["victory_b", 0.22], ["victory_a", 0.22]]},
 	"victory":      {"loop": true,  "steps": [["victory_a", 0.25], ["victory_b", 0.30], ["victory_a", 0.30]]},
 }
 

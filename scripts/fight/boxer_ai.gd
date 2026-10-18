@@ -36,11 +36,17 @@ const PUNCH_WEIGHTS: Array = [
 	[0.30, 0.28, 0.20, 0.14, 0.08],   # Showboat
 ]
 
-## Showboats: how long between taunts, how often a quiet moment becomes one,
-## and how often they drop their hands when settling.
-const SHOWBOAT_TAUNT_COOLDOWN := 6.0
-const SHOWBOAT_TAUNT_CHANCE := 0.35
-const SHOWBOAT_HANDS_DOWN := 0.45
+## Showboats show off at two levels:
+##   1. During the fight, now and then: point a glove at the opponent, or drop
+##      the hands and stick the chin out ("taunt_point", "taunt_chin").
+##   2. When on top in the second half of the fight (the opponent hurt, or
+##      well ahead on condition): arms in the air ("taunt_arms").
+## They also drop their hands when settling more than anyone else.
+const SHOWBOAT_LOW_COOLDOWN := 14.0
+const SHOWBOAT_LOW_CHANCE := 0.20
+const SHOWBOAT_HIGH_COOLDOWN := 20.0
+const SHOWBOAT_ON_TOP_HEALTH := 20.0     ## Health lead that counts as "on top".
+const SHOWBOAT_HANDS_DOWN := 0.35
 
 ## A boxer who has not thrown for a while edges closer, so two cautious
 ## styles (say a counter-puncher and an evasive boxer, who both like to stay
@@ -145,22 +151,37 @@ func think(me: Fighter, opp: Fighter, round_number: int, dt: float) -> void:
 		_move(me, -1, rng.randf_range(0.2, 0.45))
 		return
 
-	# Opponent hurt and we are ahead and flashy? Showboat for a moment. A
-	# showboat does it far more often, hurt opponent or not.
-	var showboat := me.data.style == Style.SHOWBOAT
+	# Show off for a moment? Anyone might when the opponent is badly hurt; a
+	# showboat has his own two levels (see SHOWBOAT_*).
 	if me.taunt_cooldown <= 0.0 and dist > me.height_px * 0.6:
-		var wants := opp.hurt_level() > 0.5 and rng.randf() < 0.25 * (1.0 - intel * 0.5)
-		if showboat:
-			wants = opp.hurt_level() > 0.15 or rng.randf() < SHOWBOAT_TAUNT_CHANCE
-		if wants:
+		if me.data.style == Style.SHOWBOAT:
+			if _showboat(me, opp, round_number):
+				return
+		elif opp.hurt_level() > 0.5 and rng.randf() < 0.25 * (1.0 - intel * 0.5):
 			var taunt := "taunt_skip" if me.data.style == Style.EVASIVE else "taunt_one"
-			if showboat and rng.randf() < 0.5:
-				taunt = "taunt_skip"
 			me.set_state(State.TAUNT, taunt, rng.randf_range(0.8, 1.4))
-			me.taunt_cooldown = SHOWBOAT_TAUNT_COOLDOWN if showboat else 15.0
+			me.taunt_cooldown = 15.0
 			return
 
 	_settle(me, opp, hurt)
+
+
+## A showboat's moment: arms in the air if he is on top in the second half
+## of the fight, otherwise now and then a point or a chin out. Returns true if
+## he showed off.
+func _showboat(me: Fighter, opp: Fighter, round_number: int) -> bool:
+	var second_half := round_number * 2 > rounds
+	var on_top := opp.hurt_level() > 0.35 or me.health - opp.health > SHOWBOAT_ON_TOP_HEALTH
+	if second_half and on_top:
+		me.set_state(State.TAUNT, "taunt_arms", rng.randf_range(1.0, 1.6))
+		me.taunt_cooldown = SHOWBOAT_HIGH_COOLDOWN
+		return true
+	if rng.randf() < SHOWBOAT_LOW_CHANCE:
+		var taunt := "taunt_point" if rng.randf() < 0.5 else "taunt_chin"
+		me.set_state(State.TAUNT, taunt, rng.randf_range(0.6, 1.0))
+		me.taunt_cooldown = SHOWBOAT_LOW_COOLDOWN
+		return true
+	return false
 
 
 ## Picks the trainer's advice for the next round.

@@ -13,6 +13,7 @@ extends Node
 ##   --capture=<png> take a screenshot during the fight and quit (see CaptureTool)
 ##   --index=<0-9>   which boxer's profile to open (with --division)
 ##   --rounds=<n>    fight length: 3, 6, 10 or 12 (default 6)
+##   --red=<n> --blue=<n>  pick the boxers by number in the division (1-10)
 
 ## Boxers per division.
 const ROSTER_SIZE := 10
@@ -73,6 +74,11 @@ func new_fight() -> void:
 	var second := _rng.randi_range(0, roster.size() - 2)
 	if second >= first:
 		second += 1
+	# --red / --blue pick boxers by their number in the division (from 1).
+	if options.has("red"):
+		first = clampi(int(options["red"]) - 1, 0, roster.size() - 1)
+	if options.has("blue"):
+		second = clampi(int(options["blue"]) - 1, 0, roster.size() - 1)
 	red = roster[first]
 	blue = roster[second]
 	if options.has("venue"):

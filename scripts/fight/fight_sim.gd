@@ -54,6 +54,12 @@ const CORNER_HEAL_MAX := 0.28
 const KNOCKDOWN_CHANCE := 0.024
 ## Extra seconds on the count for each earlier knockdown in the fight.
 const EARLIER_KNOCKDOWN_COUNT := 1.4
+## A clean power punch doing at least this much damage (times the division's
+## power, so a heavyweight's has to be heavier) is a significant strike:
+## roughly one landed punch in five.
+const SIGNIFICANT_DAMAGE := 1.05
+## Chance a showboat throws his arms up over an opponent he has knocked down.
+const SHOWBOAT_KNOCKDOWN_SHOW := 0.5
 ## Showboats have quick reactions: a little extra chance to slip a punch.
 const SHOWBOAT_SLIP := 0.08
 
@@ -397,7 +403,10 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 		a.add_stat("big", 1)
 		big_punch.emit(a.corner, type)
 
-	# Clean shot.
+	# Clean shot. A hard power punch (or any big one) is a significant strike.
+	var hard: float = SIGNIFICANT_DAMAGE * Divisions.get_division(a.data.division)["power_scale"]
+	if big or (PunchTypes.is_power_punch(type) and dmg >= hard):
+		a.add_stat("significant", 1)
 	d.health = maxf(d.health - dmg, 0.0)
 	a.streak += 1
 	d.streak = 0
@@ -469,6 +478,8 @@ func _knockdown(d: Fighter, a: Fighter) -> void:
 	a.combo.clear()
 	d.set_state(State.DOWN, "knockdown")
 	a.set_state(State.NEUTRAL, "move_back")
+	# Half the time a showboat celebrates over a man he has put down.
+	a.celebrates_knockdown = a.data.style == BoxerData.Style.SHOWBOAT and rng.randf() < SHOWBOAT_KNOCKDOWN_SHOW
 	knocked_down.emit(d.corner)
 
 	if d.knockdowns_round >= KNOCKDOWNS_FOR_TKO:
@@ -507,7 +518,10 @@ func _update_count(dt: float) -> void:
 			other.play("move_back")
 		else:
 			var brash := other.data.intelligence < 55 and other.data.style in [BoxerData.Style.BRAWLER, BoxerData.Style.SLUGGER]
-			other.play("taunt_one" if brash else "ready")
+			if other.celebrates_knockdown:
+				other.play("taunt_arms")       # A showboat milks it.
+			else:
+				other.play("taunt_one" if brash else "ready")
 	_keep_apart_during_count(down, other)
 
 	if down.state == State.RISING and down.state_time >= BoxerPoses.length("stand_up"):

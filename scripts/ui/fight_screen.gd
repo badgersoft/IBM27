@@ -357,7 +357,7 @@ func _update_banner(delta: float) -> void:
 # ============================================================================
 #  Screenshot mode (developer tool)
 # ============================================================================
-## Run with:  -- --capture=<file.png> [--show=intro|fight|big|break|count|announce|result] [--at=<seconds>]
+## Run with:  -- --capture=<file.png> [--show=intro|fight|big|taunt|break|count|announce|result] [--at=<seconds>]
 ## The fight is fast-forwarded (rigs stepped in lock-step with the fight) to a
 ## moment worth showing, frozen, and the whole screen saved as a PNG.
 
@@ -412,6 +412,11 @@ func _is_capture_moment(show: String) -> bool:
 			return sim.phase == FightSim.Phase.FINISHED and sim._finish_timer > 1.0
 		"big":
 			return _big_this_step
+		"taunt":
+			for f in sim.fighters:
+				if f.state == Fighter.State.TAUNT and f.state_time > 0.35:
+					return true
+			return false
 		_:
 			if sim.phase != FightSim.Phase.ROUND:
 				return false

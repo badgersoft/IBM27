@@ -19,7 +19,7 @@ extends RefCounted
 ## perfect guide to how a fair judge would see it.
 
 ## How a perfectly neutral official values each part of a round.
-const NEUTRAL_LIKES := {"attack": 0.25, "defence": 0.25, "landed": 1.00, "thrown": 0.10, "power": 0.60}
+const NEUTRAL_LIKES := {"attack": 0.25, "defence": 0.25, "landed": 1.00, "thrown": 0.10, "power": 0.60, "significant": 0.30}
 
 ## Below this share of the round the round is scored even (10-10).
 const EVEN_ROUND := 0.004
@@ -93,7 +93,8 @@ static func work(likes: Dictionary, s: Dictionary) -> float:
 		+ s["damage"] * likes["power"] \
 		+ s["pressure"] * 1.5 * likes["attack"] \
 		+ s["evaded"] * 1.5 * likes["defence"] \
-		+ s["thrown"] * 0.5 * likes["thrown"]
+		+ s["thrown"] * 0.5 * likes["thrown"] \
+		+ s["significant"] * 1.5 * likes["significant"]
 
 
 ## Official judge [param judge]'s score for a round, from the stats so far.

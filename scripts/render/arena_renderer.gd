@@ -53,10 +53,6 @@ const GLYPH_DROP := 2   ## Gap between the bottom of a capital and the baseline.
 
 ## 0 - 1. Raise it when something exciting happens; it fades by itself.
 var excitement := 0.0
-## Set false before setup() for a plain apron (e.g. the Boxers line-up, where
-## numbers are drawn over it).
-var show_apron_text := true
-
 var venue_id := 0
 var fighter_layer: Node2D
 
@@ -101,11 +97,9 @@ func shake_ropes(side: int, amount: float = 1.0) -> void:
 
 
 ## While the verdict is read out the announcement band covers the top of the
-## venue and the buttons sit on the apron, so anything that would peek out
-## under the band (the small gym's sign and clock, the hall's back banner,
-## the arena's big screen) and the apron lettering are taken down.
+## venue, so anything that would peek out under it (the small gym's sign and
+## clock, the hall's back banner, the arena's big screen) is taken down.
 func set_announcing(on: bool) -> void:
-	show_apron_text = not on
 	_announcing = on
 	_static_back.queue_redraw()
 	_crowd_layer.queue_redraw()
@@ -530,14 +524,13 @@ func _draw_hall_walls(c: CanvasItem) -> void:
 		c.draw_rect(Rect2(lx - 3, 18, 6, 2), Color("fff6d0"))
 		c.draw_circle(Vector2(lx, 19), 5.0, Color(1, 0.95, 0.75, 0.12))
 
-	# A huge banner high up at the back.
+	# A huge banner high up at the back, left blank for now.
 	if _announcing:
 		return
 	c.draw_rect(Rect2(124, 26, 176, 19), Color("0c0c14"))
 	c.draw_rect(Rect2(125, 27, 174, 17), Color("1c2a5a"))
 	c.draw_rect(Rect2(125, 27, 174, 1), Color("c8a020"))
 	c.draw_rect(Rect2(125, 43, 174, 1), Color("c8a020"))
-	_text_in(c, "WORLD TITLE NIGHT", Rect2(125, 28, 174, 15), Color("f0d060"))
 
 
 # ============================================================================
@@ -636,32 +629,17 @@ func _draw_apron(c: CanvasItem) -> void:
 				c.draw_rect(Rect2(x, CANVAS_FRONT_Y + 2, 1, rect.size.y - 2), tones[1])
 			c.draw_rect(Rect2(left, APRON_BOTTOM_Y - 2, rect.size.x, 2), tones[1])
 		Venues.Id.CITY_GYM:
+			# Plain cloth under a white trim.
 			c.draw_rect(Rect2(left, CANVAS_FRONT_Y + 2, rect.size.x, 1), Color("f0f0f0"))
-			# Text centred in the cloth between the white trim and the floor.
-			var area := Rect2(left, CANVAS_FRONT_Y + 3, rect.size.x, APRON_BOTTOM_Y - CANVAS_FRONT_Y - 3)
-			if show_apron_text:
-				_text_in(c, _venue["apron_text"], area, Color("f0f0f0"))
 		Venues.Id.BOXING_HALL, Venues.Id.GRAND_ARENA:
-			# Gold trim top and bottom; the skirt between them.
+			# Gold trim top and bottom, and faint skirt folds between them.
 			var top_trim := CANVAS_FRONT_Y + 2
 			var bottom_trim := APRON_BOTTOM_Y - 2
 			c.draw_rect(Rect2(left, top_trim, rect.size.x, 1), Color("c8a020"))
 			c.draw_rect(Rect2(left, bottom_trim, rect.size.x, 1), Color("c8a020"))
-			# Text centred between the two gold trim lines.
-			var area := Rect2(left, top_trim + 1, rect.size.x, bottom_trim - top_trim - 1)
-			# Skirt folds: faint pleats that stop at the trims and leave a clear
-			# margin round the lettering.
-			var text_w := 0.0
-			if show_apron_text:
-				text_w = FONT.get_string_size(_venue["apron_text"], HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE).x
-			var keep_clear := Rect2(area.get_center().x - text_w / 2.0 - 10.0, area.position.y, text_w + 20.0, area.size.y)
 			var fold: Color = (tones[0] as Color).lightened(0.06)
 			for x in range(int(left) + 12, int(right) - 4, 24):
-				if text_w > 0.0 and x >= keep_clear.position.x and x <= keep_clear.end.x:
-					continue
-				c.draw_rect(Rect2(x, area.position.y + 1, 1, area.size.y - 2), fold)
-			if show_apron_text:
-				_text_in(c, _venue["apron_text"], area, Color("f0d060"))
+				c.draw_rect(Rect2(x, top_trim + 2, 1, bottom_trim - top_trim - 3), fold)
 
 	# Floor in front of the ring.
 	var floor_colour: Color = FLOOR_COLOURS[venue_id]

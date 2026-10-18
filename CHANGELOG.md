@@ -4,6 +4,20 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.6
+
+* Showboats show off much less often, at two levels: during the fight they
+  now and then point a glove at the opponent or drop their hands and stick
+  out the chin; in the second half, when on top, they throw both arms in
+  the air. Half the time they also do it over a man they have knocked down.
+* New stat, SIGNIFICANT STRIKES: hard, clean power shots that really hurt
+  (about one landed punch in five in every division). The panels under the
+  ring now show LANDED as landed/thrown and SIG. STRIKES under it. Each
+  judge has a secret liking for them: some weight them heavily, others
+  count them like any other landed punch.
+* The ring aprons have no lettering, and the hall's back banner is a blank
+  box for now.
+
 ## 0.1.5
 
 * Scorecards for every fight length: 3 rounds (exhibition), 6 (amateur),

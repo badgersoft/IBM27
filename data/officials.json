@@ -1,22 +1,22 @@
 {
-	"_comment": "Ringside officials. Three judges are drawn from this pool for every fight. 'fairness' (1-99) decides the PUBLIC band shown before a fight: 70+ is FAIR, 40-69 SO-SO, below 40 WILD (the number itself is never shown). 'likes' is SECRET and never shown in game: how much the judge values attacking (coming forward), defence (slipping and blocking), punches landed (clean, quality shots), punches thrown (work rate) and power (damage done). A perfectly neutral judge would be landed 1.0, power 0.6, attack 0.25, defence 0.25, thrown 0.1. All names are invented.",
+	"_comment": "Ringside officials. Three judges are drawn from this pool for every fight. 'fairness' (1-99) decides the PUBLIC band shown before a fight: 70+ is FAIR, 40-69 SO-SO, below 40 WILD (the number itself is never shown). 'likes' is SECRET and never shown in game: how much the judge values attacking (coming forward), defence (slipping and blocking), punches landed (clean, quality shots), punches thrown (work rate), power (damage done) and significant strikes (hard clean shots that hurt; 0 means one counts like any other landed punch). A perfectly neutral judge would be landed 1.0, power 0.6, attack 0.25, defence 0.25, thrown 0.1, significant 0.3. All names are invented.",
 
 	"judges": [
-		{ "name": "Harold Pemberton",   "country": "GBR", "fairness": 91, "likes": { "attack": 0.20, "defence": 0.30, "landed": 1.10, "thrown": 0.05, "power": 0.55 } },
-		{ "name": "Yuki Shimada",       "country": "JPN", "fairness": 93, "likes": { "attack": 0.25, "defence": 0.25, "landed": 1.00, "thrown": 0.10, "power": 0.60 } },
-		{ "name": "Thomas Brandt",      "country": "USA", "fairness": 88, "likes": { "attack": 0.35, "defence": 0.15, "landed": 1.00, "thrown": 0.15, "power": 0.60 } },
-		{ "name": "Maria Delgado-Ruiz", "country": "ESP", "fairness": 87, "likes": { "attack": 0.15, "defence": 0.45, "landed": 1.00, "thrown": 0.05, "power": 0.50 } },
-		{ "name": "Walter Kessler",     "country": "DEU", "fairness": 84, "likes": { "attack": 0.20, "defence": 0.25, "landed": 0.90, "thrown": 0.10, "power": 0.80 } },
-		{ "name": "Leonard Okoye",      "country": "NGA", "fairness": 82, "likes": { "attack": 0.40, "defence": 0.20, "landed": 0.90, "thrown": 0.20, "power": 0.60 } },
-		{ "name": "Gordon McAllister",  "country": "CAN", "fairness": 79, "likes": { "attack": 0.25, "defence": 0.35, "landed": 1.15, "thrown": 0.05, "power": 0.45 } },
-		{ "name": "Francesca Bellini",  "country": "ITA", "fairness": 76, "likes": { "attack": 0.30, "defence": 0.20, "landed": 0.95, "thrown": 0.25, "power": 0.55 } },
-		{ "name": "Patrick Doolan",     "country": "IRL", "fairness": 74, "likes": { "attack": 0.45, "defence": 0.10, "landed": 0.90, "thrown": 0.15, "power": 0.70 } },
-		{ "name": "Vernon Hale",        "country": "USA", "fairness": 63, "likes": { "attack": 0.80, "defence": 0.05, "landed": 0.80, "thrown": 0.30, "power": 0.60 } },
-		{ "name": "Ines Carvalho",      "country": "BRA", "fairness": 58, "likes": { "attack": 0.30, "defence": 0.10, "landed": 0.70, "thrown": 0.70, "power": 0.40 } },
-		{ "name": "Pavel Sorokin",      "country": "RUS", "fairness": 52, "likes": { "attack": 0.30, "defence": 0.10, "landed": 0.70, "thrown": 0.05, "power": 1.30 } },
-		{ "name": "Ray Castellano",     "country": "USA", "fairness": 47, "likes": { "attack": 0.10, "defence": 0.90, "landed": 0.80, "thrown": 0.00, "power": 0.40 } },
-		{ "name": "Dexter Quill",       "country": "AUS", "fairness": 31, "likes": { "attack": 1.20, "defence": 0.00, "landed": 0.40, "thrown": 0.90, "power": 0.30 } },
-		{ "name": "Bernard Lamotte",    "country": "FRA", "fairness": 22, "likes": { "attack": 0.10, "defence": 1.10, "landed": 0.50, "thrown": 0.00, "power": 1.10 } }
+		{ "name": "Harold Pemberton",   "country": "GBR", "fairness": 91, "likes": { "attack": 0.20, "defence": 0.30, "landed": 1.10, "thrown": 0.05, "power": 0.55, "significant": 0.30 } },
+		{ "name": "Yuki Shimada",       "country": "JPN", "fairness": 93, "likes": { "attack": 0.25, "defence": 0.25, "landed": 1.00, "thrown": 0.10, "power": 0.60, "significant": 0.30 } },
+		{ "name": "Thomas Brandt",      "country": "USA", "fairness": 88, "likes": { "attack": 0.35, "defence": 0.15, "landed": 1.00, "thrown": 0.15, "power": 0.60, "significant": 0.40 } },
+		{ "name": "Maria Delgado-Ruiz", "country": "ESP", "fairness": 87, "likes": { "attack": 0.15, "defence": 0.45, "landed": 1.00, "thrown": 0.05, "power": 0.50, "significant": 0.20 } },
+		{ "name": "Walter Kessler",     "country": "DEU", "fairness": 84, "likes": { "attack": 0.20, "defence": 0.25, "landed": 0.90, "thrown": 0.10, "power": 0.80, "significant": 0.80 } },
+		{ "name": "Leonard Okoye",      "country": "NGA", "fairness": 82, "likes": { "attack": 0.40, "defence": 0.20, "landed": 0.90, "thrown": 0.20, "power": 0.60, "significant": 0.30 } },
+		{ "name": "Gordon McAllister",  "country": "CAN", "fairness": 79, "likes": { "attack": 0.25, "defence": 0.35, "landed": 1.15, "thrown": 0.05, "power": 0.45, "significant": 0.00 } },
+		{ "name": "Francesca Bellini",  "country": "ITA", "fairness": 76, "likes": { "attack": 0.30, "defence": 0.20, "landed": 0.95, "thrown": 0.25, "power": 0.55, "significant": 0.20 } },
+		{ "name": "Patrick Doolan",     "country": "IRL", "fairness": 74, "likes": { "attack": 0.45, "defence": 0.10, "landed": 0.90, "thrown": 0.15, "power": 0.70, "significant": 0.60 } },
+		{ "name": "Vernon Hale",        "country": "USA", "fairness": 63, "likes": { "attack": 0.80, "defence": 0.05, "landed": 0.80, "thrown": 0.30, "power": 0.60, "significant": 0.40 } },
+		{ "name": "Ines Carvalho",      "country": "BRA", "fairness": 58, "likes": { "attack": 0.30, "defence": 0.10, "landed": 0.70, "thrown": 0.70, "power": 0.40, "significant": 0.00 } },
+		{ "name": "Pavel Sorokin",      "country": "RUS", "fairness": 52, "likes": { "attack": 0.30, "defence": 0.10, "landed": 0.70, "thrown": 0.05, "power": 1.30, "significant": 1.20 } },
+		{ "name": "Ray Castellano",     "country": "USA", "fairness": 47, "likes": { "attack": 0.10, "defence": 0.90, "landed": 0.80, "thrown": 0.00, "power": 0.40, "significant": 0.00 } },
+		{ "name": "Dexter Quill",       "country": "AUS", "fairness": 31, "likes": { "attack": 1.20, "defence": 0.00, "landed": 0.40, "thrown": 0.90, "power": 0.30, "significant": 0.10 } },
+		{ "name": "Bernard Lamotte",    "country": "FRA", "fairness": 22, "likes": { "attack": 0.10, "defence": 1.10, "landed": 0.50, "thrown": 0.00, "power": 1.10, "significant": 0.90 } }
 	],
 
 	"_pundit_comment": "One TV pundit sits at ringside each fight and keeps an unofficial card. 'accuracy' (1-99, SECRET) is how closely their card follows a neutral judge: the best are rarely wrong, the worst make the odd bad call.",

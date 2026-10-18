@@ -9,7 +9,7 @@ extends Control
 
 const COLUMNS := 7
 const CELL := Vector2(88, 120)
-const SHEET_SIZE := Vector2i(616, 480)   # 7 x 88 wide, 4 x 120 tall.
+const SHEET_SIZE := Vector2i(616, 600)   # 7 x 88 wide, 5 x 120 tall.
 ## Labels under the bottom row read "height cm / weight lb".
 const SCALE := 2
 const FONT := preload("res://assets/fonts/PressStart2P.woff2")
@@ -27,7 +27,10 @@ const POSES := [
 	["HIT BODY", "hurt_body", 0], ["ROPES", "ropes", 0], ["CLINCH", "clinch", 0],
 	["KNEE", "to_knee", 0], ["FLOORED", "knockdown", -1], ["TAUNT 1", "taunt_skip", 0],
 	["TAUNT 2", "taunt_one", 0], ["VICTORY", "victory", 0], ["DEJECTED", "dejected", 0],
+	["POINT", "taunt_point", 1], ["CHIN OUT", "taunt_chin", 1], ["ARMS UP", "taunt_arms", 1],
 ]
+## Rows of poses above the body row.
+const POSE_ROWS := 4
 
 var _viewport: SubViewport
 
@@ -63,7 +66,7 @@ func _ready() -> void:
 		b.trunks_index = i
 		b.height_cm = BODY_ROW[i][0]
 		b.weight_lb = BODY_ROW[i][1]
-		_add_rig(b, Vector2(i * CELL.x + CELL.x * 0.5, 3 * CELL.y + CELL.y - 22), "stance", 0, i % 2)
+		_add_rig(b, Vector2(i * CELL.x + CELL.x * 0.5, POSE_ROWS * CELL.y + CELL.y - 22), "stance", 0, i % 2)
 
 	_viewport.add_child(labels)
 
@@ -97,7 +100,7 @@ func _draw_labels(c: CanvasItem) -> void:
 		var cell := Vector2(i % COLUMNS, i / COLUMNS) * CELL
 		c.draw_string(FONT, cell + Vector2(0, CELL.y - 6), POSES[i][0], HORIZONTAL_ALIGNMENT_CENTER, CELL.x, 8, Color("e8e4d8"))
 	for i in BODY_ROW.size():
-		var cell := Vector2(i * CELL.x, 3 * CELL.y)
+		var cell := Vector2(i * CELL.x, POSE_ROWS * CELL.y)
 		var text := "%d/%d" % [BODY_ROW[i][0], BODY_ROW[i][1]]
 		c.draw_string(FONT, cell + Vector2(0, CELL.y - 6), text, HORIZONTAL_ALIGNMENT_CENTER, CELL.x, 8, Color("8a90aa"))
 

@@ -60,6 +60,11 @@ preset under *Project > Export*.
   up blocks most head shots (and catches some body shots on his elbows);
   how well depends on his intelligence and speed against the puncher's
   intelligence.
+* Hard, clean power shots that really hurt count as **significant strikes**
+  (about one landed punch in five). The panels under the ring show each
+  boxer's punches landed out of thrown and his significant strikes. Some
+  judges weight a significant strike well above an ordinary landed punch;
+  others just count it as another punch landed.
 * Now and then a **big punch** lands: far more damage, twice the chance of a
   knockdown, a flash where it lands, a heavy thud and the crowd roaring in
   anticipation. They are rare (about one every two rounds per boxer) and come
@@ -82,6 +87,7 @@ preset under *Project > Export*.
   **lifts the winner's arm** (both arms for a draw) and the loser drops his
   head. A stoppage goes straight to "And the winner, by knockout in round 2
   at 1:47...". NEW FIGHT and MAIN MENU then appear on the ring apron.
+* The ring aprons and the hall's back banner are left plain for now.
 
 ![The verdict](docs/screenshots/decision_split.png)
 
@@ -94,7 +100,8 @@ band: FAIR, SO-SO or WILD (the number behind it is never shown). Most of the
 pool is fair; a few are not.
 
 Each judge also has SECRET preferences that are never shown in game: how much
-they value attacking, defence, punches landed, punches thrown and power. On
+they value attacking, defence, punches landed, punches thrown, power and
+significant strikes. On
 top of that, fairness controls how far a judge strays from what they saw:
 round-to-round personal opinion, and a lean towards one boxer that is strongest
 when a boxer comes from the judge's own country.
@@ -177,7 +184,11 @@ rather than big ones: weights are skewed towards the light end of the range
 (in the default roster eight of the ten weigh under 245 lb), with a couple of
 big men near 290 lb. The heaviest are drawn heavy rather than obese.
 
-Showboats are rarer than the other styles: one or two per division.
+Showboats are rarer than the other styles: one or two per division. They
+show off at two levels: now and then during a fight they point a glove at
+the other man or drop their hands and stick out the chin; in the second half
+of a fight, when they are on top, they throw both arms in the air. Half the
+time they do the same over a man they have just knocked down.
 
 **BOXERS** on the main menu has a tab per division listing each boxer's
 country, age, record (W, L, D and KO, each centred under its heading),
@@ -304,7 +315,8 @@ drawn at full resolution so it stays sharp on any screen.
 Guard (gloves up), ready stance (arms at the stomach), relaxed stance, victory,
 move forward, move back, jab, cross, uppercut, hook, body shot, drop to a knee,
 knocked down (then up to a knee and back to the feet), bouncing off the ropes,
-taunt with hands in the air while skipping, taunt with one hand raised. There
+taunt with hands in the air while skipping, taunt with one hand raised, and
+the showboat's point, chin out and arms up. There
 are also two hit reactions (head and body), a clinch and a dejected loser.
 
 ---
@@ -326,19 +338,20 @@ godot --path . scenes/fight.tscn -- --venue=2 --seed=21 --show=fight --capture=f
 
 Command-line options read by the game (after `--`):
 
-| Option             | Meaning                                                                                                                             |
-|--------------------|-------------------------------------------------------------------------------------------------------------------------------------|
-| `--seed=<n>`       | Fixed random seed (same match-up and fight every time)                                                                              |
-| `--roster=<n>`     | Different starting rosters                                                                                                          |
-| `--division=<0-2>` | 0 Lightweight, 1 Middleweight, 2 Heavyweight                                                                                        |
-| `--tab=<0-2>`      | Which division tab the Boxers screen opens on                                                                                       |
-| `--index=<0-9>`    | Which boxer's profile opens (with `--division`)                                                                                     |
-| `--venue=<0-3>`    | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena                                                                          |
-| `--rounds=<n>`     | Fight length: 3, 6, 10 or 12 rounds (default 6)                                                                                     |
-| `--capture=<png>`  | Fast-forward, save a screenshot and quit                                                                                            |
-| `--show=<moment>`  | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch landing), `break`, `count`, `announce`, `result` |
-| `--wait=<seconds>` | Real seconds to wait before the shot (e.g. mid read-out)                                                                            |
-| `--at=<seconds>`   | Earliest real second of round 1 to capture (default 20)                                                                             |
+| Option                   | Meaning                                                                                                                                                            |
+|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--seed=<n>`             | Fixed random seed (same match-up and fight every time)                                                                                                             |
+| `--roster=<n>`           | Different starting rosters                                                                                                                                         |
+| `--division=<0-2>`       | 0 Lightweight, 1 Middleweight, 2 Heavyweight                                                                                                                       |
+| `--red=<n>` `--blue=<n>` | Pick the boxers by their number in the division (1-10)                                                                                                             |
+| `--tab=<0-2>`            | Which division tab the Boxers screen opens on                                                                                                                      |
+| `--index=<0-9>`          | Which boxer's profile opens (with `--division`)                                                                                                                    |
+| `--venue=<0-3>`          | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena                                                                                                         |
+| `--rounds=<n>`           | Fight length: 3, 6, 10 or 12 rounds (default 6)                                                                                                                    |
+| `--capture=<png>`        | Fast-forward, save a screenshot and quit                                                                                                                           |
+| `--show=<moment>`        | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch landing), `taunt` (someone showing off), `break`, `count`, `announce`, `result` |
+| `--wait=<seconds>`       | Real seconds to wait before the shot (e.g. mid read-out)                                                                                                           |
+| `--at=<seconds>`         | Earliest real second of round 1 to capture (default 20)                                                                                                            |
 
 ### Code style
 
