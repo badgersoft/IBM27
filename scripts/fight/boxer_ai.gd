@@ -61,10 +61,12 @@ const COMBOS := {
 }
 
 var rng: RandomNumberGenerator
+var rounds := FightLengths.DEFAULT_ROUNDS    ## Scheduled length of the fight.
 
 
-func _init(random: RandomNumberGenerator) -> void:
+func _init(random: RandomNumberGenerator, round_count: int = FightLengths.DEFAULT_ROUNDS) -> void:
 	rng = random
+	rounds = round_count
 
 
 ## Called by FightSim every frame for a boxer who is free to act.
@@ -190,7 +192,7 @@ func _think_interval(me: Fighter) -> float:
 func _aggression(me: Fighter, opp: Fighter, round_number: int) -> float:
 	var intel := me.skill("intelligence") / 99.0
 	var a: float = BASE_AGGRESSION[me.data.style]
-	if me.data.style == Style.EVASIVE and round_number >= FightSim.ROUNDS:
+	if me.data.style == Style.EVASIVE and round_number >= rounds:
 		a += 0.28   # Evasive boxers save themselves for the last round.
 	match me.advice:
 		Advice.ATTACK_MORE:
@@ -209,7 +211,7 @@ func _aggression(me: Fighter, opp: Fighter, round_number: int) -> float:
 
 func _preferred_distance(me: Fighter, round_number: int) -> float:
 	var d: float = PREFERRED_RANGE[me.data.style]
-	if me.data.style == Style.EVASIVE and round_number >= FightSim.ROUNDS:
+	if me.data.style == Style.EVASIVE and round_number >= rounds:
 		d = 0.52
 	if me.reset_timer > 0.0:
 		d = maxf(d, 0.66)   # Hit and move.

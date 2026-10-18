@@ -44,7 +44,10 @@ preset under *Project > Export*.
   random.
 * The **tale of the tape** compares them. Tap, or wait 12 seconds, to ring the
   bell.
-* Six rounds. Each round is **1 minute of real time**, but the clock shows
+* Fights come in four lengths: **3 rounds** (exhibition), **6** (amateur),
+  **10** (semi-pro) and **12** (professional). Every fight in this build is
+  6 rounds; `--rounds=<n>` picks another length for testing. Each round is
+  **1 minute of real time**, but the clock shows
   **3:00** and counts down at three times real speed.
 * The **bell** rings once (a short, soft ring) to start each round, and
   three times to end it.
@@ -68,7 +71,7 @@ preset under *Project > Export*.
 * When the fight ends, both boxers and the referee turn to face the crowd in
   the middle of the ring, the referee holding each man by the wrist. A slim
   two-line band over the crowd does the announcing, so nothing covers them:
-  after six rounds the judges' cards are read **one at a time**, like a
+  after the last round the judges' cards are read **one at a time**, like a
   ring announcer ("Judge H. Pemberton scores the bout..." then "58-56 in
   favour of Johnson"), and each judge's row fills in on the official
   scorecards, which take over the whole bottom of the screen. The crowd gives a small cheer for
@@ -100,10 +103,13 @@ The official cards are **secret until the final bell**. During the fight the
 panel shows a **TV pundit's unofficial card** instead. Five pundits share the
 job, each with a secret accuracy rating: they score like a neutral judge with
 a little error, so the card is a good guide with the occasional bad call.
-Like a real card it is only filled in when the bell ends each round; the six
-rounds sit in two rows of three beside the running total. The official cards
-replace it when the verdict is read, one judge at a time, with a pause
-before each score and before the winner's name.
+Like a real card it is only filled in when the bell ends each round. Each
+round is a box coloured by who won it (red, blue, grey for even, with a gold
+edge for a 10-8 round), with the round numbers above and the running total
+beside them; the boxes are sized so 3, 6, 10 and 12 rounds all fit. The
+official cards use the same boxes, one row per judge, and take over the
+bottom of the screen when the verdict is read, one judge at a time, with a
+pause before each score and before the winner's name.
 
 Knockdown rounds are scored the way real judges do it: the boxer who scored the
 knockdown wins the round, 10-8 if he was clearly winning it anyway, otherwise
@@ -236,6 +242,7 @@ scripts/
     boxer_data.gd             A boxer's fixed details (Resource)
     boxer_generator.gd        Random boxers: hometown, name, body, skills
     palette.gd                Every colour in the game
+    fight_lengths.gd          3 / 6 / 10 / 12 rounds and their level names
   fight/
     fight_sim.gd              Clock, bell, punches, knockdowns, count, result
     fighter.gd                One boxer's live state during a fight
@@ -308,7 +315,7 @@ All of these run from the project folder. `godot` is your Godot 4.7 executable.
 
 ```sh
 # Run 200 fights with no graphics and print the balance summary
-godot --headless --path . -s tools/simulate_fights.gd -- --fights=200 --division=1
+godot --headless --path . -s tools/simulate_fights.gd -- --fights=200 --division=1 --rounds=6
 
 # Every pose and every skin/hair/size combination on one sheet
 godot --path . scenes/debug/pose_sheet.tscn -- --capture=poses.png
@@ -327,6 +334,7 @@ Command-line options read by the game (after `--`):
 | `--tab=<0-2>`      | Which division tab the Boxers screen opens on                                                                                       |
 | `--index=<0-9>`    | Which boxer's profile opens (with `--division`)                                                                                     |
 | `--venue=<0-3>`    | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena                                                                          |
+| `--rounds=<n>`     | Fight length: 3, 6, 10 or 12 rounds (default 6)                                                                                     |
 | `--capture=<png>`  | Fast-forward, save a screenshot and quit                                                                                            |
 | `--show=<moment>`  | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch landing), `break`, `count`, `announce`, `result` |
 | `--wait=<seconds>` | Real seconds to wait before the shot (e.g. mid read-out)                                                                            |

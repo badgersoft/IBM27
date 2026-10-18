@@ -54,7 +54,7 @@ func _ready() -> void:
 	var red := GameState.red
 	var blue := GameState.blue
 
-	sim = FightSim.new(red, blue, GameState.fight_seed())
+	sim = FightSim.new(red, blue, GameState.fight_seed(), GameState.rounds)
 	_connect_sim()
 
 	view = ArenaView.new()
@@ -174,7 +174,7 @@ func _build_layout(red: BoxerData, blue: BoxerData) -> void:
 	_overlay.add_child(UiTheme.place(_banner, 0, 160, arena_size.x, 64))
 
 	_tape = TaleOfTape.new()
-	_tape.setup(red, blue, GameState.venue_id, FightSim.ROUNDS)
+	_tape.setup(red, blue, GameState.venue_id, sim.rounds)
 	_tape.position = (arena_size - Vector2(TaleOfTape.W, TaleOfTape.H)) / 2.0
 	_tape.dismissed.connect(_begin_fight)
 	_overlay.add_child(_tape)
@@ -213,7 +213,7 @@ func _on_round_started(r: int) -> void:
 
 
 func _on_round_ended(r: int) -> void:
-	if r < FightSim.ROUNDS:
+	if r < sim.rounds:
 		_show_banner("END OF ROUND %d" % r, 2.0, Palette.UI_TEXT)
 
 
@@ -331,7 +331,7 @@ func _sync_rigs() -> void:
 
 
 func _refresh_hud(delta: float = SCORECARD_REFRESH) -> void:
-	_bug.show_state(sim.round_number, FightSim.ROUNDS, sim.clock_text())
+	_bug.show_state(sim.round_number, sim.rounds, sim.clock_text())
 	for i in 2:
 		_panels[i].refresh(sim.fighters[i])
 	_card_clock += delta
@@ -372,7 +372,7 @@ func _run_capture() -> void:
 		_begin_fight()
 		var dt := 1.0 / 60.0
 		var t := 0.0
-		var limit := (FightSim.REAL_ROUND_SECONDS + FightSim.BREAK_SECONDS) * FightSim.ROUNDS + 120.0
+		var limit := (FightSim.REAL_ROUND_SECONDS + FightSim.BREAK_SECONDS) * sim.rounds + 120.0
 		while t < limit:
 			_big_this_step = false
 			sim.step(dt)

@@ -27,7 +27,6 @@ signal fight_finished(result: Dictionary)
 
 enum Phase { INTRO, ROUND, COUNT, BREAK, FINISHED }
 
-const ROUNDS := 6
 const REAL_ROUND_SECONDS := 60.0
 const GAME_ROUND_SECONDS := 180.0
 const CLOCK_SPEED := GAME_ROUND_SECONDS / REAL_ROUND_SECONDS
@@ -79,6 +78,8 @@ var ai: BoxerAI
 var rng := RandomNumberGenerator.new()
 
 var phase: Phase = Phase.INTRO
+## How many rounds this fight is scheduled for (see FightLengths).
+var rounds := FightLengths.DEFAULT_ROUNDS
 var round_number := 1
 var clock := GAME_ROUND_SECONDS       ## Game seconds left in the round.
 var break_time := 0.0
@@ -91,7 +92,9 @@ var _advice_given := false
 var _finish_timer := 0.0
 
 
-func _init(red_data: BoxerData, blue_data: BoxerData, seed_value: int = -1) -> void:
+func _init(red_data: BoxerData, blue_data: BoxerData, seed_value: int = -1,
+		round_count: int = FightLengths.DEFAULT_ROUNDS) -> void:
+	rounds = round_count
 	if seed_value < 0:
 		rng.randomize()
 	else:
@@ -103,8 +106,8 @@ func _init(red_data: BoxerData, blue_data: BoxerData, seed_value: int = -1) -> v
 	blue.x = ArenaRenderer.CORNER_X[1]
 	for f in fighters:
 		f.set_state(State.CORNER, "relaxed")
-	judges = Judges.new(ROUNDS, Officials.pick_judges(rng), Officials.pick_pundit(rng), red_data, blue_data, rng)
-	ai = BoxerAI.new(rng)
+	judges = Judges.new(rounds, Officials.pick_judges(rng), Officials.pick_pundit(rng), red_data, blue_data, rng)
+	ai = BoxerAI.new(rng, rounds)
 
 
 ## Rings the first bell. Call once the pre-fight screen is dismissed.
@@ -168,7 +171,7 @@ func _end_round() -> void:
 	judges.finalise_round(round_number - 1, red, blue)
 	bell.emit(3)
 	round_ended.emit(round_number)
-	if round_number >= ROUNDS:
+	if round_number >= rounds:
 		_decision()
 		return
 
@@ -182,8 +185,8 @@ func _end_round() -> void:
 	# The official cards are secret, so each trainer goes by the TV pundit's
 	# card (what they would hear at ringside) before giving advice.
 	var t := judges.pundit_totals()
-	red.advice = ai.corner_advice(red, t[0], t[1], round_number + 1, ROUNDS)
-	blue.advice = ai.corner_advice(blue, t[1], t[0], round_number + 1, ROUNDS)
+	red.advice = ai.corner_advice(red, t[0], t[1], round_number + 1, rounds)
+	blue.advice = ai.corner_advice(blue, t[1], t[0], round_number + 1, rounds)
 
 
 ## A minute in the corner: water, a towel and some breath back.
@@ -355,7 +358,7 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	var power := a.skill("power")
 	var dmg := PunchTypes.DAMAGE[type] * (0.45 + power / 99.0 * 0.95) * rng.randf_range(0.8, 1.2)
 	dmg *= Divisions.get_division(a.data.division)["power_scale"]   # Heavyweights hit harder.
-	dmg *= 1.0 + d.fatigue() * 0.6 + (round_number - 1) / float(ROUNDS - 1) * LATE_ROUND_DAMAGE
+	dmg *= 1.0 + d.fatigue() * 0.6 + (round_number - 1) / float(maxi(rounds - 1, 1)) * LATE_ROUND_DAMAGE
 	if a.advice == Fighter.Advice.ALL_OUT:
 		dmg *= 1.1
 	if PunchTypes.is_power_punch(type):

@@ -4,13 +4,14 @@ extends Control
 ## fight screen while the verdict is read (1248 x 128). Each judge's row is
 ## filled in as his score is read out (see reveal_judges).
 ##
-##   OFFICIAL SCORECARDS                                          RED  BLUE
-##                 ROUND 1  ROUND 2  ROUND 3  ROUND 4  ROUND 5  ROUND 6  TOTAL
-##   Y. SHIMADA     10-9     9-10     10-9     10-9     10-9     9-10   58-56
+##   OFFICIAL SCORECARDS                    RED  BLUE  EVEN  GOLD EDGE 10-8
+##   JUDGE              1     2     3     4     5     6            TOTAL
+##   Y. SHIMADA       [red] [blu] [red] [red] [gry] [red]          58-56
 ##   ...
 ##
-## Seven equal columns (six rounds and the total) fill the space after the
-## judges' names, with every score's dash in the same place.
+## Every round is a box coloured by who that judge gave it to (RoundStrip),
+## sized so 3, 6, 10 and 12 rounds all fill the same space, and the total is
+## a full-size score with room for three digits in the longer fights.
 
 const W := 1248
 const H := 128
@@ -19,11 +20,19 @@ const CAPTION_Y := 7
 const HEADER_Y := 27
 const FIRST_ROW_Y := 43
 const NAME_W := 240
-const COLUMNS_X := PAD + NAME_W + 16
-const COLUMN_W := 136
+const STRIP_AREA := Vector2(272, 1048)      ## x from / to.
+const STRIP_STEPS := [128, 96, 72, 64]
+const STRIP_DROP := 3                       ## Box top below the row top.
+const TOTAL_X := 1072
+const TOTAL_W := 160
+
+## The colour key: [text, colour].
+const KEY := [["RED", Palette.UI_RED], ["BLUE", Palette.UI_BLUE], ["EVEN", Palette.UI_TEXT_DIM], ["GOLD EDGE 10-8", Palette.UI_GOLD]]
+const KEY_GAP := 16
 
 var _names: Array[Label] = []
-var _cells: Array = []            # [judge][column]; the last column is the total.
+var _strips: Array[RoundStrip] = []
+var _totals: Array[ScorePair] = []
 var _revealed := 0
 
 
@@ -32,35 +41,47 @@ func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(UiTheme.panel(0, 0, W, H))
 	add_child(UiTheme.place(UiTheme.label("OFFICIAL SCORECARDS", UiTheme.CAPTION, Palette.UI_GOLD), PAD, CAPTION_Y, 240, UiTheme.CAPTION))
-	var blue_key := UiTheme.label("BLUE", UiTheme.CAPTION, Palette.UI_BLUE, HORIZONTAL_ALIGNMENT_RIGHT)
-	var red_key := UiTheme.label("RED", UiTheme.CAPTION, Palette.UI_RED, HORIZONTAL_ALIGNMENT_RIGHT)
-	add_child(UiTheme.place(blue_key, W - PAD - 32, CAPTION_Y, 32, UiTheme.CAPTION))
-	add_child(UiTheme.place(red_key, W - PAD - 32 - 8 - 24, CAPTION_Y, 24, UiTheme.CAPTION))
+	# Key, right-aligned: each entry as wide as its text (8 px a character).
+	var x := float(W - PAD)
+	for i in range(KEY.size() - 1, -1, -1):
+		var entry: Array = KEY[i]
+		var w := str(entry[0]).length() * UiTheme.CAPTION
+		x -= w
+		add_child(UiTheme.place(UiTheme.label(entry[0], UiTheme.CAPTION, entry[1]), x, CAPTION_Y, w, UiTheme.CAPTION))
+		x -= KEY_GAP
 
-	var columns := FightSim.ROUNDS + 1
-	for c in columns:
-		var text := "TOTAL" if c == FightSim.ROUNDS else "ROUND %d" % (c + 1)
-		var h := UiTheme.label(text, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER)
-		add_child(UiTheme.place(h, COLUMNS_X + c * COLUMN_W, HEADER_Y, COLUMN_W, UiTheme.CAPTION))
-	for j in 3:
+
+## Lays the card out for [param judges] (names and fight length).
+func setup(judges: Judges) -> void:
+	add_child(UiTheme.place(UiTheme.label("JUDGE", UiTheme.CAPTION, Palette.UI_TEXT_DIM), PAD, HEADER_Y, NAME_W, UiTheme.CAPTION))
+	var total_caption := UiTheme.label("TOTAL", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER)
+	add_child(UiTheme.place(total_caption, TOTAL_X, HEADER_Y, TOTAL_W, UiTheme.CAPTION))
+	var digits := 3 if judges.rounds * 10 >= 100 else 2
+
+	for j in judges.panel.size():
 		var y := FIRST_ROW_Y + j * UiTheme.ROW_H
-		var name_label := UiTheme.label("", UiTheme.BODY, Palette.UI_TEXT)
+		var name_label := UiTheme.label(Officials.short_name(judges.panel[j]), UiTheme.BODY, Palette.UI_TEXT)
 		add_child(UiTheme.place(name_label, PAD, y, NAME_W, UiTheme.ROW_H))
 		_names.append(name_label)
-		var row: Array = []
-		for c in columns:
-			var cell := ScorePair.new()
-			cell.position = Vector2(COLUMNS_X + c * COLUMN_W + (COLUMN_W - ScorePair.WIDTH) / 2.0, y)
-			cell.clear()
-			add_child(cell)
-			row.append(cell)
-		_cells.append(row)
 
+		var strip := RoundStrip.new()
+		strip.setup(judges.rounds, STRIP_AREA.y - STRIP_AREA.x, STRIP_STEPS)
+		strip.position = Vector2(roundf(STRIP_AREA.x + (STRIP_AREA.y - STRIP_AREA.x - strip.size.x) / 2.0), y + STRIP_DROP)
+		add_child(strip)
+		_strips.append(strip)
 
-func setup(judges: Judges) -> void:
-	for j in judges.panel.size():
-		_names[j].text = Officials.short_name(judges.panel[j])
-		UiTheme.fit(_names[j], NAME_W)
+		var total := ScorePair.new(digits)
+		total.position = Vector2(TOTAL_X + (TOTAL_W - ScorePair.width_for(digits)) / 2.0, y)
+		total.clear()
+		add_child(total)
+		_totals.append(total)
+
+	# Round numbers over the boxes, from the first strip's layout.
+	var first := _strips[0]
+	for r in judges.rounds:
+		var number := UiTheme.label(str(r + 1), UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER)
+		var nx := first.position.x + first.number_x(r) - first.step / 2.0
+		add_child(UiTheme.place(number, nx, HEADER_Y, first.step, UiTheme.CAPTION))
 
 
 ## Fills in the first [param count] judges' rows; the rest stay blank.
@@ -68,16 +89,11 @@ func reveal_judges(count: int, sim: FightSim) -> void:
 	_revealed = count
 	var judges := sim.judges
 	for j in judges.panel.size():
-		var row: Array = _cells[j]
 		if j >= _revealed:
-			for cell in row:
-				(cell as ScorePair).clear()
+			_strips[j].clear_all()
+			_totals[j].clear()
 			continue
 		for r in judges.rounds:
-			var score: Array = judges.cards[j][r]
-			if score.is_empty():
-				(row[r] as ScorePair).clear()
-			else:
-				(row[r] as ScorePair).set_score(score[0], score[1])
+			_strips[j].set_round(r, judges.cards[j][r])
 		var t := judges.totals(j)
-		(row[judges.rounds] as ScorePair).set_score(t[0], t[1])
+		_totals[j].set_score(t[0], t[1])

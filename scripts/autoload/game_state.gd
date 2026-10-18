@@ -12,6 +12,7 @@ extends Node
 ##   --venue=<0-3>   force a venue (0 town gym, 1 city gym, 2 boxing hall, 3 grand arena)
 ##   --capture=<png> take a screenshot during the fight and quit (see CaptureTool)
 ##   --index=<0-9>   which boxer's profile to open (with --division)
+##   --rounds=<n>    fight length: 3, 6, 10 or 12 (default 6)
 
 ## Boxers per division.
 const ROSTER_SIZE := 10
@@ -24,6 +25,8 @@ var rosters: Array = []
 var red: BoxerData
 var blue: BoxerData
 var division: int = Divisions.Id.MIDDLEWEIGHT
+## Scheduled rounds for the next fight (see FightLengths).
+var rounds := FightLengths.DEFAULT_ROUNDS
 var venue_id := 0
 
 ## The Boxers screen remembers its tab, and which boxer's profile is open.
@@ -58,6 +61,9 @@ func boxers_in(division_id: int) -> Array[BoxerData]:
 ## Picks a division, two different boxers from it, and a venue - all at random
 ## unless --division / --venue are given.
 func new_fight() -> void:
+	rounds = int(options.get("rounds", FightLengths.DEFAULT_ROUNDS))
+	if not FightLengths.is_valid(rounds):
+		rounds = FightLengths.DEFAULT_ROUNDS
 	if options.has("division"):
 		division = clampi(int(options["division"]), 0, Divisions.count() - 1)
 	else:

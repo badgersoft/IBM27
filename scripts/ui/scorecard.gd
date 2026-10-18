@@ -9,10 +9,11 @@ extends Control
 ##
 ## PUNDIT (during the fight) - the official cards are secret, so this shows a
 ## ringside TV pundit's unofficial card. Like a real card, each round is only
-## scored when the bell ends it. Six rounds sit in two rows of three:
+## scored when the bell ends it. Each round is a box coloured by who won it
+## (see RoundStrip), sized so 3, 6, 10 and 12 rounds all fit:
 ##   RINGSIDE PUNDIT - UNOFFICIAL                 SALLY BRENNAN
-##   R1  10-9    R2  9-10    R3  10-9     |     TOTAL
-##   R4   -      R5   -      R6   -       |     29-28
+##     1    2    3    4    5    6               |    TOTAL
+##   [red][blu][red][   ][   ][   ]             |    29-28
 ##   --------------------------------------------------
 ##              SCORES IT 29-28  JOHNSON
 ##
@@ -26,12 +27,11 @@ const H := 128
 const PAD := 16
 const HEADER_Y := 27
 const FIRST_ROW_Y := 43
-## Pundit's card: rounds in rows of three, each cell a dim round number and
-## the score; the total in its own block on the right.
-const ROUNDS_PER_ROW := 3
-const ROUND_ROW_Y := 26
-const ROUND_LABEL_W := 32
-const ROUND_PITCH := 120
+## Pundit's card: the round strip centred in the space left of the total,
+## round numbers over the boxes, the total in its own block on the right.
+const STRIP_AREA := Vector2(PAD, 368)       ## x from / to.
+const STRIP_Y := 46                         ## Boxes centred on the score row.
+const STRIP_STEPS := [48, 40, 32, 28]
 const TOTAL_X := 384
 const TOTAL_W := 112
 ## "Today's judges" columns: name, country, fairness band. Only the band
@@ -45,7 +45,7 @@ const FAIR_W := 128
 var mode: Mode = Mode.JUDGES
 
 var _faces := {}                  # Mode -> Control holding that face.
-var _pundit_cells: Array = []     # One per round.
+var _pundit_strip: RoundStrip
 var _pundit_total: ScorePair
 var _verdict: Label
 var _pundit_name: Label
@@ -57,7 +57,6 @@ func _init() -> void:
 	add_child(UiTheme.panel(0, 0, W, H))
 	_faces[Mode.JUDGES] = _face()
 	_faces[Mode.PUNDIT] = _face()
-	_build_pundit(_faces[Mode.PUNDIT])
 	set_mode(Mode.JUDGES)
 
 
@@ -86,7 +85,7 @@ func show_judges(judges: Judges) -> void:
 		face.add_child(UiTheme.place(UiTheme.label(judge["country"], UiTheme.BODY, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), COUNTRY_X, y, COUNTRY_W, UiTheme.ROW_H))
 		var band := UiTheme.label(Officials.fairness_label(fairness), UiTheme.BODY, Officials.fairness_color(fairness), HORIZONTAL_ALIGNMENT_CENTER)
 		face.add_child(UiTheme.place(band, FAIR_X, y, FAIR_W, UiTheme.ROW_H))
-	_pundit_name.text = str(judges.pundit["name"]).to_upper()
+	_build_pundit(_faces[Mode.PUNDIT], judges)
 
 
 ## Updates the pundit's card (the judges face never changes).
@@ -106,31 +105,30 @@ func _face() -> Control:
 	return face
 
 
-func _build_pundit(face: Control) -> void:
+func _build_pundit(face: Control, judges: Judges) -> void:
+	for child in face.get_children():
+		child.queue_free()
 	face.add_child(UiTheme.place(UiTheme.label("RINGSIDE PUNDIT  -  UNOFFICIAL", UiTheme.CAPTION, Palette.UI_TEXT_DIM), PAD, 7, 288, UiTheme.CAPTION))
-	_pundit_name = UiTheme.label("", UiTheme.CAPTION, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_RIGHT)
+	_pundit_name = UiTheme.label(str(judges.pundit["name"]).to_upper(), UiTheme.CAPTION, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_RIGHT)
 	face.add_child(UiTheme.place(_pundit_name, W - PAD - 192, 7, 192, UiTheme.CAPTION))
 
-	for r in FightSim.ROUNDS:
-		var x := PAD + (r % ROUNDS_PER_ROW) * ROUND_PITCH
-		var y := ROUND_ROW_Y + (r / ROUNDS_PER_ROW) * UiTheme.ROW_H
-		# An 8 px label draws its capitals 7 px down, which centres them on
-		# the 16 px score beside it.
-		var number := UiTheme.label("R%d" % (r + 1), UiTheme.CAPTION, Palette.UI_TEXT_DIM)
-		face.add_child(UiTheme.place(number, x, y, ROUND_LABEL_W, UiTheme.CAPTION))
-		var cell := ScorePair.new()
-		cell.position = Vector2(x + ROUND_LABEL_W, y)
-		cell.clear()
-		face.add_child(cell)
-		_pundit_cells.append(cell)
+	_pundit_strip = RoundStrip.new()
+	_pundit_strip.setup(judges.rounds, STRIP_AREA.y - STRIP_AREA.x, STRIP_STEPS)
+	var strip_x := roundf(STRIP_AREA.x + (STRIP_AREA.y - STRIP_AREA.x - _pundit_strip.size.x) / 2.0)
+	_pundit_strip.position = Vector2(strip_x, STRIP_Y)
+	face.add_child(_pundit_strip)
+	for r in judges.rounds:
+		var number := UiTheme.label(str(r + 1), UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER)
+		var x := strip_x + _pundit_strip.number_x(r) - _pundit_strip.step / 2.0
+		face.add_child(UiTheme.place(number, x, HEADER_Y, _pundit_strip.step, UiTheme.CAPTION))
 
-	# Total: a thin divider, the caption over the first row, the score under it.
-	var rows := ceili(FightSim.ROUNDS / float(ROUNDS_PER_ROW))
-	face.add_child(UiTheme.block(Color(Palette.UI_TEXT_DIM, 0.4), TOTAL_X - 8, ROUND_ROW_Y + 4, 1, rows * UiTheme.ROW_H - 8))
+	# Total: a thin divider, its caption over the score.
+	face.add_child(UiTheme.block(Color(Palette.UI_TEXT_DIM, 0.4), TOTAL_X - 8, HEADER_Y + 4, 1, 36))
 	var caption := UiTheme.label("TOTAL", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER)
-	face.add_child(UiTheme.place(caption, TOTAL_X, ROUND_ROW_Y, TOTAL_W, UiTheme.CAPTION))
-	_pundit_total = ScorePair.new()
-	_pundit_total.position = Vector2(TOTAL_X + (TOTAL_W - ScorePair.WIDTH) / 2.0, ROUND_ROW_Y + UiTheme.ROW_H)
+	face.add_child(UiTheme.place(caption, TOTAL_X, HEADER_Y, TOTAL_W, UiTheme.CAPTION))
+	var digits := 3 if judges.rounds * 10 >= 100 else 2
+	_pundit_total = ScorePair.new(digits)
+	_pundit_total.position = Vector2(TOTAL_X + (TOTAL_W - ScorePair.width_for(digits)) / 2.0, FIRST_ROW_Y)
 	_pundit_total.clear()
 	face.add_child(_pundit_total)
 
@@ -143,13 +141,9 @@ func _refresh_pundit(sim: FightSim) -> void:
 	var judges := sim.judges
 	var any := false
 	for r in judges.rounds:
-		var cell: ScorePair = _pundit_cells[r]
 		var score: Array = judges.pundit_card[r]
-		if not score.is_empty():
-			cell.set_score(score[0], score[1])
-			any = true
-		else:
-			cell.clear()
+		_pundit_strip.set_round(r, score)
+		any = any or not score.is_empty()
 	if not any:
 		_pundit_total.clear()
 		_verdict.text = "SCORED AFTER EACH ROUND"

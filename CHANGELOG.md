@@ -4,6 +4,18 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.5
+
+* Scorecards for every fight length: 3 rounds (exhibition), 6 (amateur),
+  10 (semi-pro) and 12 (professional). Each round is a box coloured by who
+  won it (red, blue, grey for even, gold edge for a 10-8 round) with the
+  round numbers above, sized so every length fills the card neatly. The
+  pundit's card and the full-width official card both use it, and totals
+  have room for three digits (12-round cards go past 100).
+* Fight length is now a setting of each fight (6 rounds for now;
+  `--rounds=3|6|10|12` to test the others). The tale of the tape shows the
+  length and level, e.g. "6 ROUNDS - AMATEUR - ...".
+
 ## 0.1.4
 
 * Fights are now 6 rounds. The pundit's card shows the rounds in two rows
