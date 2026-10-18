@@ -19,7 +19,9 @@ extends Control
 ## DECISION..." and the name, billed with any nickname between first name
 ## and surname (JAKE "MAMMOTH" HARRIS!). As each judge is read out his row of the
 ## official scorecard under the ring is filled in (judge_revealed).
-## A stoppage gets to the name quickly. Tap, click or Space skips to the end.
+## A stoppage gets to the name quickly. In a title fight the name is called
+## as "...AND STILL IBC HEAVYWEIGHT CHAMPION" or "...AND NEW IBC HEAVYWEIGHT
+## CHAMPION". Tap, click or Space skips to the end.
 
 signal new_fight_pressed
 signal menu_pressed
@@ -46,6 +48,9 @@ const SCORE_AFTER := 2.5        ## Judge's name first, then his score.
 const WINNER_PAUSE := 2.4       ## Drum roll between "and the winner..." and the name.
 const STOPPAGE_VERDICT_AT := 0.4
 const BUTTONS_AFTER := 1.0
+## After a drawn title fight, how long before the champion is named as
+## keeping his title.
+const TITLE_AFTER_DRAW := 3.0
 
 const METHOD_TITLES := {
 	"KO": "KNOCKOUT!",
@@ -66,11 +71,21 @@ var _steps: Array = []
 var _next_step := 0
 var _clock := 0.0
 var _announced := false
+## Title fight details: is one on the line, the champion's corner (-1 if
+## the title is vacant) and the division's name.
+var _title := false
+var _holder := -1
+var _division := ""
 
 
-## [param buttons_mid_y] is the overlay y the buttons are centred on.
-func setup(result: Dictionary, red: BoxerData, blue: BoxerData, judges: Judges, buttons_mid_y: float) -> void:
+## [param buttons_mid_y] is the overlay y the buttons are centred on. For a
+## title fight, [param title_holder] is the champion's corner (-1 if vacant).
+func setup(result: Dictionary, red: BoxerData, blue: BoxerData, judges: Judges, buttons_mid_y: float,
+		title_fight: bool = false, title_holder: int = -1) -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	_title = title_fight
+	_holder = title_holder
+	_division = red.division_name().to_upper()
 	add_child(UiTheme.panel(BAND.position.x, BAND.position.y, BAND.size.x, BAND.size.y))
 	var inner_w := BAND.size.x - PAD * 2
 	_lead = UiTheme.label("", UiTheme.LARGE, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
@@ -154,14 +169,26 @@ func _plan_decision(result: Dictionary, boxers: Array, judges: Judges) -> void:
 	var lead_in := "THIS CONTEST IS SCORED A..."
 	var verdict := "%s DRAW!" % str(result["detail"])
 	var colour := Palette.UI_GOLD
+	var name_lead := lead_in
 	if winner >= 0:
 		var kind := {"UD": "UNANIMOUS", "SD": "SPLIT", "MD": "MAJORITY"}[result["method"]] as String
 		lead_in = "AND THE WINNER, BY %s DECISION..." % kind
+		name_lead = _title_line(winner) if _title else lead_in
 		verdict = "%s!" % boxers[winner].billing_name().to_upper()
 		colour = Palette.corner_color(winner)
 	_at(verdict_at, _say.bind(lead_in, "", Palette.UI_TEXT))
-	_at(verdict_at + WINNER_PAUSE, _announce.bind(lead_in, verdict, colour))
-	_at(verdict_at + WINNER_PAUSE + BUTTONS_AFTER, _show_buttons)
+	_at(verdict_at + WINNER_PAUSE, _announce.bind(name_lead, verdict, colour))
+	var buttons_at := verdict_at + WINNER_PAUSE + BUTTONS_AFTER
+	if _title and winner < 0:
+		# A draw: the champion keeps his title (a vacant one stays vacant).
+		var after := verdict_at + WINNER_PAUSE + TITLE_AFTER_DRAW
+		if _holder >= 0:
+			var champ := "%s!" % boxers[_holder].billing_name().to_upper()
+			_at(after, _say.bind(_title_line(_holder), champ, Palette.corner_color(_holder)))
+		else:
+			_at(after, _say.bind("THE %s %s TITLE..." % [Rankings.TITLE_NAME, _division], "REMAINS VACANT", Palette.UI_GOLD))
+		buttons_at = after + BUTTONS_AFTER
+	_at(buttons_at, _show_buttons)
 
 
 func _plan_stoppage(result: Dictionary, boxers: Array, judges: Judges) -> void:
@@ -172,8 +199,16 @@ func _plan_stoppage(result: Dictionary, boxers: Array, judges: Judges) -> void:
 	var lead_in := "AND THE WINNER, BY %s IN ROUND %d AT %s..." % [how, result["round"], result["time"]]
 	_at(STOPPAGE_VERDICT_AT, _say.bind(lead_in, "", Palette.UI_TEXT))
 	var name_at := STOPPAGE_VERDICT_AT + WINNER_PAUSE
-	_at(name_at, _announce.bind(lead_in, "%s!" % boxers[winner].billing_name().to_upper(), Palette.corner_color(winner)))
+	var name_lead := _title_line(winner) if _title else lead_in
+	_at(name_at, _announce.bind(name_lead, "%s!" % boxers[winner].billing_name().to_upper(), Palette.corner_color(winner)))
 	_at(name_at + BUTTONS_AFTER, _show_buttons)
+
+
+## "...AND STILL IBC HEAVYWEIGHT CHAMPION" for a champion who keeps his
+## title, "...AND NEW IBC HEAVYWEIGHT CHAMPION" for anyone else.
+func _title_line(corner: int) -> String:
+	var still := corner == _holder
+	return "...AND %s %s %s CHAMPION" % ["STILL" if still else "NEW", Rankings.TITLE_NAME, _division]
 
 
 func _at(time: float, action: Callable) -> void:

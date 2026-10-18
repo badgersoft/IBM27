@@ -42,6 +42,8 @@ const SHOWBOAT_SHARE := Vector2(0.06, 0.10)
 const SHOWBOAT_CHANCE := 0.15
 ## Tries at a fresh surname before settling for a repeat.
 const NAME_ATTEMPTS := 40
+## Share of managers from their boxer's own country.
+const HOME_MANAGER := 0.7
 
 var _rng := RandomNumberGenerator.new()
 var _world: Dictionary = {}
@@ -119,6 +121,27 @@ func generate_boxer(avoid_trunks: Array[int] = [], division: Divisions.Id = Divi
 	b.start_health = clampf(84.0 + fitness * 12.0 + _rng.randf_range(-3.0, 3.0), 82.0, 98.0)
 	b.start_health = snappedf(b.start_health, 0.1)
 	return b
+
+
+## A manager for [param boxer]: usually from his own country (the
+## HOME_MANAGER share of the time), with a type picked by
+## ManagerData.TYPE_SHARES. Names in [param avoid] ("First Last") are skipped.
+func generate_manager(boxer: BoxerData, avoid: Array[String] = []) -> ManagerData:
+	var m := ManagerData.new()
+	for attempt in NAME_ATTEMPTS:
+		var code := boxer.country_code if _rng.randf() < HOME_MANAGER else _pick_country_code()
+		var country: Dictionary = _world["countries"][code]
+		m.first_name = _pick(country["first"])
+		m.last_name = _pick(country["last"])
+		if m.last_name != boxer.last_name and not avoid.has("%s %s" % [m.first_name, m.last_name]):
+			break
+	var roll := _rng.randf()
+	for t in ManagerData.TYPE_SHARES.size():
+		roll -= ManagerData.TYPE_SHARES[t]
+		if roll <= 0.0 or t == ManagerData.TYPE_SHARES.size() - 1:
+			m.type = t as ManagerData.Type
+			break
+	return m
 
 
 # ----------------------------------------------------------------------------

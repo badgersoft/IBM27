@@ -1,19 +1,21 @@
 class_name RosterScreen
 extends Control
 ## The Boxers screen: one tab per weight division, each listing that
-## division's thirty boxers, best first (by overall rating), ten to a page.
+## division's thirty boxers ten to a page, best first by overall rating or
+## (ORDER button) in ranking order. Each row shows the boxer's ranking (C for
+## the champion, who also has the IBC belt beside his name) and level.
 ## Choosing a boxer opens his profile (all his skills and a portrait).
 ## Records shown include any fights played this session.
 ##
 ## Layout (1280 x 800 frame):
-##   y  16  THE BOXERS                         size range    [ BACK ]
+##   y  16  THE BOXERS               size range  [ ORDER: OVR ]  [ BACK ]
 ##   y  80  [ LIGHTWEIGHT ][ MIDDLEWEIGHT ][ HEAVYWEIGHT ]  [<] 1-10 OF 30 [>]
 ##   y 120  table panel (1248 x 664), joined to the selected tab
 ##
-## After the name, the columns are 80 px cells on an even rhythm. Every value
-## is centred under its heading, so W, L, D and KO each sit squarely beneath
-## their letter. Each row has the name on its first line and any nickname
-## under it, with plenty of room either side.
+## After the name and belt, the columns are 80 px cells on an even rhythm.
+## Every value is centred under its heading, so W, L, D and KO each sit
+## squarely beneath their letter. Each row has the name on its first line and
+## any nickname under it, with plenty of room either side.
 
 const FRAME_SIZE := Vector2(1280, 800)
 const PANEL := Rect2(16, 120, 1248, 664)
@@ -45,26 +47,36 @@ const PAGER_LABEL_W := 208      ## Between the buttons, 16 px either side.
 ## the name is centred in its cell.
 const CELL := 80
 const COLUMNS := [
-	["#",       24,  32],
-	["NAME",    80, 320],
-	["FROM",   416, CELL],
-	["AGE",    496, CELL],
-	["W",      576, CELL],
-	["L",      656, CELL],
-	["D",      736, CELL],
-	["KO",     816, CELL],
-	["STYLE",  896, CELL],
-	["CM",     976, CELL],
-	["LB",    1056, CELL],
-	["OVR",   1136, CELL],
+	["RANK",    24,  32],
+	["NAME",    72, 360],
+	["FROM",   440, CELL],
+	["AGE",    520, CELL],
+	["W",      600, CELL],
+	["L",      680, CELL],
+	["D",      760, CELL],
+	["KO",     840, CELL],
+	["STYLE",  920, CELL],
+	["LB",    1000, CELL],
+	["LEVEL", 1080, CELL],
+	["OVR",   1160, CELL],
 ]
-const COL_NUMBER := 0
+const COL_RANK := 0
 const COL_NAME := 1
 const COL_FROM := 2
+const COL_LEVEL := 10
 const COL_OVERALL := 11
+## The champion's belt follows his name (BeltIcon at x3: 72 x 24), so his
+## name is kept to CHAMPION_NAME_CHARS to leave room for it.
+const BELT_PIXEL := 3
+const BELT_GAP := 16
+## Each level's colour in the LEVEL column: Amateur, Semi-Pro, Professional.
+const LEVEL_COLOURS: Array[Color] = [Palette.UI_TEXT_DIM, Palette.UI_TEXT, Palette.UI_GOLD]
+## The ORDER button, between the captions and BACK.
+const ORDER_W := 224
 ## Longest name shown in full; longer names are shortened to an initial and
 ## surname so every name is the same size and clear of the FROM column.
 const NAME_CHARS := 18
+const CHAMPION_NAME_CHARS := 16
 
 var _frame: Control
 var _tabs: Array[Button] = []
@@ -76,6 +88,7 @@ var _page := 0
 var _page_label: Label
 var _prev: Button
 var _next: Button
+var _order: Button
 
 
 func _ready() -> void:
@@ -109,10 +122,15 @@ func _ready() -> void:
 		tab.pressed.connect(_select.bind(id))
 		_frame.add_child(tab)
 		_tabs.append(tab)
-	# Size range and a hint, right-aligned against the BACK button, level
+	_order = Button.new()
+	_order.focus_mode = Control.FOCUS_ALL
+	UiTheme.place(_order, back.position.x - 16 - ORDER_W, 16, ORDER_W, 48)
+	_order.pressed.connect(_toggle_order)
+	_frame.add_child(_order)
+	# Size range and a hint, right-aligned against the ORDER button, level
 	# with the title.
-	var caption_x := 640.0
-	var caption_w := back.position.x - 16 - caption_x
+	var caption_x := 384.0
+	var caption_w := _order.position.x - 16 - caption_x
 	_caption = UiTheme.label("", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_RIGHT)
 	_frame.add_child(UiTheme.place(_caption, caption_x, 24, caption_w, UiTheme.CAPTION))
 	var hint := UiTheme.label("CHOOSE A BOXER FOR HIS PROFILE", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_RIGHT)
@@ -147,6 +165,16 @@ func _page_count() -> int:
 	return ceili(GameState.boxers_in(_division).size() / float(PAGE_SIZE))
 
 
+## Switches between best-first by overall rating and ranking order.
+func _toggle_order() -> void:
+	if GameState.roster_order == GameState.ListOrder.OVERALL:
+		GameState.roster_order = GameState.ListOrder.RANKING
+	else:
+		GameState.roster_order = GameState.ListOrder.OVERALL
+	_page = 0
+	_build_page()
+
+
 ## Shows the previous (-1) or next (+1) page of the division.
 func _turn(dir: int) -> void:
 	var page := clampi(_page + dir, 0, _page_count() - 1)
@@ -178,6 +206,7 @@ func _build_page() -> void:
 	var total := GameState.boxers_in(_division).size()
 	var first := _page * PAGE_SIZE
 	_page_label.text = "%d - %d OF %d" % [first + 1, mini(first + PAGE_SIZE, total), total]
+	_order.text = "ORDER: RANK" if GameState.roster_order == GameState.ListOrder.RANKING else "ORDER: OVR"
 	_prev.disabled = _page == 0
 	_next.disabled = _page >= _page_count() - 1
 	if _content != null:
@@ -246,7 +275,8 @@ func _build_table(frame: Control) -> void:
 		panel.add_child(UiTheme.place(h, col[1], HEADER_Y, col[2], UiTheme.CAPTION))
 
 	_rows.clear()
-	var roster := GameState.boxers_in(_division)
+	var roster := GameState.listed_boxers(_division)
+	var table := GameState.rankings[_division]
 	var first := _page * PAGE_SIZE
 	for i in range(first, mini(first + PAGE_SIZE, roster.size())):
 		var b: BoxerData = roster[i]
@@ -254,18 +284,28 @@ func _build_table(frame: Control) -> void:
 		if i % 2 == 0:
 			panel.add_child(UiTheme.block(Color(1, 1, 1, 0.04), 8, y, PANEL.size.x - 16, ROW_H))
 		_rows.append(_row_button(panel, i, y))
+		var level := table.tier_of(b)
+		var champion := table.is_champion(b)
+		var name_text := _short_name(b, CHAMPION_NAME_CHARS if champion else NAME_CHARS)
 		var values := [
-			str(i + 1), _short_name(b), b.country_code, str(b.age),
+			table.rank_label(b), name_text, b.country_code, str(b.age),
 			str(b.wins), str(b.losses), str(b.draws), str(b.kos),
-			b.style_short(), str(b.height_cm), str(b.weight_lb), str(b.overall()),
+			b.style_short(), str(b.weight_lb), Rankings.TIER_SHORT[level], str(b.overall()),
 		]
+		if champion:
+			# Centred on the name's capitals (rows 16 - 29 of the row).
+			var belt := BeltIcon.new(BELT_PIXEL)
+			belt.position = Vector2(COLUMNS[COL_NAME][1] + name_text.length() * UiTheme.CHAR_W + BELT_GAP, y + VALUE_Y + 4 + 8 - belt.size.y / 2.0)
+			panel.add_child(belt)
 		for c in COLUMNS.size():
 			var col: Array = COLUMNS[c]
 			var colour := Palette.UI_TEXT
-			if c == COL_NUMBER or c == COL_OVERALL:
+			if c == COL_RANK or c == COL_OVERALL:
 				colour = Palette.UI_GOLD
 			elif c == COL_FROM:
 				colour = Palette.UI_TEXT_DIM
+			elif c == COL_LEVEL:
+				colour = LEVEL_COLOURS[level]
 			var cell := UiTheme.label(values[c], UiTheme.BODY, colour, _align(c))
 			if c == COL_NAME:
 				UiTheme.fit(cell, col[2])
@@ -292,7 +332,7 @@ func _row_button(panel: Control, index: int, y: float) -> Button:
 
 func _align(column: int) -> HorizontalAlignment:
 	match column:
-		COL_NUMBER:
+		COL_RANK:
 			return HORIZONTAL_ALIGNMENT_RIGHT
 		COL_NAME:
 			return HORIZONTAL_ALIGNMENT_LEFT
@@ -300,10 +340,11 @@ func _align(column: int) -> HorizontalAlignment:
 			return HORIZONTAL_ALIGNMENT_CENTER
 
 
-## "DANIYAR TULEGENOV" (17) -> "D. TULEGENOV" so every name fits at full size.
-func _short_name(b: BoxerData) -> String:
+## "DANIYAR TULEGENOV" (17) -> "D. TULEGENOV" so every name fits at full
+## size in [param chars] characters.
+func _short_name(b: BoxerData, chars: int) -> String:
 	var full := b.display_name().to_upper()
-	if full.length() <= NAME_CHARS:
+	if full.length() <= chars:
 		return full
 	return "%s. %s" % [b.first_name.substr(0, 1).to_upper(), b.last_name.to_upper()]
 

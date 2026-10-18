@@ -175,7 +175,7 @@ func _build_layout(red: BoxerData, blue: BoxerData) -> void:
 	_overlay.add_child(UiTheme.place(_banner, 0, 160, arena_size.x, 64))
 
 	_tape = TaleOfTape.new()
-	_tape.setup(red, blue, GameState.venue_id, sim.rounds)
+	_tape.setup(red, blue, GameState.venue_id, sim.rounds, GameState.title_fight, GameState.purse)
 	_tape.position = (arena_size - Vector2(TaleOfTape.W, TaleOfTape.H)) / 2.0
 	_tape.dismissed.connect(_begin_fight)
 	_overlay.add_child(_tape)
@@ -271,15 +271,10 @@ func _on_fight_finished(result: Dictionary) -> void:
 	_result_clock = 0.0
 
 
-## Adds this fight to both boxers' records (kept for the rest of the session).
+## Adds this fight to both boxers' records, pays the purse and moves them in
+## the rankings (kept for the rest of the session).
 func _update_records(result: Dictionary) -> void:
-	var winner: int = result["winner"]
-	var by_ko: bool = result["method"] in ["KO", "TKO"]
-	for f in sim.fighters:
-		if winner < 0:
-			f.data.add_result("D", false)
-		else:
-			f.data.add_result("W" if f.corner == winner else "L", by_ko)
+	GameState.record_fight(sim.red.data, sim.blue.data, result, GameState.title_fight, GameState.purse)
 
 
 ## The verdict: the boxers and referee face the crowd in the middle of the
@@ -294,7 +289,8 @@ func _show_result() -> void:
 	_result = ResultBand.new()
 	_overlay.add_child(UiTheme.place(_result, 0, 0, _overlay.size.x, _overlay.size.y))
 	var apron_mid := (ArenaRenderer.CANVAS_FRONT_Y + ArenaRenderer.APRON_BOTTOM_Y) / 2.0 * ARENA_SCALE
-	_result.setup(sim.result, sim.red.data, sim.blue.data, sim.judges, apron_mid)
+	_result.setup(sim.result, sim.red.data, sim.blue.data, sim.judges, apron_mid,
+			GameState.title_fight, GameState.title_holder)
 	_result.new_fight_pressed.connect(_new_fight)
 	_result.menu_pressed.connect(_go_to_menu)
 	_result.judge_revealed.connect(_on_judge_revealed)

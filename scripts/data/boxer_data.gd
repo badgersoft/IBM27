@@ -40,6 +40,13 @@ const STYLE_BLURBS: Array[String] = [
 @export var draws: int = 0
 @export var kos: int = 0                 ## Wins by knockout (counted inside wins).
 
+# --- Business ----------------------------------------------------------------
+@export var id: int = 0                  ## Unique across every division.
+@export var manager: ManagerData         ## Arranges his fights (see ManagerData.Type).
+@export var earnings: int = 0            ## Career prize money, in dollars.
+## Ranking points, used when the rankings run on points (see Rankings).
+@export var rank_points: float = 0.0
+
 # --- Body ------------------------------------------------------------------
 ## Weight division (see Divisions); height and weight ranges depend on it.
 @export var division: Divisions.Id = Divisions.Id.MIDDLEWEIGHT

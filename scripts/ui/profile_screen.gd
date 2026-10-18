@@ -4,10 +4,11 @@ extends Control
 ## division; BACK returns to the list on the same tab.
 ##
 ## Layout (1280 x 800 frame):
-##   y  16  BOBBY WALKER                   [< PREV] [NEXT >] [  BACK  ]
-##   y  72  "THE OUTLAW"                          HEAVYWEIGHT  -  1 OF 10
+##   y  16  BOBBY WALKER [belt]            [< PREV] [NEXT >] [  BACK  ]
+##   y  72  "THE OUTLAW"                          HEAVYWEIGHT  -  1 OF 30
 ##   y 112  +-- portrait --+  +-- details (832 x 240) ------------------+
-##          |  400 x 672   |  +-- skills  (832 x 416) ------------------+
+##          |  400 x 672   |  +-- career  (832 x 136) ------------------+
+##          |              |  +-- skills  (832 x 264) ------------------+
 ##   y 784  +--------------+
 ##
 ## The portrait is drawn at the same pixel scale for everyone (x3, like the
@@ -22,7 +23,8 @@ const FIGURE_SIZE := 1.6                     ## Drawn larger than in the ring.
 const FEET_Y := 186.0
 
 const DETAILS := Rect2(432, 112, 832, 240)
-const SKILLS := Rect2(432, 368, 832, 416)
+const CAREER := Rect2(432, 368, 832, 136)
+const SKILLS := Rect2(432, 520, 832, 264)
 const PAD := 16
 const CAPTION_Y := 10
 
@@ -33,16 +35,20 @@ const CAPTION_Y := 10
 const DETAIL_ROW_Y := 36
 const DETAIL_ROW_H := 32
 const FROM_LABEL_W := 128
-## Each column's labels get just the room they need ("KNOCKOUTS" is the
-## longest), leaving the left values room for "5' 10\"  (177 CM)".
-const DETAIL_LABEL_W := [128, 176]
+## Each column's labels get just the room they need ("EARNINGS" and "KNOCKOUTS"
+## are the longest), leaving the left values room for "5' 10\"  (177 CM)".
+const DETAIL_LABEL_W := [144, 176]
 const DETAIL_COLUMN_X := [PAD, 432]
 const DETAIL_COLUMN_END := [416, 816]
 const BLURB_Y := 200
 
+# Career: ranking and level, earnings and manager (same columns as the
+# details), then what sort of manager he has.
+const MANAGER_Y := 100
+
 # Skills: label, bar, value.
 const SKILL_ROW_Y := 28
-const SKILL_ROW_H := 54
+const SKILL_ROW_H := 32
 const SKILL_LABEL_W := 224
 const BAR_X := 256
 const BAR_W := 448
@@ -131,12 +137,17 @@ func _show() -> void:
 	_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_frame.add_child(UiTheme.place(_content, 0, 0, FRAME_SIZE.x, FRAME_SIZE.y))
 
-	var roster := GameState.boxers_in(_division)
+	var roster := GameState.listed_boxers(_division)
 	var b: BoxerData = roster[_index]
 
 	var title := UiTheme.label(b.display_name().to_upper(), UiTheme.TITLE, Palette.UI_GOLD)
 	UiTheme.fit(title, 744)
 	_content.add_child(UiTheme.place(title, 24, 24, 744, UiTheme.TITLE))
+	if GameState.is_champion(b):
+		# The belt (x4, 96 x 32) just after the name, level with its capitals.
+		var belt := BeltIcon.new(4)
+		belt.position = Vector2(24 + b.display_name().length() * UiTheme.TITLE + 16, 24)
+		_content.add_child(belt)
 	if not b.nickname.is_empty():
 		var nick := UiTheme.label("\"%s\"" % b.nickname.to_upper(), UiTheme.BODY, Palette.UI_GOLD)
 		_content.add_child(UiTheme.place(nick, 24, 72, 640, UiTheme.ROW_H))
@@ -146,6 +157,7 @@ func _show() -> void:
 
 	_build_portrait(b)
 	_build_details(b)
+	_build_career(b)
 	_build_skills(b)
 
 
@@ -217,6 +229,26 @@ func _build_details(b: BoxerData) -> void:
 			_detail(panel, x, DETAIL_ROW_Y + (r + 1) * DETAIL_ROW_H, label_w, value_w, rows[r][0], rows[r][1])
 	var blurb := UiTheme.label(BoxerData.STYLE_BLURBS[b.style].to_upper(), UiTheme.BODY, Palette.UI_GOLD)
 	panel.add_child(UiTheme.place(blurb, PAD, BLURB_Y, DETAILS.size.x - PAD * 2, UiTheme.ROW_H))
+
+
+func _build_career(b: BoxerData) -> void:
+	var panel := _panel(CAREER, "CAREER")
+	var table := GameState.rankings_for(b)
+	var columns := [
+		[["RANKING", table.rank_text(b)],
+		 ["EARNINGS", Purse.money_text(b.earnings)]],
+		[["LEVEL", Rankings.TIER_NAMES[table.tier_of(b)].to_upper()],
+		 ["MANAGER", b.manager.short_name().to_upper()]],
+	]
+	for c in columns.size():
+		var x: float = DETAIL_COLUMN_X[c]
+		var label_w: float = DETAIL_LABEL_W[c]
+		var value_w: float = DETAIL_COLUMN_END[c] - x - label_w
+		var rows: Array = columns[c]
+		for r in rows.size():
+			_detail(panel, x, DETAIL_ROW_Y + r * DETAIL_ROW_H, label_w, value_w, rows[r][0], rows[r][1])
+	var manager := "%s: %s" % [b.manager.type_name().to_upper(), b.manager.type_blurb().to_upper()]
+	panel.add_child(UiTheme.place(UiTheme.label(manager, UiTheme.BODY, Palette.UI_GOLD), PAD, MANAGER_Y, CAREER.size.x - PAD * 2, UiTheme.ROW_H))
 
 
 ## One label / value pair, both 16 px.

@@ -19,20 +19,25 @@ var _prompt: Label
 var _blink := 0.0
 
 
-func setup(red: BoxerData, blue: BoxerData, venue_id: int, rounds: int) -> void:
+## [param title_fight] if the IBC title is on the line; [param purse] in dollars.
+func setup(red: BoxerData, blue: BoxerData, venue_id: int, rounds: int, title_fight: bool, purse: int) -> void:
 	size = Vector2(W, H)
 	add_child(UiTheme.panel(0, 0, W, H, Palette.UI_PANEL, Palette.UI_BORDER, 4))
 
 	var title := UiTheme.label("TALE OF THE TAPE", UiTheme.LARGE, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
 	add_child(UiTheme.place(title, 0, 12, W, UiTheme.LARGE))
-	var bill := "%d ROUNDS  -  %s  -  %s  -  %s" % [rounds, FightLengths.level_name(rounds).to_upper(),
-			red.division_name().to_upper(), Venues.venue_name(venue_id).to_upper()]
+	var billing := "%s  -  %s" % [FightLengths.level_name(rounds).to_upper(), red.division_name().to_upper()]
+	if title_fight:
+		billing = "%s %s TITLE" % [Rankings.TITLE_NAME, red.division_name().to_upper()]
+	var bill := "%d ROUNDS  -  %s  -  %s  -  PURSE %s" % [rounds, billing,
+			Venues.venue_name(venue_id).to_upper(), Purse.money_text(purse)]
 	add_child(UiTheme.place(UiTheme.label(bill, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), 0, 44, W, UiTheme.CAPTION))
 
 	var rows: Array = [
 		["", "RED CORNER", "BLUE CORNER"],
 		["NAME", red.display_name().to_upper(), blue.display_name().to_upper()],
 		["NICKNAME", _nick(red), _nick(blue)],
+		["RANKING", GameState.rankings_for(red).rank_text(red), GameState.rankings_for(blue).rank_text(blue)],
 		["HOMETOWN", red.hometown().to_upper(), blue.hometown().to_upper()],
 		["AGE", str(red.age), str(blue.age)],
 		["RECORD", red.record_with_kos(), blue.record_with_kos()],
@@ -43,7 +48,6 @@ func setup(red: BoxerData, blue: BoxerData, venue_id: int, rounds: int) -> void:
 	var skills := ["power", "speed", "stamina", "chin", "strength", "intelligence"]
 	for s in skills:
 		rows.append([s.to_upper(), red.get(s), blue.get(s)])
-	rows.append(["HEALTH", roundi(red.start_health), roundi(blue.start_health)])
 
 	for i in rows.size():
 		var y := TABLE_Y + i * UiTheme.ROW_H
@@ -55,6 +59,10 @@ func setup(red: BoxerData, blue: BoxerData, venue_id: int, rounds: int) -> void:
 		if i == 0:
 			red_colour = Palette.UI_RED
 			blue_colour = Palette.UI_BLUE
+		elif row[0] == "RANKING":
+			# The champion's line is in gold.
+			red_colour = Palette.UI_GOLD if GameState.is_champion(red) else Palette.UI_TEXT
+			blue_colour = Palette.UI_GOLD if GameState.is_champion(blue) else Palette.UI_TEXT
 		elif row[1] is int:
 			if row[1] > row[2]:
 				red_colour = Palette.UI_GOLD

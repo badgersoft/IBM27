@@ -4,6 +4,44 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.9
+
+* Rankings: every division is ranked from top to bottom and split into
+  thirds, which are the boxers' levels. The top third is Professional
+  (12-round fights), the middle Semi-Pro (10 rounds) and the bottom
+  Amateur (6 rounds).
+* The IBC title: one per division, held to begin with by the division's
+  best man. The champion is listed as "C" with his belt (black, with a
+  silver centre plate and a smaller silver plate either side) beside his
+  name: in the Boxers list, on his profile and on his name plate in the
+  ring (under his record). His ranking is shown in gold on the tale of the
+  tape.
+* Title fights end with "...AND STILL IBC HEAVYWEIGHT CHAMPION" or
+  "...AND NEW IBC HEAVYWEIGHT CHAMPION" as the winner's name is called.
+  A drawn title fight leaves the champion with his belt.
+* Purses: each fight is worth an amount set by the two boxers' level and
+  rankings. Amateur fights pay a few hundred dollars ($10K at most),
+  Semi-Pro mostly $5K-$25K ($50K at most), and Professional fights tens of
+  millions, up to $100M for a heavyweight title fight. Fights without a
+  title pay 70%, middleweight fights 80% and lightweight fights 60%. The
+  winner takes 60% and the loser 40%. The purse is shown on the tale of
+  the tape.
+* Career earnings: every boxer has them (on his profile), with starting
+  figures that fit his ranking and career so far.
+* Managers: every boxer has his own, of one of three types: Money Man,
+  Protective or Old School. They are shown on the profile and are ready
+  for arranging fights in the next build.
+* Two ranking systems, as asked (`--ranking=ladder`, the default, or
+  `--ranking=points`); see the README for how each works.
+* START now picks an opponent ranked near the first boxer (no more than 4
+  places above or 6 below). The length, purse and venue suit their level.
+  A fight involving the champion is for his title, at the Grand Arena.
+  Results move both boxers in the rankings.
+* The Boxers list has RANK and LEVEL columns (CM made way, as height is on
+  the profile) and an ORDER button to switch between overall rating and
+  ranking order. The profile has a new CAREER panel: ranking, level,
+  earnings and manager.
+
 ## 0.1.8
 
 * Thirty boxers in every division (was ten). The Boxers list shows them

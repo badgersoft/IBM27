@@ -1,39 +1,67 @@
 extends Node
 ## Global game state (autoloaded as "GameState").
 ##
-## Holds the roster of boxers and the details of the next fight so that any
-## scene can reach them. Nothing here is saved to disk yet.
+## Holds every division's rankings (its boxers, best first, and its IBC
+## champion) and the details of the next fight, so that any scene can reach
+## them. Nothing here is saved to disk yet.
 ##
 ## Command-line options (after "--") are read here too, which is handy for
 ## testing and for the screenshot tool:
-##   --seed=<n>      fixed random seed for the roster and fight
+##   --seed=<n>      fixed random seed for the fight
 ##   --roster=<n>    use different starting rosters
 ##   --division=<0-2> force a division (0 light, 1 middle, 2 heavy)
 ##   --venue=<0-3>   force a venue (0 town gym, 1 city gym, 2 boxing hall, 3 grand arena)
 ##   --capture=<png> take a screenshot during the fight and quit (see CaptureTool)
 ##   --index=<0-29>  which boxer's profile to open (with --division)
-##   --rounds=<n>    fight length: 3, 6, 10 or 12 (default 6)
-##   --red=<n> --blue=<n>  pick the boxers by number in the division (1-30)
+##   --rounds=<n>    fight length: 3, 6, 10 or 12 (normally set by the boxers' level)
+##   --red=<n> --blue=<n>  pick the boxers by place in the rankings (1 = top)
+##   --title         make it a title fight (the champion against the number 1)
+##   --ranking=ladder|points  how results move boxers up and down (see Rankings)
 
 ## Boxers per division.
 const ROSTER_SIZE := 30
+## Seed for the managers and made-up career earnings (kept apart from the
+## boxers' own seeds so adding them changed no one's name or skills).
+const BUSINESS_SEED := 4242
+## How a quick fight finds an opponent: someone no more than this many places
+## above or below (see Matchmaker for the full rules the season uses).
+const QUICK_FIGHT_ABOVE := 4
+const QUICK_FIGHT_BELOW := 6
+## Venues for a fight at each level (see Venues.Id); title fights are always
+## at the Grand Arena.
+const LEVEL_VENUES: Array = [
+	[Venues.Id.SMALL_GYM, Venues.Id.CITY_GYM],
+	[Venues.Id.CITY_GYM, Venues.Id.BOXING_HALL],
+	[Venues.Id.BOXING_HALL, Venues.Id.GRAND_ARENA],
+]
 
-## rosters[division] = that division's boxers, best first (by overall rating,
-## see BoxerData.overall()). Each division's starting roster
-## is the same every run (its roster_seed in Divisions; the middleweights use
-## 1985, after the original game). Fights and venues are still random. Pass
-## --roster=<n> for a different set of boxers.
-var rosters: Array = []
+## How results move boxers up and down (see Rankings.Mode).
+var ranking_mode: Rankings.Mode = Rankings.Mode.LADDER
+## rankings[division] = that division's Rankings. Each division's starting
+## roster is the same every run (its roster_seed in Divisions; the
+## middleweights use 1985, after the original game). Pass --roster=<n> for a
+## different set of boxers.
+var rankings: Array[Rankings] = []
+
+# --- The next fight ------------------------------------------------------------
 var red: BoxerData
 var blue: BoxerData
 var division: int = Divisions.Id.MIDDLEWEIGHT
-## Scheduled rounds for the next fight (see FightLengths).
+## Scheduled rounds (see FightLengths).
 var rounds := FightLengths.DEFAULT_ROUNDS
 var venue_id := 0
+var title_fight := false
+## Corner of the champion in a title fight (0 red, 1 blue), -1 if the title
+## is vacant or not on the line.
+var title_holder := -1
+var purse := 0
 
-## The Boxers screen remembers its tab, and which boxer's profile is open.
+## The Boxers screen remembers its tab, page and order, and which boxer's
+## profile is open (his place in that order).
+enum ListOrder { OVERALL, RANKING }
 var roster_tab: int = Divisions.Id.MIDDLEWEIGHT
 var roster_page := 0
+var roster_order: ListOrder = ListOrder.OVERALL
 var profile_division: int = Divisions.Id.MIDDLEWEIGHT
 var profile_index := 0
 
@@ -50,53 +78,128 @@ func _ready() -> void:
 		_rng.seed = seed_value
 	else:
 		_rng.randomize()
+	if options.get("ranking", "") == "points":
+		ranking_mode = Rankings.Mode.POINTS
 	if options.has("division"):
 		profile_division = clampi(int(options["division"]), 0, Divisions.count() - 1)
 	profile_index = clampi(int(options.get("index", 0)), 0, ROSTER_SIZE - 1)
+	if options.get("order", "") == "rank":
+		roster_order = ListOrder.RANKING
 	_build_rosters()
 
 
-## The boxers in one division.
+## The boxers in one division, best-ranked first.
 func boxers_in(division_id: int) -> Array[BoxerData]:
-	return rosters[division_id]
+	return rankings[division_id].boxers
 
 
-## Picks a division, two different boxers from it, and a venue - all at random
-## unless --division / --venue are given.
+func rankings_for(b: BoxerData) -> Rankings:
+	return rankings[b.division]
+
+
+func is_champion(b: BoxerData) -> bool:
+	return rankings[b.division].is_champion(b)
+
+
+## A division's boxers in the Boxers list's current order.
+func listed_boxers(division_id: int) -> Array[BoxerData]:
+	if roster_order == ListOrder.RANKING:
+		return rankings[division_id].boxers
+	return rankings[division_id].by_overall()
+
+
+## Picks the next quick fight: a division, a boxer and an opponent ranked
+## near him (no more than QUICK_FIGHT_ABOVE places above or QUICK_FIGHT_BELOW
+## below), and a venue to suit. The fight's length and purse come from the
+## better man's level; a fight involving the champion is for his title.
+## --division, --red, --blue, --title, --rounds and --venue override.
 func new_fight() -> void:
-	rounds = int(options.get("rounds", FightLengths.DEFAULT_ROUNDS))
-	if not FightLengths.is_valid(rounds):
-		rounds = FightLengths.DEFAULT_ROUNDS
 	if options.has("division"):
 		division = clampi(int(options["division"]), 0, Divisions.count() - 1)
 	else:
 		division = _rng.randi_range(0, Divisions.count() - 1)
-	var roster := boxers_in(division)
+	var table := rankings[division]
+	var roster := table.boxers
 	var first := _rng.randi_range(0, roster.size() - 1)
-	var second := _rng.randi_range(0, roster.size() - 2)
-	if second >= first:
-		second += 1
-	# --red / --blue pick boxers by their number in the division (from 1).
+	var options_for_first: Array[int] = []
+	for i in range(maxi(first - QUICK_FIGHT_ABOVE, 0), mini(first + QUICK_FIGHT_BELOW, roster.size() - 1) + 1):
+		if i != first:
+			options_for_first.append(i)
+	var second: int = options_for_first[_rng.randi_range(0, options_for_first.size() - 1)]
+	if options.has("title"):
+		first = 0
+		second = 1
+	# --red / --blue pick boxers by their place in the rankings (from 1).
 	if options.has("red"):
 		first = clampi(int(options["red"]) - 1, 0, roster.size() - 1)
 	if options.has("blue"):
 		second = clampi(int(options["blue"]) - 1, 0, roster.size() - 1)
 	red = roster[first]
 	blue = roster[second]
+
+	title_fight = table.is_champion(red) or table.is_champion(blue) or (options.has("title") and table.champion == null)
+	title_holder = -1
+	if title_fight and table.champion != null:
+		title_holder = 0 if table.is_champion(red) else 1
+	var best := mini(first, second)
+	var level := table.tier_at(best)
+	rounds = Rankings.TITLE_ROUNDS if title_fight else Rankings.TIER_ROUNDS[level]
+	if options.has("rounds") and FightLengths.is_valid(int(options["rounds"])):
+		rounds = int(options["rounds"])
+	purse = Purse.for_fight(first, second, roster.size(), division, title_fight, _rng)
+
 	if options.has("venue"):
 		venue_id = clampi(int(options["venue"]), 0, Venues.count() - 1)
+	elif title_fight:
+		venue_id = Venues.Id.GRAND_ARENA
 	else:
-		venue_id = _rng.randi_range(0, Venues.count() - 1)
+		var venues: Array = LEVEL_VENUES[level]
+		venue_id = venues[_rng.randi_range(0, venues.size() - 1)]
 
 
-## Middleweights are generated first so their roster never changes when other
-## divisions are added; surnames and nicknames are kept unique across all
-## divisions.
+## Adds a finished fight to the boxers' records, pays the purse and updates
+## the rankings and the title. [param result] is FightSim.result. Returns a
+## summary: {"draw", "winner", "loser", "new_champion", "retained",
+## "winner_purse", "loser_purse"}.
+func record_fight(fight_red: BoxerData, fight_blue: BoxerData, result: Dictionary, title: bool, fight_purse: int) -> Dictionary:
+	var winner_corner: int = result["winner"]
+	var draw := winner_corner < 0
+	var by_ko: bool = result["method"] in ["KO", "TKO"]
+	var winner := fight_red if winner_corner != 1 else fight_blue
+	var loser := fight_blue if winner == fight_red else fight_red
+	if draw:
+		fight_red.add_result("D", false)
+		fight_blue.add_result("D", false)
+	else:
+		winner.add_result("W", by_ko)
+		loser.add_result("L", by_ko)
+	var shares := Purse.split(fight_purse, draw)
+	winner.earnings += shares[0]
+	loser.earnings += shares[1]
+	var summary := {"draw": draw, "winner": winner, "loser": loser,
+			"winner_purse": shares[0], "loser_purse": shares[1]}
+	var change := {"new_champion": false, "retained": false}
+	if fight_red.division == fight_blue.division:
+		change = rankings[fight_red.division].record(winner, loser, draw, by_ko, title)
+	summary.merge(change)
+	return summary
+
+
+## Builds every division: the boxers are generated (middleweights first so
+## their roster never changes when other divisions are added; surnames and
+## nicknames unique across all divisions), put in their starting ranking
+## order (see _standing), given managers and career earnings, and the best
+## man in each division is crowned champion.
 func _build_rosters() -> void:
-	rosters.resize(Divisions.count())
+	rankings.resize(Divisions.count())
 	var order := [Divisions.Id.MIDDLEWEIGHT, Divisions.Id.LIGHTWEIGHT, Divisions.Id.HEAVYWEIGHT]
 	var used_names: Array[String] = []
 	var used_nicknames: Array[String] = []
+	var business := BoxerGenerator.new(BUSINESS_SEED + int(options.get("roster", 0)))
+	var business_rng := RandomNumberGenerator.new()
+	business_rng.seed = BUSINESS_SEED
+	var used_managers: Array[String] = []
+	var next_id := 1
 	for id in order:
 		var seed_value: int = Divisions.get_division(id)["roster_seed"]
 		if options.has("roster"):
@@ -106,18 +209,24 @@ func _build_rosters() -> void:
 			used_names.append(b.last_name)
 			if not b.nickname.is_empty():
 				used_nicknames.append(b.nickname)
-		roster.sort_custom(_better)
-		rosters[id] = roster
+		roster.sort_custom(func(a: BoxerData, b: BoxerData) -> bool: return _standing(a) > _standing(b))
+		var table := Rankings.new(id, roster, ranking_mode)
+		for i in roster.size():
+			var b: BoxerData = table.boxers[i]
+			b.id = next_id
+			next_id += 1
+			b.manager = business.generate_manager(b, used_managers)
+			used_managers.append("%s %s" % [b.manager.first_name, b.manager.last_name])
+			b.earnings = Career.estimate_earnings(b, i, roster.size(), table.is_champion(b), business_rng)
+		rankings[id] = table
 
 
-## Sort order for a division: higher overall rating first, then more wins,
-## then by surname so the order never depends on chance.
-static func _better(a: BoxerData, b: BoxerData) -> bool:
-	if a.overall() != b.overall():
-		return a.overall() > b.overall()
-	if a.wins != b.wins:
-		return a.wins > b.wins
-	return a.last_name < b.last_name
+## Starting ranking order: mostly ability, then a good record and
+## experience; a man past his best (over 34) loses a little ground.
+static func _standing(b: BoxerData) -> float:
+	var fights := b.total_fights()
+	var win_rate := float(b.wins) / fights if fights > 0 else 0.5
+	return b.overall() + 10.0 * (win_rate - 0.75) + minf(fights, 30.0) * 0.4 - maxf(b.age - 34.0, 0.0)
 
 
 ## A seed for the fight itself (punch luck, AI choices).
