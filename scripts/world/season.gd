@@ -123,6 +123,15 @@ func booking(b: BoxerData) -> Fixture:
 	return null
 
 
+## True if [param a] and [param b] have fought (or are booked to fight)
+## since season month [param since].
+func fought_recently(a: BoxerData, b: BoxerData, since: int) -> bool:
+	for f in fixtures:
+		if f.month >= since and f.involves(a) and f.involves(b):
+			return true
+	return false
+
+
 func has_vacant_title_fight(division: int) -> bool:
 	for f in fixtures:
 		if f.vacant and f.division == division and not f.is_done():

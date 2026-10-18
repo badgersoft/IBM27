@@ -8,8 +8,10 @@ extends Node2D
 ##   RingBack    - canvas, back posts, back and side ropes.
 ##   Fighters    - the two BoxerRigs are added here by ArenaView.
 ##   RingFront   - semi-transparent front ropes, front posts, apron, floor.
-##   Fx          - big-punch flashes, and the trainers' advice bubbles between
-##                 rounds (the trainers themselves are off screen).
+##   Fx          - blood spraying off a big punch, call-outs, and the trainers'
+##                 advice bubbles between rounds (the trainers themselves are
+##                 off screen). Blood that lands stains the canvas (drawn on
+##                 RingBack) for the rest of the fight.
 ##
 ## The ring geometry below is shared by every venue, so the ring is always the
 ## same size; the venue only changes its colours and finish.
@@ -35,6 +37,8 @@ const RING_MAX_X := 366.0
 const CORNER_X := [60.0, 364.0]
 
 const CROWD_FPS := 12.0
+## How quickly the crowd settles after something exciting (a second).
+const EXCITEMENT_FADE := 0.15
 ## Floor colour around the ring, per venue.
 const FLOOR_COLOURS: Array[Color] = [Color("3a2818"), Color("2a2c34"), Color("08080c"), Color("050508")]
 ## Aisle positions (x) in the tiered venues.
@@ -44,7 +48,16 @@ const BUBBLE_TOP := 24.0
 const BUBBLE_TAIL_Y := 50.0
 const BUBBLE_EDGE := 8.0        ## Gap between a bubble and the screen edge.
 const FRONT_ROPE_ALPHA := 0.45
-const FLASH_SECONDS := 0.15     ## How long a big punch's impact flash shows.
+# --- Blood: a big punch sprays drops away from the puncher ---------------------------
+const BLOOD_TONES: Array[Color] = [Color("5c0809"), Color("9a0e12"), Color("d01c22")]
+const BLOOD_DROPS := Vector2i(14, 22)
+const BLOOD_SPEED := Vector2(40.0, 110.0)    ## Sideways, arena pixels a second.
+const BLOOD_LIFT := Vector2(15.0, 60.0)      ## Upwards at the start.
+const BLOOD_BIG_DROP := 0.45                 ## Share of drops 2 pixels across.
+const BLOOD_GRAVITY := 260.0
+## Drops land at the boxers' feet, a little nearer or further away.
+const BLOOD_FLOOR_SPREAD := 4.0
+const MAX_STAINS := 90
 const CALLOUT_SECONDS := 1.0    ## How long a "ONE-TWO!" call-out shows.
 const CALLOUT_RISE := 6.0       ## Pixels it drifts up while it shows.
 
@@ -67,8 +80,10 @@ var _flash_rng := RandomNumberGenerator.new()
 var _crowd_clock := 0.0
 var _advice_text := ["", ""]   # What each trainer is saying ("" = not shown).
 var _advice_time := [0.0, 0.0]
-var _flash_pos := Vector2.ZERO
-var _flash_time := 0.0
+## Drops in the air: {pos, vel, floor_y, size, tone}. Stains: {pos, size, tone}.
+var _drops: Array[Dictionary] = []
+var _stains: Array[Dictionary] = []
+var _blood_rng := RandomNumberGenerator.new()
 var _callout_text := ""
 var _callout_pos := Vector2.ZERO
 var _callout_time := 0.0
@@ -111,11 +126,27 @@ func set_announcing(on: bool) -> void:
 	_ring_front.queue_redraw()
 
 
-## A white starburst where a big punch lands, gone after a few frames.
-func impact_flash(at: Vector2) -> void:
-	_flash_pos = at
-	_flash_time = FLASH_SECONDS
+## Blood sprays from [param at] where a big punch lands, flying the way the
+## punch was going ([param dir] +1 right, -1 left), and falls to the canvas.
+func blood_splatter(at: Vector2, dir: float) -> void:
+	for i in _blood_rng.randi_range(BLOOD_DROPS.x, BLOOD_DROPS.y):
+		var vel := Vector2(dir * _blood_rng.randf_range(BLOOD_SPEED.x, BLOOD_SPEED.y),
+				-_blood_rng.randf_range(BLOOD_LIFT.x, BLOOD_LIFT.y))
+		_drops.append({
+			"pos": at + Vector2(_blood_rng.randf_range(-1.0, 1.0), _blood_rng.randf_range(-1.0, 1.0)),
+			"vel": vel,
+			"floor_y": FIGHT_Y + _blood_rng.randf_range(-BLOOD_FLOOR_SPREAD, BLOOD_FLOOR_SPREAD),
+			"size": 2 if _blood_rng.randf() < BLOOD_BIG_DROP else 1,
+			"tone": _blood_rng.randi_range(1, BLOOD_TONES.size() - 1),
+		})
 	_fx.queue_redraw()
+
+
+## Clears the canvas of blood (a new fight).
+func clear_blood() -> void:
+	_drops.clear()
+	_stains.clear()
+	_ring_back.queue_redraw()
 
 
 ## A short gold call-out ("ONE-TWO!") centred on [param at], drifting up
@@ -149,7 +180,7 @@ func _process(delta: float) -> void:
 ## every frame, and by the screenshot tool while it fast-forwards a fight).
 func advance(delta: float) -> void:
 	_time += delta
-	excitement = maxf(excitement - delta * 0.25, 0.0)
+	excitement = maxf(excitement - delta * EXCITEMENT_FADE, 0.0)
 
 	_crowd_clock += delta
 	if _crowd_clock >= 1.0 / CROWD_FPS:
@@ -162,9 +193,8 @@ func advance(delta: float) -> void:
 		_ring_back.queue_redraw()
 		_ring_front.queue_redraw()
 
-	if _flash_time > 0.0:
-		_flash_time -= delta
-		_fx.queue_redraw()
+	if not _drops.is_empty():
+		_move_drops(delta)
 	if _callout_time > 0.0:
 		_callout_time -= delta
 		_fx.queue_redraw()
@@ -563,6 +593,7 @@ func _draw_hall_walls(c: CanvasItem) -> void:
 
 func _draw_ring_back(c: CanvasItem) -> void:
 	_draw_canvas(c)
+	_draw_stains(c)
 	for side in 2:
 		_draw_post(c, POST_BACK_X[side], CANVAS_BACK_Y, POST_BACK_H, 3.0, _venue["pads"][2])
 	# Back ropes run between the two back posts; side ropes join back to front.
@@ -676,8 +707,9 @@ func _draw_apron(c: CanvasItem) -> void:
 # ============================================================================
 
 func _draw_fx(c: CanvasItem) -> void:
-	if _flash_time > 0.0:
-		_draw_impact(c, _flash_pos, _flash_time / FLASH_SECONDS)
+	for drop in _drops:
+		var size: int = drop["size"]
+		c.draw_rect(Rect2((drop["pos"] as Vector2).round(), Vector2(size, size)), BLOOD_TONES[drop["tone"]])
 	if _callout_time > 0.0:
 		_draw_callout(c)
 	for corner in 2:
@@ -690,17 +722,32 @@ func _draw_fx(c: CanvasItem) -> void:
 		_draw_bubble(c, _advice_text[corner], Vector2(x, BUBBLE_TAIL_Y), dir)
 
 
-## An eight-point star: long spikes up, down and sideways, short diagonals,
-## with a hot centre. [param life] runs from 1 down to 0 and shrinks it.
-func _draw_impact(c: CanvasItem, at: Vector2, life: float) -> void:
-	var size := 5.0 + 6.0 * life
-	var pts := PackedVector2Array()
-	for i in 16:
-		var a := TAU * i / 16.0
-		var r := size if i % 4 == 0 else (size * 0.6 if i % 2 == 0 else size * 0.25)
-		pts.append(at + Vector2(cos(a), sin(a)) * r)
-	c.draw_colored_polygon(pts, Color(1.0, 0.92, 0.55, 0.9))
-	c.draw_circle(at, size * 0.3, Color.WHITE)
+## Drops fly and fall; one that reaches the canvas inside the ropes leaves a
+## stain (darker, a little spread), one outside the ring is simply gone.
+func _move_drops(delta: float) -> void:
+	var landed := false
+	for i in range(_drops.size() - 1, -1, -1):
+		var drop: Dictionary = _drops[i]
+		drop["vel"] += Vector2(0.0, BLOOD_GRAVITY * delta)
+		drop["pos"] += drop["vel"] * delta
+		var pos: Vector2 = drop["pos"]
+		if drop["vel"].y > 0.0 and pos.y >= drop["floor_y"]:
+			if pos.x > RING_MIN_X - CANVAS_OVERHANG and pos.x < RING_MAX_X + CANVAS_OVERHANG:
+				_stains.append({"pos": Vector2(pos.x, drop["floor_y"]).round(), "size": drop["size"] + 1, "tone": drop["tone"] - 1})
+				landed = true
+			_drops.remove_at(i)
+	while _stains.size() > MAX_STAINS:
+		_stains.pop_front()
+	if landed:
+		_ring_back.queue_redraw()
+	_fx.queue_redraw()
+
+
+## Blood on the canvas: flattened spots (wider than tall, as seen side-on).
+func _draw_stains(c: CanvasItem) -> void:
+	for stain in _stains:
+		var size: int = stain["size"]
+		c.draw_rect(Rect2(stain["pos"], Vector2(size, 1)), BLOOD_TONES[stain["tone"]])
 
 
 func _draw_callout(c: CanvasItem) -> void:

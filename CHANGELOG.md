@@ -4,6 +4,30 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.11
+
+* Big punches spray blood instead of flashing: drops fly off away from the
+  puncher and leave spots on the canvas for the rest of the fight.
+* Between rounds, once a boxer sits down in his corner his health and
+  energy bars climb to where his corner can get him. They move quickly at
+  first, then ease. Stamina and the recovery stat decide how far they go,
+  and the corner does less in later rounds.
+* The crowd cheers longer: a cheering loop swells for significant strikes,
+  one-twos and big punches, longest for knockdowns (through the count) and
+  the winner's name, and holds a while before it dies away.
+* Monsters: two of the best boxers in each division are knockout artists.
+  They have huge power, a granite chin and records with 90-100% KOs. They
+  hit harder, land more big punches, knock men down more often and come
+  forward looking for the finish.
+* Glass jaws: one boxer per division looks and punches like a monster but
+  has a poor chin. A significant punch on it is more than twice as likely
+  to put him down, and he is slower to get up.
+* Knockdowns and damage are scaled by fight length, so 10- and 12-round
+  fights no longer end early most of the time.
+* Excitement ratings re-centred to suit.
+* Managers no longer arrange a rematch within 9 months unless there is no
+  one else to fight.
+
 ## 0.1.10
 
 * The season. SEASON on the main menu opens the Fixtures screen,

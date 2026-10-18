@@ -38,7 +38,7 @@ const KNOCKOUT := 1.0
 const LATE_KNOCKOUT := 0.6
 const TITLE := 0.5
 ## rating = 10 / (1 + e^(-(points - CENTRE) / WIDTH)).
-const CENTRE := 7.0
+const CENTRE := 6.6
 const WIDTH := 2.7
 
 

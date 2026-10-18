@@ -18,6 +18,7 @@ signal punch_landed(corner: int, type: int, damage: float, blocked: bool)
 ## before its punch_landed) - the crowd roars.
 signal big_punch(corner: int, type: int)
 signal one_two_landed(corner: int)
+signal significant_strike(corner: int)
 signal punch_missed(corner: int, type: int)
 signal knocked_down(corner: int)
 signal count_changed(corner: int, count: int)
@@ -50,15 +51,38 @@ const LATE_ROUND_DAMAGE := 0.12
 ## Share of lost health a boxer recovers in the corner (by his recovery stat).
 const CORNER_HEAL_MIN := 0.12
 const CORNER_HEAL_MAX := 0.28
+## The corner does less as the fight goes on: by the last break only this
+## share of the early-round recovery (health and breath alike).
+const LATE_CORNER_RECOVERY := 0.70
+## Once a boxer sits down in his corner his health and energy climb to where
+## the corner will get them over this many seconds (easing in at the end).
+const RECOVERY_SECONDS := 3.5
 ## Chance of a knockdown from a clean power shot to the head, per point of
 ## damage over 0.5 (then scaled by chin, stun and health).
 const KNOCKDOWN_CHANCE := 0.020
+## Longer fights would end early far too often if every round were as
+## dangerous as in a six-rounder, so knockdowns and damage are scaled by
+## (6 / rounds) ^ LENGTH_KNOCKDOWN and ^ LENGTH_DAMAGE (never above 1).
+const LENGTH_KNOCKDOWN := 0.8
+const LENGTH_DAMAGE := 0.25
 ## Extra seconds on the count for each earlier knockdown in the fight.
 const EARLIER_KNOCKDOWN_COUNT := 1.4
 ## A clean power punch doing at least this much damage (times the division's
 ## power, so a heavyweight's has to be heavier) is a significant strike:
 ## roughly one landed punch in five.
 const SIGNIFICANT_DAMAGE := 1.05
+## Monsters (BoxerData.Special) hit harder, land more big punches and their
+## power shots knock men down more often. Glass jaws punch like monsters too:
+## only their chin gives them away.
+const MONSTER_DAMAGE := 1.25
+const MONSTER_BIG := 1.5
+const MONSTER_KNOCKDOWN := 1.8
+## A glass jaw caught clean on the chin by a significant (or big) punch is
+## GLASS_JAW_KNOCKDOWN times as likely to go down (up to GLASS_JAW_CAP), and
+## takes GLASS_JAW_COUNT seconds longer to get up - if he does.
+const GLASS_JAW_KNOCKDOWN := 2.2
+const GLASS_JAW_CAP := 0.65
+const GLASS_JAW_COUNT := 2.0
 ## A one-two (see BoxerAI.ONE_TWO_LEAD) whose jab lands clean leaves the
 ## opponent open for ONE_TWO_WINDOW seconds; a cross landing in that time
 ## does ONE_TWO_DAMAGE times the damage and is a little likelier to be big.
@@ -205,14 +229,21 @@ func _end_round() -> void:
 	blue.advice = ai.corner_advice(blue, t[1], t[0], round_number + 1, rounds)
 
 
-## A minute in the corner: water, a towel and some breath back.
+## A minute in the corner: water, a towel and some breath back. Works out
+## where his health and energy will get to; they climb there once he sits
+## down (_update_break), so you can watch how far each man comes back.
 func _corner_recovery(f: Fighter) -> void:
-	var recover := lerpf(0.35, 0.60, f.data.stamina / 99.0)
-	f.energy = minf(f.energy + (Fighter.MAX_ENERGY - f.energy) * recover, Fighter.MAX_ENERGY)
+	var late := lerpf(1.0, LATE_CORNER_RECOVERY, (round_number - 1) / float(maxi(rounds - 2, 1)))
+	var recover := lerpf(0.35, 0.60, f.data.stamina / 99.0) * late
+	f.corner_from = Vector2(f.health, f.energy)
+	var energy := minf(f.energy + (Fighter.MAX_ENERGY - f.energy) * recover, Fighter.MAX_ENERGY)
 	# Some of the damage is shaken off in the corner (CORNER_HEAL_MIN - MAX of
 	# what he has lost, depending on his recovery).
 	var lost := f.data.start_health - f.health
-	f.health = minf(f.health + lost * lerpf(CORNER_HEAL_MIN, CORNER_HEAL_MAX, f.data.recovery / 99.0), f.data.start_health)
+	var heal := lerpf(CORNER_HEAL_MIN, CORNER_HEAL_MAX, f.data.recovery / 99.0) * late
+	var health := minf(f.health + lost * heal, f.data.start_health)
+	f.corner_to = Vector2(health, energy)
+	f.corner_time = 0.0
 	f.stun = 0.0
 	f.wear *= 0.85
 
@@ -225,11 +256,20 @@ func _update_break(dt: float) -> void:
 			f.x = move_toward(f.x, target, WALK_SPEED * dt)
 			if absf(f.x - target) < 0.5:
 				f.set_state(State.CORNER, "relaxed")
+		elif f.state == State.CORNER:
+			# Sitting down: health and breath come back, quickly at first.
+			f.corner_time += dt
+			var k := ease(clampf(f.corner_time / RECOVERY_SECONDS, 0.0, 1.0), 0.5)
+			f.health = lerpf(f.corner_from.x, f.corner_to.x, k)
+			f.energy = lerpf(f.corner_from.y, f.corner_to.y, k)
 	if not _advice_given and break_time >= ADVICE_AT:
 		_advice_given = true
 		for f in fighters:
 			corner_advice.emit(f.corner, Fighter.ADVICE_TEXT[f.advice])
 	if break_time >= BREAK_SECONDS:
+		for f in fighters:
+			f.health = f.corner_to.x   # However long the walk took.
+			f.energy = f.corner_to.y
 		round_number += 1
 		_start_round()
 
@@ -379,9 +419,12 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	var power := a.skill("power")
 	var dmg := PunchTypes.DAMAGE[type] * (0.45 + power / 99.0 * 0.95) * rng.randf_range(0.8, 1.2)
 	dmg *= Divisions.get_division(a.data.division)["power_scale"]   # Heavyweights hit harder.
+	dmg *= _length_scale(LENGTH_DAMAGE)
 	dmg *= 1.0 + d.fatigue() * 0.6 + (round_number - 1) / float(maxi(rounds - 1, 1)) * LATE_ROUND_DAMAGE
 	if a.advice == Fighter.Advice.ALL_OUT:
 		dmg *= 1.1
+	if a.data.special != BoxerData.Special.NONE:
+		dmg *= MONSTER_DAMAGE
 	if PunchTypes.is_power_punch(type):
 		dmg *= STYLE_POWER[a.data.style]
 	var caught_punching := d.state == State.PUNCH and not d.punch_resolved
@@ -415,6 +458,8 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 
 	# A big one? Rare, but it does far more damage and can end things.
 	var big_chance := _big_punch_chance(a, d, caught_punching) + (ONE_TWO_BIG if two else 0.0)
+	if a.data.special != BoxerData.Special.NONE:
+		big_chance *= MONSTER_BIG
 	var big := PunchTypes.is_power_punch(type) and rng.randf() < big_chance
 	if big:
 		dmg *= rng.randf_range(BIG_DAMAGE.x, BIG_DAMAGE.y)
@@ -423,8 +468,10 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 
 	# Clean shot. A hard power punch (or any big one) is a significant strike.
 	var hard: float = SIGNIFICANT_DAMAGE * Divisions.get_division(a.data.division)["power_scale"]
-	if big or (PunchTypes.is_power_punch(type) and dmg >= hard):
+	var significant := big or (PunchTypes.is_power_punch(type) and dmg >= hard)
+	if significant:
 		a.add_stat("significant", 1)
+		significant_strike.emit(a.corner)
 	d.health = maxf(d.health - dmg, 0.0)
 	a.streak += 1
 	d.streak = 0
@@ -454,15 +501,27 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	if to_head and PunchTypes.is_power_punch(type):
 		var chance := (dmg - 0.5) * KNOCKDOWN_CHANCE * (1.5 - d.data.chin / 99.0)
 		chance *= (1.0 + d.stun / 60.0) * (1.6 - d.health / Fighter.MAX_HEALTH)
+		chance *= _length_scale(LENGTH_KNOCKDOWN)
+		var cap := 0.45 if big else 0.30
 		if big:
 			chance *= BIG_KNOCKDOWN
-		if rng.randf() < clampf(chance, 0.0, 0.45 if big else 0.30):
+		if a.data.special != BoxerData.Special.NONE:
+			chance *= MONSTER_KNOCKDOWN
+		if significant and d.data.special == BoxerData.Special.GLASS_JAW:
+			chance *= GLASS_JAW_KNOCKDOWN
+			cap = GLASS_JAW_CAP
+		if rng.randf() < clampf(chance, 0.0, cap):
 			_knockdown(d, a)
 			return
 
 	var reaction := "hurt" if to_head else "hurt_body"
 	d.set_state(State.HURT, reaction, 0.25 + dmg * (0.22 if big else 0.15))
 	_hit_ropes(d, true)
+
+
+## (6 / rounds) ^ [param power], capped at 1 (see LENGTH_KNOCKDOWN).
+func _length_scale(power: float) -> float:
+	return minf(pow(6.0 / rounds, power), 1.0)
 
 
 ## Chance that a clean power punch is a big, significant one. Each of these
@@ -512,6 +571,8 @@ func _knockdown(d: Fighter, a: Fighter) -> void:
 	# How long until he can beat the count? 99 = he is not getting up.
 	var t := 3.0 + d.stun / 30.0 + (1.0 - d.health / Fighter.MAX_HEALTH) * 7.5
 	t += -d.data.chin / 99.0 * 2.0 + d.knockdowns_total * EARLIER_KNOCKDOWN_COUNT + rng.randf_range(-1.0, 2.0)
+	if d.data.special == BoxerData.Special.GLASS_JAW:
+		t += GLASS_JAW_COUNT
 	if d.health <= 0.0:
 		t = 99.0
 	d.getup_count = clampi(ceili(t), 3, 99)

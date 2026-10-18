@@ -21,6 +21,14 @@ const MARGIN := 16
 const INTRO_AUTO_START := 12.0   ## Seconds before the fight starts by itself.
 const RESULT_DELAY := 3.0        ## Seconds after the final bell before the verdict.
 const SCORECARD_REFRESH := 0.25
+## How the crowd's cheering (Sfx.excite) answers each moment:
+## (excitement 0 - 1, seconds it is held before dying away).
+const CHEER_SIGNIFICANT := Vector2(0.45, 1.5)
+const CHEER_ONE_TWO := Vector2(0.55, 1.5)
+const CHEER_BIG := Vector2(0.85, 3.0)
+const CHEER_KNOCKDOWN := Vector2(1.0, 7.0)
+const CHEER_BEAT_COUNT := Vector2(0.8, 3.0)
+const CHEER_WINNER := Vector2(1.0, 4.0)
 
 var sim: FightSim
 var view: ArenaView
@@ -197,9 +205,10 @@ func _connect_sim() -> void:
 	sim.punch_landed.connect(_on_punch_landed)
 	sim.big_punch.connect(_on_big_punch)
 	sim.one_two_landed.connect(_on_one_two)
+	sim.significant_strike.connect(func(_c: int) -> void: Sfx.excite(CHEER_SIGNIFICANT.x, CHEER_SIGNIFICANT.y))
 	sim.knocked_down.connect(_on_knocked_down)
 	sim.count_changed.connect(func(_c: int, n: int) -> void: _show_banner(str(n), 0.9, Palette.UI_TEXT))
-	sim.fighter_rose.connect(func(_c: int) -> void: view.arena.excitement = 0.8)
+	sim.fighter_rose.connect(_on_fighter_rose)
 	sim.ropes_hit.connect(func(side: int) -> void: view.arena.shake_ropes(side))
 	sim.corner_advice.connect(func(corner: int, text: String) -> void: view.arena.show_corner_advice(corner, text, 6.5))
 	sim.fight_finished.connect(_on_fight_finished)
@@ -237,16 +246,18 @@ func _on_punch_landed(_corner: int, _type: int, damage: float, blocked: bool) ->
 		Sfx.roar(0.5)
 
 
-## A big punch: a flash where it lands, a heavy thud and the crowd rising.
+## A big punch: blood spraying off where it lands, a heavy thud and the
+## crowd rising (and staying up for a while).
 func _on_big_punch(corner: int, type: int) -> void:
 	_big_landing = true
 	_big_this_step = true
 	var d: Fighter = sim.fighters[1 - corner]
 	var height_share := 0.80 if PunchTypes.TO_HEAD[type] else 0.56
 	var at := Vector2(d.x + d.facing * d.height_px * 0.10, ArenaRenderer.FIGHT_Y - d.height_px * height_share)
-	view.arena.impact_flash(at.round())
+	view.arena.blood_splatter(at.round(), -d.facing)
 	view.arena.excitement = 1.0
 	Sfx.big_hit()
+	Sfx.excite(CHEER_BIG.x, CHEER_BIG.y)
 
 
 ## A one-two landed: a call-out over the man who threw it and a lift from the crowd.
@@ -257,12 +268,19 @@ func _on_one_two(corner: int) -> void:
 	view.arena.callout("ONE-TWO!", Vector2(a.x, head_top))
 	view.arena.excitement = minf(view.arena.excitement + 0.4, 1.0)
 	Sfx.roar(0.6)
+	Sfx.excite(CHEER_ONE_TWO.x, CHEER_ONE_TWO.y)
 
 
 func _on_knocked_down(_corner: int) -> void:
 	_show_banner("DOWN!", 1.0, Palette.UI_RED)
 	view.arena.excitement = 1.0
 	Sfx.roar(1.0)
+	Sfx.excite(CHEER_KNOCKDOWN.x, CHEER_KNOCKDOWN.y)
+
+
+func _on_fighter_rose(_corner: int) -> void:
+	view.arena.excitement = 0.8
+	Sfx.excite(CHEER_BEAT_COUNT.x, CHEER_BEAT_COUNT.y)
 
 
 func _on_fight_finished(result: Dictionary) -> void:
@@ -331,6 +349,7 @@ func _on_judge_revealed(index: int) -> void:
 func _on_winner_announced() -> void:
 	sim.announce_winner()
 	_ceremony.raise(sim.result["winner"])
+	Sfx.excite(CHEER_WINNER.x, CHEER_WINNER.y)
 	view.arena.excitement = 1.0
 
 
@@ -435,8 +454,11 @@ func _run_capture() -> void:
 				break
 		for rig in view.rigs:
 			rig.set_process(false)
+		if show == "big":
+			for i in 14:
+				view.arena.advance(dt)      # Let the blood fly a little.
 		if show == "big" or show == "onetwo":
-			view.arena.set_process(false)   # Hold the impact flash or call-out for the shot.
+			view.arena.set_process(false)   # Hold the blood or call-out for the shot.
 		_refresh_hud()
 		if show in ["result", "announce", "stats"] and sim.phase == FightSim.Phase.FINISHED:
 			_show_result()
@@ -450,7 +472,7 @@ func _run_capture() -> void:
 	await get_tree().create_timer(float(GameState.options.get("wait", "0.5"))).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(path)
-	print("Captured ", path, "  (", sim.result.get("method", "fight on"), ")")
+	print("Captured ", path, "  (", sim.result.get("method", "fight on"), " ", sim.result.get("winner", ""), ")")
 	get_tree().quit()
 
 

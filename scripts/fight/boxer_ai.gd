@@ -54,6 +54,8 @@ const SHOWBOAT_HANDS_DOWN := 0.35
 ## favourite distance shrinks by CLOSE_IN_RATE body heights a second, up to
 ## MAX_CLOSE_IN.
 const IDLE_BEFORE_CLOSING := 2.0
+## A monster or glass jaw (BoxerData.Special) is that much more aggressive.
+const MONSTER_AGGRESSION := 0.15
 const CLOSE_IN_RATE := 0.05
 const MAX_CLOSE_IN := 0.22
 
@@ -241,6 +243,8 @@ func _think_interval(me: Fighter) -> float:
 func _aggression(me: Fighter, opp: Fighter, round_number: int) -> float:
 	var intel := me.skill("intelligence") / 99.0
 	var a: float = BASE_AGGRESSION[me.data.style]
+	if me.data.special != BoxerData.Special.NONE:
+		a += MONSTER_AGGRESSION   # Comes forward, looking for the knockout.
 	if me.data.style == Style.EVASIVE and round_number >= rounds:
 		a += 0.28   # Evasive boxers save themselves for the last round.
 	match me.advice:

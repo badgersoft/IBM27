@@ -40,6 +40,16 @@ const STYLE_BIAS := {
 ## such as the simulator's pairs, get one now and then.
 const SHOWBOAT_SHARE := Vector2(0.06, 0.10)
 const SHOWBOAT_CHANCE := 0.15
+## In a full division (SPECIALS_FROM boxers or more): MONSTERS knockout
+## artists, picked from the MONSTER_POOL best, and GLASS_JAWS men who look
+## like them but can't take a punch, from the GLASS_JAW_POOL best.
+const SPECIALS_FROM := 20
+const MONSTERS := 2
+const MONSTER_POOL := 6
+const GLASS_JAWS := 1
+const GLASS_JAW_POOL := 10
+## Both have been around long enough for the record to tell the story.
+const SPECIAL_MIN_FIGHTS := 12
 ## Tries at a fresh surname before settling for a repeat.
 const NAME_ATTEMPTS := 40
 ## Share of managers from their boxer's own country.
@@ -81,6 +91,7 @@ func generate_roster(count: int, division: Divisions.Id = Divisions.Id.MIDDLEWEI
 		roster.append(boxer)
 
 	_assign_showboats(roster)
+	_assign_specials(roster)
 	_assign_nicknames(roster, avoid_nicknames)
 	return roster
 
@@ -276,6 +287,55 @@ func _assign_showboats(roster: Array[BoxerData]) -> void:
 		b.style = BoxerData.Style.SHOWBOAT
 		_roll_skills(b)
 		_roll_record(b)
+
+
+## Turns a few of the best boxers in a full division into monsters and glass
+## jaws (see BoxerData.Special): new skills and a record to match.
+func _assign_specials(roster: Array[BoxerData]) -> void:
+	if roster.size() < SPECIALS_FROM:
+		return
+	var best: Array[BoxerData] = []
+	for b in roster:
+		if b.style != BoxerData.Style.SHOWBOAT and b.total_fights() >= SPECIAL_MIN_FIGHTS:
+			best.append(b)
+	best.sort_custom(func(x: BoxerData, y: BoxerData) -> bool: return x.overall() > y.overall())
+	var pool := best.slice(0, MONSTER_POOL)
+	_shuffle(pool)
+	for b in pool.slice(0, MONSTERS):
+		b.special = BoxerData.Special.MONSTER
+		# A pressure fighter, good at everything and frightening at punching.
+		b.style = BoxerData.Style.BRAWLER if _rng.randf() < 0.5 else BoxerData.Style.SLUGGER
+		b.power = _rng.randi_range(90, 97)
+		b.strength = _rng.randi_range(82, 95)
+		b.chin = _rng.randi_range(78, 92)
+		b.speed = maxi(b.speed, _rng.randi_range(70, 82))
+		b.stamina = maxi(b.stamina, _rng.randi_range(72, 85))
+		b.intelligence = maxi(b.intelligence, _rng.randi_range(68, 80))
+		_roll_special_record(b, Vector2(0.92, 1.0), Vector2(0.90, 1.0))
+	var rest: Array = []
+	for b in best.slice(0, GLASS_JAW_POOL):
+		if b.special == BoxerData.Special.NONE:
+			rest.append(b)
+	_shuffle(rest)
+	for b in rest.slice(0, GLASS_JAWS):
+		b.special = BoxerData.Special.GLASS_JAW
+		b.power = _rng.randi_range(88, 96)
+		b.speed = maxi(b.speed, _rng.randi_range(70, 85))
+		b.strength = _rng.randi_range(75, 90)
+		b.stamina = maxi(b.stamina, _rng.randi_range(68, 80))
+		b.intelligence = maxi(b.intelligence, _rng.randi_range(65, 78))
+		b.chin = _rng.randi_range(30, 40)
+		_roll_special_record(b, Vector2(0.84, 0.94), Vector2(0.85, 0.97))
+
+
+## A record for a monster or glass jaw: a win rate and knockout rate from
+## the given ranges, no draws, and an age-fitting number of fights.
+func _roll_special_record(b: BoxerData, win_rate: Vector2, ko_rate: Vector2) -> void:
+	var fights := b.total_fights()
+	b.draws = 0
+	b.wins = clampi(roundi(fights * _rng.randf_range(win_rate.x, win_rate.y)), 1, fights)
+	b.losses = fights - b.wins
+	b.kos = clampi(roundi(b.wins * _rng.randf_range(ko_rate.x, ko_rate.y)), 0, b.wins)
 
 
 func _roll_skill(bias: int) -> int:

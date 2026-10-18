@@ -7,6 +7,12 @@ extends Resource
 ## boxer can be saved, loaded or reused for another fight without clean-up.
 
 enum Style { BRAWLER, SLUGGER, BOXER, COUNTER, EVASIVE, SHOWBOAT }
+## A few boxers are out of the ordinary (see BoxerGenerator._assign_specials):
+##   MONSTER    - a knockout artist: huge power, a granite chin, and a
+##                record full of knockouts; dominant in the ring.
+##   GLASS_JAW  - looks like a monster on paper, but a hard, clean shot on
+##                the chin can put him down (and out) far more easily.
+enum Special { NONE, MONSTER, GLASS_JAW }
 
 const STYLE_NAMES: Array[String] = ["Brawler", "Slugger", "Boxer", "Counter", "Evasive", "Showboat"]
 ## Three-letter short forms for tight tables (the Boxers list).
@@ -74,6 +80,7 @@ const STYLE_BLURBS: Array[String] = [
 @export_range(1, 99) var intelligence: int = 50  ## How well he picks attack or defence.
 
 @export var style: Style = Style.BOXER
+@export var special: Special = Special.NONE
 
 # --- Condition ---------------------------------------------------------------
 ## Health going into the fight (percent). Linked to fitness and pain tolerance.

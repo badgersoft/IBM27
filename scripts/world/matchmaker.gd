@@ -20,7 +20,9 @@ extends RefCounted
 ##      BELOW places below him.
 ##   2. In the division above, only its bottom UP_DIVISION_BOTTOM available men.
 ##   3. In the division below, only its top DOWN_DIVISION_TOP available men.
-## Managers only look outside their division now and then (CROSS_DIVISION).
+## Managers only look outside their division now and then (CROSS_DIVISION),
+## and nobody fights the same man twice within REMATCH_MONTHS unless there
+## is no one else to fight.
 ##
 ## Who he picks, by his manager's type:
 ##   Money Man   the biggest purse on offer
@@ -44,6 +46,7 @@ const BELOW := 6
 const UP_DIVISION_BOTTOM := 2
 const DOWN_DIVISION_TOP := 3
 const CROSS_DIVISION := 0.08
+const REMATCH_MONTHS := 9
 ## Chance a manager arranges a fight in a month when his boxer is not yet
 ## due one: Money Man, Protective, Old School.
 const LOOK_CHANCE: Array[float] = [0.30, 0.15, 0.45]
@@ -142,7 +145,11 @@ func candidates(b: BoxerData, month: int) -> Array[BoxerData]:
 			out.append_array(_available_from(_rankings[b.division + 1], UP_DIVISION_BOTTOM, true, month))
 		if b.division > 0:
 			out.append_array(_available_from(_rankings[b.division - 1], DOWN_DIVISION_TOP, false, month))
-	return out
+	var fresh: Array[BoxerData] = []
+	for other in out:
+		if not _season.fought_recently(b, other, month - REMATCH_MONTHS):
+			fresh.append(other)
+	return fresh if not fresh.is_empty() else out
 
 
 ## The first [param count] available men from the bottom (or top) of a division.

@@ -75,6 +75,11 @@ var streak := 0                 ## Clean punches landed in a row (feeds big punc
 var idle_time := 0.0            ## Seconds since he last threw a punch.
 var celebrates_knockdown := false ## Showboating over the man he has just put down.
 var coming_out := false         ## Walking briskly out of his corner at the bell.
+## Between rounds: health and energy when he reached the corner (x, y), where
+## the corner will get them (x, y), and seconds spent sitting down.
+var corner_from := Vector2.ZERO
+var corner_to := Vector2.ZERO
+var corner_time := 0.0
 var one_two := false            ## The jab in the air is the first half of a one-two.
 var one_two_window := 0.0       ## Time left for the cross after a one-two jab landed.
 var advice: Advice = Advice.NONE

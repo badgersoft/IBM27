@@ -61,7 +61,11 @@ preset under *Project > Export*.
   screen by the corner post) picks one of four instructions (*attack more*,
   *defend more*, *keep it up*, *go all out*), and it appears in a speech
   bubble pointing down to the corner. It changes how the boxer fights the
-  next round.
+  next round. Once a boxer sits down, his health and energy bars climb to
+  where his corner can get him (quickly at first, then easing), so you can
+  watch how far each man comes back. Good stamina and recovery bring him
+  back further, and the corner does less as the fight goes on (by the last
+  break, 70% of what it could do early on).
 * Punches can land clean, be slipped, or be **blocked**. A boxer who covers
   up blocks most head shots (and catches some body shots on his elbows);
   how well depends on his intelligence and speed against the puncher's
@@ -82,11 +86,16 @@ preset under *Project > Export*.
   ![A one-two](docs/screenshots/one_two.png)
 
 * Now and then a **big punch** lands: far more damage, twice the chance of a
-  knockdown, a flash where it lands, a heavy thud and the crowd roaring in
+  knockdown, blood spraying off where it lands (it leaves spots on the
+  canvas for the rest of the fight), a heavy thud and the crowd roaring in
   anticipation. They are rare (about one every two rounds per boxer) and come
   from a run of clean punches, an opponent running out of gas, a dropped
   guard (hurt, showboating or hands down) or a good counter; harder
   punchers and smarter boxers make more of them.
+* **The crowd** cheers for the big moments and keeps cheering for a while
+  before it dies away: a little for a significant strike or a one-two,
+  more for a big punch, and longest for a knockdown (right through the
+  count) and for the winner's name.
 * Knockdowns get a count. A boxer may make it to one knee and then stand, or
   stay down. Three knockdowns in one round stops the fight.
 * When the fight ends, both boxers and the referee turn to face the crowd in
@@ -189,7 +198,8 @@ boxers.
 Each boxer starts with health a little below 100, set by his fitness (stamina,
 strength and chin). In the corner between rounds he gets back some of his
 breath (more with good stamina) and shakes off 12-28% of the damage he has
-taken, depending on his **recovery** stat (shown on his profile).
+taken, depending on his **recovery** stat (shown on his profile); less as
+the fight goes on.
 
 ### Weight divisions and the roster
 
@@ -226,9 +236,23 @@ Choose a boxer to open his **profile**: a portrait, his details, his career
 (ranking, level, earnings and manager) and all six skills as bars, with
 PREV and NEXT to step through the division in the same order.
 
-Over 120 simulated six-round fights per division, stoppages ended about 26%
-of lightweight fights, 37% of middleweight fights and 53% of heavyweight
-fights. About 6% are draws (a 3-3 split of rounds is possible over six).
+**Monsters and glass jaws.** In every division two of the best men are
+**monsters**: knockout artists with huge power, a granite chin and
+records with 90-100% of their wins inside the distance ("KNOCKOUT ARTIST"
+on the profile). They come forward looking for the finish, hit harder, land
+more big punches and knock men down more often, and when you watch them
+they dominate. One more is a **glass jaw**: he looks just like a monster on
+paper and punches like one (power, record and all), but his chin is poor. A significant punch
+landing clean on his chin is more than twice as likely to put him down, and
+he is slower to get up, so the right shot COULD knock him out.
+
+![A monster](docs/screenshots/monster_profile.png)
+
+Fights get more dangerous the shorter they are: knockdowns and damage are
+scaled by fight length, so a 12-round fight is not twice as likely to end
+early as a 6-rounder. Over 100 simulated fights each, stoppages ended about
+31% of middleweight fights over 6 rounds and 33% over 12, and 52% and 42%
+of heavyweight fights; lightweights stop least.
 
 ![The Boxers](docs/screenshots/boxers_heavyweight.png)
 

@@ -41,6 +41,7 @@ const DETAIL_LABEL_W := [144, 176]
 const DETAIL_COLUMN_X := [PAD, 432]
 const DETAIL_COLUMN_END := [416, 816]
 const BLURB_Y := 200
+const MONSTER_BLURB := "Knockout artist: few men hear the final bell."
 
 # Career: ranking and level, earnings and manager (same columns as the
 # details), then what sort of manager he has.
@@ -227,7 +228,12 @@ func _build_details(b: BoxerData) -> void:
 		var rows: Array = columns[c]
 		for r in rows.size():
 			_detail(panel, x, DETAIL_ROW_Y + (r + 1) * DETAIL_ROW_H, label_w, value_w, rows[r][0], rows[r][1])
-	var blurb := UiTheme.label(BoxerData.STYLE_BLURBS[b.style].to_upper(), UiTheme.BODY, Palette.UI_GOLD)
+	# A monster's reputation goes before him; a glass jaw's weakness doesn't
+	# (only his CHIN gives it away).
+	var blurb_text := BoxerData.STYLE_BLURBS[b.style]
+	if b.special == BoxerData.Special.MONSTER:
+		blurb_text = MONSTER_BLURB
+	var blurb := UiTheme.label(blurb_text.to_upper(), UiTheme.BODY, Palette.UI_GOLD)
 	panel.add_child(UiTheme.place(blurb, PAD, BLURB_Y, DETAILS.size.x - PAD * 2, UiTheme.ROW_H))
 
 

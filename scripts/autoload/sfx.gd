@@ -11,8 +11,17 @@ extends Node
 ##   block  - a short, higher "pap" of gloves hitting gloves
 ##   crowd  - a looping murmur, louder in bigger venues
 ##   roar   - the crowd reacting to a big moment
+##   hype   - a looping cheer under everything that swells when the crowd
+##            gets excited and holds for a while before it dies away (excite)
 
 const RATE := 22050
+## The cheering bed: silent at rest, HYPE_LOUDEST at full excitement. Once
+## the hold runs out it fades by HYPE_FADE (0 - 1 excitement) a second.
+const HYPE_QUIET_DB := -60.0
+const HYPE_LOUDEST_DB := -8.0
+const HYPE_FADE := 0.25
+## How fast the volume follows the excitement (a second's share of the gap).
+const HYPE_FOLLOW := 6.0
 
 var _bell: AudioStreamWAV
 var _start_bell: AudioStreamWAV
@@ -22,11 +31,15 @@ var _punch: AudioStreamWAV
 var _block: AudioStreamWAV
 var _crowd: AudioStreamWAV
 var _roar: AudioStreamWAV
+var _hype: AudioStreamWAV
 
 var _players: Array[AudioStreamPlayer] = []
 var _next_player := 0
 var _crowd_player: AudioStreamPlayer
 var _roar_player: AudioStreamPlayer
+var _hype_player: AudioStreamPlayer
+var _hype_level := 0.0          ## 0 - 1, how excited the crowd is.
+var _hype_hold := 0.0           ## Seconds before the cheering starts to fade.
 var _rng := RandomNumberGenerator.new()
 
 
@@ -40,6 +53,7 @@ func _ready() -> void:
 	_block = _make_wav(_synth_block())
 	_crowd = _make_wav(_synth_crowd(), true)
 	_roar = _make_wav(_synth_roar())
+	_hype = _make_wav(_synth_hype(), true)
 
 	for i in 6:
 		var p := AudioStreamPlayer.new()
@@ -51,6 +65,10 @@ func _ready() -> void:
 	_roar_player = AudioStreamPlayer.new()
 	_roar_player.stream = _roar
 	add_child(_roar_player)
+	_hype_player = AudioStreamPlayer.new()
+	_hype_player.stream = _hype
+	_hype_player.volume_db = HYPE_QUIET_DB
+	add_child(_hype_player)
 
 
 ## Rings the bell [param strikes] times. One strike starts a round with the
@@ -103,6 +121,30 @@ func crowd_start(venue_id: int) -> void:
 
 func crowd_stop() -> void:
 	_crowd_player.stop()
+	_hype_player.stop()
+	_hype_level = 0.0
+	_hype_hold = 0.0
+
+
+## Gets the crowd going: cheering at [param amount] (0 - 1) excitement, kept
+## up for [param hold] seconds before it slowly dies away. A bigger moment
+## lifts it further; a smaller one never cuts a bigger one short.
+func excite(amount: float, hold: float) -> void:
+	if not _hype_player.playing:
+		_hype_player.play()
+	_hype_level = maxf(_hype_level, clampf(amount, 0.0, 1.0))
+	_hype_hold = maxf(_hype_hold, hold)
+
+
+func _process(delta: float) -> void:
+	if not _hype_player.playing:
+		return
+	if _hype_hold > 0.0:
+		_hype_hold -= delta
+	else:
+		_hype_level = maxf(_hype_level - HYPE_FADE * delta, 0.0)
+	var target := lerpf(HYPE_QUIET_DB, HYPE_LOUDEST_DB, sqrt(_hype_level)) if _hype_level > 0.0 else HYPE_QUIET_DB
+	_hype_player.volume_db = lerpf(_hype_player.volume_db, target, minf(HYPE_FOLLOW * delta, 1.0))
 
 
 ## The crowd reacts. [param amount] 0 - 1.
@@ -286,6 +328,35 @@ func _synth_roar() -> PackedFloat32Array:
 		smooth = lerpf(smooth, _rng.randf_range(-1.0, 1.0), 0.18)
 		var env := minf(t / 0.15, 1.0) * exp(-maxf(t - 0.3, 0.0) / 0.5)
 		out[i] = smooth * env * 0.9
+	return out
+
+
+## A seamless loop of a crowd cheering: bright voices, a low swell and
+## scattered claps, cross-faded at the join.
+func _synth_hype() -> PackedFloat32Array:
+	var length := RATE * 3
+	var fade := int(RATE * 0.3)
+	var raw := PackedFloat32Array()
+	raw.resize(length + fade)
+	var smooth := 0.0
+	var low := 0.0
+	var clap := 0.0
+	for i in raw.size():
+		var t := float(i) / RATE
+		smooth = lerpf(smooth, _rng.randf_range(-1.0, 1.0), 0.32)
+		low = lerpf(low, smooth, 0.2)
+		if _rng.randf() < 0.006:
+			clap = 1.0
+		clap *= 0.92
+		var swell := 0.85 + 0.15 * sin(TAU * 0.7 * t)
+		raw[i] = ((smooth - low * 0.5) * 0.7 * swell + _rng.randf_range(-1.0, 1.0) * clap * 0.4) * 0.8
+	var out := PackedFloat32Array()
+	out.resize(length)
+	for i in length:
+		out[i] = raw[i]
+	for i in fade:
+		var k := float(i) / fade
+		out[i] = raw[i] * k + raw[length + i] * (1.0 - k)
 	return out
 
 
