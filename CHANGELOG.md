@@ -4,6 +4,46 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.10
+
+* The season. SEASON on the main menu opens the Fixtures screen,
+  starting in January 2027.
+  - Each month the managers arrange fights two months ahead. That is the
+    training camp, where the boxer trains 50% harder.
+  - Everyone fights three or four times a year, at least three months
+    apart, and about a quarter of the boxers fight in any month.
+  - Opponents follow the challenge rules: no more than 4 places above or
+    6 below in his own division, only the bottom two available men of the
+    division above, only the top three of the division below.
+  - Each manager picks by type: the biggest purse, the weakest man, or
+    anyone at all.
+* Champions defend often, and at least once a year. A retiring champion
+  leaves the title vacant, and the two best contenders fight for it.
+* Fight night is the end of the month. Watch any fixture in the ring, or
+  PLAY MONTH to have the rest fought: every fight is a full simulation by
+  the same fight engine, run in the background with results filling in
+  as they come. BOOKED and LAST MONTH tabs show what's coming and what
+  happened.
+* Month end: boxers train and age (young men improve, from 32 skills
+  fade), old boxers retire and young prospects replace them.
+* The monthly newspaper, THE RINGSIDE GAZETTE.
+  - Title fights make the main headline (new champions first), with more
+    stories under it.
+  - Professional fights rated 9 out of 10 or better, with a top-ten man in
+    them, get a feature.
+  - A round-up of the other results.
+  - IN BRIEF: rankings climbers in the player's division (middleweight for
+    now), retirements and new faces.
+  - A results page with every fight's rating.
+* Excitement ratings: every fight is rated out of 10. Most fall between 3
+  and 7, 9+ is rare and 10 is next to impossible.
+* Post-fight stats: after the verdict, CONTINUE opens a full screen of
+  both boxers' numbers side by side (thrown, landed, accuracy, jabs, power
+  punches, significant strikes, big punches, one-twos, punches avoided,
+  knockdowns, health). It also shows the result, purse, ranking changes
+  and the match rating.
+* Purses never go past their level's top figure ($100M at the most).
+
 ## 0.1.9
 
 * Rankings: every division is ranked from top to bottom and split into

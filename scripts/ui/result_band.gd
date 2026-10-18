@@ -12,7 +12,7 @@ extends Control
 ##
 ##                 ( boxers and referee stand in the ring )
 ##
-##                     [ NEW FIGHT ]   [ MAIN MENU ]    <- on the apron
+##                          [ CONTINUE ]            <- on the apron
 ##
 ## The top line is the announcer's lead-in and the bigger line under it the
 ## payoff: each judge's name, then his score, then "AND THE WINNER, BY ...
@@ -23,8 +23,8 @@ extends Control
 ## as "...AND STILL IBC HEAVYWEIGHT CHAMPION" or "...AND NEW IBC HEAVYWEIGHT
 ## CHAMPION". Tap, click or Space skips to the end.
 
-signal new_fight_pressed
-signal menu_pressed
+## CONTINUE pressed (on to the post-fight stats).
+signal continue_pressed
 ## Emitted when judge [param index]'s score is read out.
 signal judge_revealed(index: int)
 ## Emitted the moment the winner (or draw) is read out.
@@ -38,7 +38,6 @@ const PAYOFF_Y := 41            ## 32 px text.
 
 const BUTTON_W := 256
 const BUTTON_H := 48
-const BUTTON_GAP := 32
 
 ## Seconds into the announcement when each step happens. The waits are
 ## longer than a ring announcer strictly needs: the pause is the drama.
@@ -97,9 +96,7 @@ func setup(result: Dictionary, red: BoxerData, blue: BoxerData, judges: Judges, 
 	_buttons.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_buttons.visible = false
 	add_child(UiTheme.place(_buttons, 0, roundf(buttons_mid_y - BUTTON_H / 2.0), size.x, BUTTON_H))
-	var left := roundf((size.x - BUTTON_W * 2 - BUTTON_GAP) / 2.0)
-	_first_button = _button("NEW FIGHT", left, new_fight_pressed)
-	_button("MAIN MENU", left + BUTTON_W + BUTTON_GAP, menu_pressed)
+	_first_button = _button("CONTINUE", roundf((size.x - BUTTON_W) / 2.0), continue_pressed)
 
 	if result["method"] in ["KO", "TKO"]:
 		_plan_stoppage(result, [red, blue], judges)

@@ -36,6 +36,10 @@ var _banner_time := 0.0
 var _tape: TaleOfTape
 var _result: ResultBand
 var _ceremony: Ceremony
+var _post: PostFight
+## What the result did to the two boxers (see Season.record_result), with
+## their places before and after; filled in when the fight ends.
+var _summary := {}
 
 var _serials := [-1, -1]
 var _intro_time := 0.0
@@ -56,6 +60,7 @@ func _ready() -> void:
 	var blue := GameState.blue
 
 	sim = FightSim.new(red, blue, GameState.fight_seed(), GameState.rounds)
+	sim.title_fight = GameState.title_fight
 	_connect_sim()
 
 	view = ArenaView.new()
@@ -272,9 +277,25 @@ func _on_fight_finished(result: Dictionary) -> void:
 
 
 ## Adds this fight to both boxers' records, pays the purse and moves them in
-## the rankings (kept for the rest of the session).
+## the rankings (kept for the rest of the session). A season fixture is
+## completed in the season, which also rates it and keeps it for the paper.
 func _update_records(result: Dictionary) -> void:
-	GameState.record_fight(sim.red.data, sim.blue.data, result, GameState.title_fight, GameState.purse)
+	var f := GameState.fixture
+	if f != null and not f.is_done():
+		f.watched = true
+		GameState.season.complete(f, sim)
+		_summary = f.summary
+		return
+	var before := [_rank(sim.red.data), _rank(sim.blue.data)]
+	_summary = GameState.record_fight(sim.red.data, sim.blue.data, result, GameState.title_fight, GameState.purse)
+	_summary["red_rank"] = before[0]
+	_summary["blue_rank"] = before[1]
+	_summary["red_rank_after"] = _rank(sim.red.data)
+	_summary["blue_rank_after"] = _rank(sim.blue.data)
+
+
+static func _rank(b: BoxerData) -> int:
+	return GameState.rankings_for(b).rank_number(b)
 
 
 ## The verdict: the boxers and referee face the crowd in the middle of the
@@ -291,8 +312,7 @@ func _show_result() -> void:
 	var apron_mid := (ArenaRenderer.CANVAS_FRONT_Y + ArenaRenderer.APRON_BOTTOM_Y) / 2.0 * ARENA_SCALE
 	_result.setup(sim.result, sim.red.data, sim.blue.data, sim.judges, apron_mid,
 			GameState.title_fight, GameState.title_holder)
-	_result.new_fight_pressed.connect(_new_fight)
-	_result.menu_pressed.connect(_go_to_menu)
+	_result.continue_pressed.connect(_show_post_fight)
 	_result.judge_revealed.connect(_on_judge_revealed)
 	_result.winner_announced.connect(_on_winner_announced)
 	# The official cards replace the condition panels and the pundit's card,
@@ -314,9 +334,29 @@ func _on_winner_announced() -> void:
 	view.arena.excitement = 1.0
 
 
+## The post-fight stats over the whole screen.
+func _show_post_fight() -> void:
+	if _post != null:
+		return
+	_post = PostFight.new()
+	var season_fight := GameState.fixture != null
+	_post.setup(sim, _summary, Excitement.rate(sim), GameState.purse, GameState.venue_id,
+			"FIXTURES" if season_fight else "NEW FIGHT")
+	_post.position = Vector2(MARGIN, MARGIN)
+	_post.next_pressed.connect(_to_fixtures if season_fight else _new_fight)
+	_post.menu_pressed.connect(_go_to_menu)
+	_frame.add_child(_post)
+	_post.focus()
+
+
 func _new_fight() -> void:
 	GameState.new_fight()
 	get_tree().reload_current_scene()
+
+
+func _to_fixtures() -> void:
+	Sfx.crowd_stop()
+	get_tree().change_scene_to_file("res://scenes/fixtures.tscn")
 
 
 func _go_to_menu() -> void:
@@ -365,7 +405,7 @@ func _update_banner(delta: float) -> void:
 # ============================================================================
 #  Screenshot mode (developer tool)
 # ============================================================================
-## Run with:  -- --capture=<file.png> [--show=intro|fight|big|onetwo|taunt|break|count|announce|result] [--at=<seconds>]
+## Run with:  -- --capture=<file.png> [--show=intro|fight|big|onetwo|taunt|break|count|announce|result|stats] [--at=<seconds>]
 ## The fight is fast-forwarded (rigs stepped in lock-step with the fight) to a
 ## moment worth showing, frozen, and the whole screen saved as a PNG.
 
@@ -398,11 +438,13 @@ func _run_capture() -> void:
 		if show == "big" or show == "onetwo":
 			view.arena.set_process(false)   # Hold the impact flash or call-out for the shot.
 		_refresh_hud()
-		if show in ["result", "announce"] and sim.phase == FightSim.Phase.FINISHED:
+		if show in ["result", "announce", "stats"] and sim.phase == FightSim.Phase.FINISHED:
 			_show_result()
-			if show == "result":
+			if show != "announce":
 				_result.reveal_all()
 				_ceremony.finish_raise()
+			if show == "stats":
+				_show_post_fight()
 
 	# "--wait" lets the decision announcement run for a while before the shot.
 	await get_tree().create_timer(float(GameState.options.get("wait", "0.5"))).timeout
@@ -418,7 +460,7 @@ func _is_capture_moment(show: String) -> bool:
 			return sim.phase == FightSim.Phase.BREAK and sim.break_time > FightSim.ADVICE_AT + 0.6
 		"count":
 			return sim.phase == FightSim.Phase.COUNT and sim.count_value >= 2
-		"result", "announce":
+		"result", "announce", "stats":
 			return sim.phase == FightSim.Phase.FINISHED and sim._finish_timer > 1.0
 		"big":
 			return _big_this_step

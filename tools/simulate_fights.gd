@@ -38,6 +38,7 @@ func _initialize() -> void:
 	# Judging: how often the official result differs from a neutral card.
 	var judging := {"decisions": 0, "differs": 0, "robbery": 0, "all_agree": 0, "pundit_right": 0, "split_rounds": 0, "rounds": 0}
 	var pundits := {}   # name -> [calls matching a neutral card, fights]
+	var excitement: Array[float] = []
 
 	for n in fights:
 		var gen := BoxerGenerator.new(seed_value * 1000 + n)
@@ -54,6 +55,7 @@ func _initialize() -> void:
 				clinches[0] += 1
 			guard += 1
 		var r: Dictionary = sim.result
+		excitement.append(Excitement.rate(sim))
 		if r["method"] in ["UD", "MD", "SD", "DRAW"]:
 			_judging_stats(sim, judging)
 			var pname: String = sim.judges.pundit["name"]
@@ -117,8 +119,32 @@ func _initialize() -> void:
 	for s in BoxerData.STYLE_NAMES.size():
 		var pct: float = 100.0 * by_style_wins[s] / maxf(by_style_fights[s], 1.0)
 		print("  %-8s wins %5.1f%% of %d fights" % [BoxerData.STYLE_NAMES[s], pct, by_style_fights[s]])
+	print("------------------------------------------")
+	_excitement_summary(excitement)
 	print("")
 	quit()
+
+
+## How the excitement ratings (out of 10) spread: a count for each whole
+## number and the share rated 8+ and 9+.
+static func _excitement_summary(ratings: Array[float]) -> void:
+	var buckets: Array[int] = []
+	buckets.resize(11)
+	buckets.fill(0)
+	var eight := 0
+	var nine := 0
+	var total := 0.0
+	for x in ratings:
+		buckets[floori(x)] += 1
+		total += x
+		eight += 1 if x >= 8.0 else 0
+		nine += 1 if x >= 9.0 else 0
+	var line := ""
+	for i in buckets.size():
+		line += "%d:%d " % [i, buckets[i]]
+	var n := maxf(ratings.size(), 1)
+	print("  Excitement  average %.1f   8+ %.1f%%   9+ %.1f%%" % [total / n, 100.0 * eight / n, 100.0 * nine / n])
+	print("  " + line)
 
 
 static func _winner(t: Array) -> int:

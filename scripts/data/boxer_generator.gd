@@ -44,6 +44,8 @@ const SHOWBOAT_CHANCE := 0.15
 const NAME_ATTEMPTS := 40
 ## Share of managers from their boxer's own country.
 const HOME_MANAGER := 0.7
+## Chance a new prospect already has a nickname.
+const PROSPECT_NICKNAME := 0.3
 
 var _rng := RandomNumberGenerator.new()
 var _world: Dictionary = {}
@@ -120,6 +122,27 @@ func generate_boxer(avoid_trunks: Array[int] = [], division: Divisions.Id = Divi
 	var fitness := (b.stamina * 0.5 + b.strength * 0.3 + b.chin * 0.2) / 99.0
 	b.start_health = clampf(84.0 + fitness * 12.0 + _rng.randf_range(-3.0, 3.0), 82.0, 98.0)
 	b.start_health = snappedf(b.start_health, 0.1)
+	return b
+
+
+## A young prospect turning up to replace a retired boxer: 19 - 22, with
+## no more than three fights (all wins), in [param division]. Surnames in
+## [param avoid_names] and nicknames in [param avoid_nicknames] are skipped.
+func generate_prospect(division: Divisions.Id, avoid_names: Array[String],
+		avoid_nicknames: Array[String]) -> BoxerData:
+	var b := generate_boxer([], division)
+	for attempt in NAME_ATTEMPTS:
+		if not avoid_names.has(b.last_name):
+			break
+		b = generate_boxer([], division)
+	b.age = _rng.randi_range(19, 22)
+	b.wins = _rng.randi_range(0, 3)
+	b.losses = 0
+	b.draws = 0
+	b.kos = _rng.randi_range(0, b.wins)
+	b.birth_month = _rng.randi_range(0, 11)
+	if _rng.randf() < PROSPECT_NICKNAME:
+		b.nickname = _pick_nickname(b, avoid_nicknames)
 	return b
 
 

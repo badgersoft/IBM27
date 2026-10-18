@@ -1,13 +1,14 @@
 extends Control
 ## Main menu: title, a window onto the Boxing Hall with two boxers from the
-## roster squaring up, and two buttons: START a fight, or look at the BOXERS.
+## roster squaring up, and three buttons: START a quick fight, the SEASON
+## (fixtures, results and the newspaper), or look at the BOXERS.
 ##
 ## Vertical rhythm (1280 x 800 frame, all on the 8 px grid):
 ##   y  40  "BADGER-SOFT PRESENTS"          body, dim
 ##   y  72  "INTERNATIONAL BOXING MANAGER"  title
 ##   y 112  "2027"                          96 px, gold
 ##   y 248  arena window                    848 x 336 (arena at x2)
-##   y 632  [ START ]  [ BOXERS ]           288 x 64 each, 32 apart
+##   y 632  [ START ] [ SEASON ] [ BOXERS ] 288 x 64 each, 32 apart
 ##   y 752  version line                    caption
 
 const FRAME_SIZE := Vector2(1280, 800)
@@ -53,9 +54,10 @@ func _ready() -> void:
 	year.clip_text = false
 	frame.add_child(UiTheme.place(year, 0, 112, FRAME_SIZE.x, 96))
 
-	var left := (FRAME_SIZE.x - BUTTON_SIZE.x * 2 - BUTTON_GAP) / 2.0
+	var left := (FRAME_SIZE.x - BUTTON_SIZE.x * 3 - BUTTON_GAP * 2) / 2.0
 	_start = _menu_button(frame, "START", left, _on_start)
-	_menu_button(frame, "BOXERS", left + BUTTON_SIZE.x + BUTTON_GAP, _on_boxers)
+	_menu_button(frame, "SEASON", left + BUTTON_SIZE.x + BUTTON_GAP, _on_season)
+	_menu_button(frame, "BOXERS", left + (BUTTON_SIZE.x + BUTTON_GAP) * 2, _on_boxers)
 	_start.grab_focus()
 
 	var version := "VERSION %s  -  PROTOTYPE BUILD  -  2027 BADGER-SOFT" % ProjectSettings.get_setting("application/config/version", "0.1")
@@ -100,6 +102,10 @@ func _menu_button(frame: Control, text: String, x: float, action: Callable) -> B
 	b.pressed.connect(action)
 	frame.add_child(b)
 	return b
+
+
+func _on_season() -> void:
+	get_tree().change_scene_to_file("res://scenes/fixtures.tscn")
 
 
 func _on_boxers() -> void:

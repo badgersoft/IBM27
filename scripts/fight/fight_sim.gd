@@ -93,6 +93,8 @@ var rng := RandomNumberGenerator.new()
 var phase: Phase = Phase.INTRO
 ## How many rounds this fight is scheduled for (see FightLengths).
 var rounds := FightLengths.DEFAULT_ROUNDS
+## Set by whoever arranges the fight; only the excitement rating reads it.
+var title_fight := false
 var round_number := 1
 var clock := GAME_ROUND_SECONDS       ## Game seconds left in the round.
 var break_time := 0.0

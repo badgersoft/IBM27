@@ -102,7 +102,16 @@ preset under *Project > Export*.
   unanimous, majority or split draw. As the name is called the referee
   **lifts the winner's arm** (both arms for a draw) and the loser drops his
   head. A stoppage goes straight to "And the winner, by knockout in round 2
-  at 1:47...". NEW FIGHT and MAIN MENU then appear on the ring apron.
+  at 1:47...". CONTINUE then appears on the ring apron.
+* CONTINUE opens the **fight stats**. Both boxers' numbers sit side by
+  side, with the better one in gold: punches thrown and landed, accuracy,
+  jabs and power punches, significant strikes, big punches, one-twos,
+  punches avoided, knockdowns and health at the end. Under them are the
+  result (winner, method, purse and how each man moved in the rankings)
+  and the **match rating** out of 10 (see *Excitement ratings*). NEW FIGHT
+  (or FIXTURES for a season fight) and MAIN MENU are at the bottom.
+
+  ![Fight stats](docs/screenshots/fight_stats.png)
 * The ring aprons and the hall's back banner are left plain for now.
 
 ![The verdict](docs/screenshots/decision_split.png)
@@ -264,8 +273,8 @@ with his belt.
 Every boxer has his own **manager**, and each manager is one of three types
 (shown on the boxer's profile): a *Money Man* chases the biggest purse
 going, a *Protective* manager looks for easier fights for his man, and an
-*Old School* manager will take on anyone. They will arrange fights in the
-background once the season is added.
+*Old School* manager will take on anyone. They arrange the season's fights
+(see *The season*).
 
 **How results move the rankings.** There are two systems, picked with
 `--ranking=ladder` (the default) or `--ranking=points`:
@@ -287,6 +296,71 @@ background once the season is added.
 Either way the champion keeps the top spot until he loses his title: a
 champion beaten in a non-title fight keeps his belt, and the man who beat
 him moves up as if he had beaten the number 1.
+
+### The season
+
+**SEASON** on the main menu opens the fixtures. The season starts in
+January 2027 and runs a month at a time:
+
+* **Arranging fights.** At the start of each month the managers arrange
+  fights for two months on: that is the boxer's **training camp**, during
+  which he trains 50% harder (more improvement in his skills). A boxer can
+  have a new fight arranged a month after his last one, and must have one
+  arranged by two months after it. So fights are three or four months
+  apart, everyone fights three or four times a year, and about a quarter
+  of all the boxers fight in any month. A boxer can only be matched with
+  someone who isn't already booked and is past that month's recovery.
+* **Who can fight whom.** In his own division, someone no more than 4
+  places above him or 6 below. In the division above, only its bottom two
+  available men. In the division below, only its top three available men.
+  Managers look outside their division only now and then.
+* **Who the manager picks.** A *Money Man* takes the biggest purse on
+  offer, a *Protective* manager the weakest man on offer (and turns down
+  challengers clearly better than his own boxer), and an *Old School*
+  manager anyone at all.
+* **Titles.** A champion's fights are often for his title, and any fight
+  nine months or more after his last defence must be, so he defends at
+  least once a year. If a champion retires the title is vacant, and the
+  two best contenders fight for it as soon as both are free (until then
+  neither takes another fight).
+* **Fight night** is the end of the month. The **Fixtures** screen lists
+  the month's fights (division, each man's ranking and record, rounds and
+  purse, with the belt for a title fight). Choose one to **watch** it in
+  the ring, or **PLAY MONTH** to have the rest fought. Every fight is a
+  full FightSim fight, exactly as a watched one runs, simulated on a
+  worker thread so the screen keeps moving as each result comes in. BOOKED
+  shows the fights arranged for the months after, and LAST MONTH the
+  previous results.
+* **Month end.** Everyone trains (harder in camp) and gets older. Young men
+  still improve, men in their prime hold steady, and from 32 skills start
+  to fade, speed first. Men over 34 may retire (at 39 they always do), and
+  a young prospect takes each one's place at the bottom of his division.
+  Then **READ THE PAPER**.
+
+**The newspaper**, THE RINGSIDE GAZETTE, comes out every month. Its main
+headline is a title fight, a new champion first and then a successful
+defence (any other title fights get stories underneath). A professional
+fight rated 9 or more out of 10, with a top-ten man (or the champion) in
+it, gets a feature raving about it. With neither, the month's biggest upset
+or best fight leads. A round-up of the other results follows, and IN BRIEF
+notes everyone who climbed the rankings in the player's division (the
+middleweights, until there is a player's boxer), plus retirements and new
+faces. RESULTS lists every fight of the month with its rating.
+
+![The fixtures](docs/screenshots/fixtures.png)
+
+![The newspaper](docs/screenshots/newspaper.png)
+
+### Excitement ratings
+
+Every fight, watched or simulated, is rated out of 10 for excitement from
+what happened in it. Points come from knockdowns (more if both men went
+down), a comeback (the winner was knocked down, or behind on a neutral
+card from halfway on), big punches, one-twos, the work rate, a close or
+split decision or a draw, a knockout (more for a late one) and a title on
+the line. The total is put on an S-shaped curve: most fights land between
+3 and 7, a great one 8 or more, and 9 or more is rare (about 5 in every 100
+fights in a simulated year). 10 is next to impossible.
 
 ### Records (placeholders for now)
 
@@ -323,9 +397,11 @@ data/
   officials.json              Judges (fairness, secret likes) and TV pundits
 assets/fonts/                 Press Start 2P pixel font (SIL Open Font License)
 scenes/
-  main_menu.tscn              START and BOXERS
+  main_menu.tscn              START, SEASON and BOXERS
   fight.tscn
   roster.tscn                 The Boxers screen (one table per division)
+  fixtures.tscn               The season's fixtures, results and PLAY MONTH
+  newspaper.tscn              The monthly newspaper
   profile.tscn                One boxer's profile: portrait, details, skills
   debug/                      Developer tools: pose sheet, venue preview
 scripts/
@@ -342,6 +418,12 @@ scripts/
     rankings.gd               A division's ranking order, champion and levels
     purse.gd                  What a fight is worth, and money as text
     career.gd                 Starting career earnings
+    season.gd                 The calendar: fixtures, results, month end
+    matchmaker.gd             Managers arranging fights (the challenge rules)
+    fixture.gd                One arranged fight and its result
+    training.gd               A month of training and getting older
+    excitement.gd             Rating a fight out of 10
+    newspaper.gd              Writing the monthly paper
   fight/
     fight_sim.gd              Clock, bell, punches, knockdowns, count, result
     fighter.gd                One boxer's live state during a fight
@@ -426,24 +508,25 @@ godot --path . scenes/fight.tscn -- --venue=2 --seed=21 --show=fight --capture=f
 
 Command-line options read by the game (after `--`):
 
-| Option                     | Meaning                                                                                                                                                                  |
-|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--seed=<n>`               | Fixed random seed (same match-up and fight every time)                                                                                                                   |
-| `--roster=<n>`             | Different starting rosters                                                                                                                                               |
-| `--division=<0-2>`         | 0 Lightweight, 1 Middleweight, 2 Heavyweight                                                                                                                             |
-| `--red=<n>` `--blue=<n>`   | Pick the boxers by their place in the rankings (1 = top)                                                                                                                 |
-| `--title`                  | A title fight: the champion against the number 1                                                                                                                         |
-| `--ranking=ladder\|points` | How results move the rankings (default ladder)                                                                                                                           |
-| `--order=rank`             | The Boxers list opens in ranking order                                                                                                                                   |
-| `--tab=<0-2>`              | Which division tab the Boxers screen opens on                                                                                                                            |
-| `--page=<1-3>`             | Which page of the division the Boxers screen opens on                                                                                                                    |
-| `--index=<0-29>`           | Which boxer's profile opens (with `--division`)                                                                                                                          |
-| `--venue=<0-3>`            | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena                                                                                                               |
-| `--rounds=<n>`             | Fight length: 3, 6, 10 or 12 rounds (normally set by the level)                                                                                                          |
-| `--capture=<png>`          | Fast-forward, save a screenshot and quit                                                                                                                                 |
-| `--show=<moment>`          | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch), `onetwo` (a one-two), `taunt` (showing off), `break`, `count`, `announce`, `result` |
-| `--wait=<seconds>`         | Real seconds to wait before the shot (e.g. mid read-out)                                                                                                                 |
-| `--at=<seconds>`           | Earliest real second of round 1 to capture (default 20)                                                                                                                  |
+| Option                     | Meaning                                                                                                                                                                                                |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--seed=<n>`               | Fixed random seed (same match-up and fight every time)                                                                                                                                                 |
+| `--roster=<n>`             | Different starting rosters                                                                                                                                                                             |
+| `--division=<0-2>`         | 0 Lightweight, 1 Middleweight, 2 Heavyweight                                                                                                                                                           |
+| `--red=<n>` `--blue=<n>`   | Pick the boxers by their place in the rankings (1 = top)                                                                                                                                               |
+| `--title`                  | A title fight: the champion against the number 1                                                                                                                                                       |
+| `--ranking=ladder\|points` | How results move the rankings (default ladder)                                                                                                                                                         |
+| `--order=rank`             | The Boxers list opens in ranking order                                                                                                                                                                 |
+| `--months=<n>`             | Play the first n months of the season at start-up                                                                                                                                                      |
+| `--tab=<n>`                | Which tab the Boxers, Fixtures or newspaper screen opens on                                                                                                                                            |
+| `--page=<1-3>`             | Which page of the division the Boxers screen opens on                                                                                                                                                  |
+| `--index=<0-29>`           | Which boxer's profile opens (with `--division`)                                                                                                                                                        |
+| `--venue=<0-3>`            | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena                                                                                                                                             |
+| `--rounds=<n>`             | Fight length: 3, 6, 10 or 12 rounds (normally set by the level)                                                                                                                                        |
+| `--capture=<png>`          | Fast-forward, save a screenshot and quit                                                                                                                                                               |
+| `--show=<moment>`          | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch), `onetwo` (a one-two), `taunt` (showing off), `break`, `count`, `announce`, `result`, `stats`, `fixtures`, `paper` |
+| `--wait=<seconds>`         | Real seconds to wait before the shot (e.g. mid read-out)                                                                                                                                               |
+| `--at=<seconds>`           | Earliest real second of round 1 to capture (default 20)                                                                                                                                                |
 
 ### Code style
 

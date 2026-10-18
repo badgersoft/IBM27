@@ -43,10 +43,13 @@ static func for_fight(index_a: int, index_b: int, count: int, division: int, tit
 	var amount: float = level[0] * pow(level[1] / level[0], pow(q, level[2]))
 	if not title:
 		amount *= NON_TITLE
-	amount *= DIVISION_SHARE[clampi(division, 0, DIVISION_SHARE.size() - 1)]
+	var share := DIVISION_SHARE[clampi(division, 0, DIVISION_SHARE.size() - 1)]
+	amount *= share
 	if rng != null:
 		amount *= rng.randf_range(1.0 - SPREAD, 1.0 + SPREAD)
-	return roundi(amount)
+	# The spread never takes a fight past its level's top purse.
+	var ceiling: float = level[1] * share * (1.0 if title else NON_TITLE)
+	return roundi(minf(amount, ceiling))
 
 
 ## 0 - 1: how big a fight this is within its level. The top two men of the

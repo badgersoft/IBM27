@@ -47,6 +47,13 @@ const STYLE_BLURBS: Array[String] = [
 ## Ranking points, used when the rankings run on points (see Rankings).
 @export var rank_points: float = 0.0
 
+# --- Season ------------------------------------------------------------------
+@export var birth_month: int = 0          ## 0 = January: he turns a year older then.
+@export var last_fight_month: int = -99   ## Season month of his last fight (see Season).
+## Training and age add or take away fractions of a skill point each month;
+## whole points are applied as they build up (see Training).
+@export var skill_progress: Dictionary = {}
+
 # --- Body ------------------------------------------------------------------
 ## Weight division (see Divisions); height and weight ranges depend on it.
 @export var division: Divisions.Id = Divisions.Id.MIDDLEWEIGHT

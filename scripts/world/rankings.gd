@@ -38,6 +38,13 @@ const TIER_SHORT: Array[String] = ["AM", "SEMI", "PRO"]
 ## Scheduled rounds for a fight at each level, and for a title fight.
 const TIER_ROUNDS: Array[int] = [6, 10, 12]
 const TITLE_ROUNDS := 12
+## Venues for a fight at each level (see Venues.Id); title fights are
+## always at the Grand Arena.
+const TIER_VENUES: Array = [
+	[Venues.Id.SMALL_GYM, Venues.Id.CITY_GYM],
+	[Venues.Id.CITY_GYM, Venues.Id.BOXING_HALL],
+	[Venues.Id.BOXING_HALL, Venues.Id.GRAND_ARENA],
+]
 ## The title every division has.
 const TITLE_NAME := "IBC"
 
@@ -64,6 +71,8 @@ var mode: Mode = Mode.LADDER
 var boxers: Array[BoxerData] = []
 ## The IBC champion, or null while the title is vacant.
 var champion: BoxerData = null
+## Season month the title was last on the line (see Season).
+var last_defence_month := -99
 
 
 func _init(division_id: int, ranked: Array[BoxerData], ranking_mode: Mode) -> void:
