@@ -382,7 +382,10 @@ it, gets a feature raving about it. With neither, the month's biggest upset
 or best fight leads. A round-up of the other results follows, and IN BRIEF
 notes everyone who climbed the rankings in the player's division (the
 middleweights, until there is a player's boxer), plus retirements and new
-faces. RESULTS lists every fight of the month with its rating.
+faces. RESULTS lists every fight of the month with its rating, and keeps
+the full verdict under each result for the record (UNANIMOUS, SPLIT or
+MAJORITY DECISION, the kind of draw, KNOCKOUT or TECHNICAL KNOCKOUT); the
+Fixtures screen's LAST MONTH shows the same.
 
 ![The fixtures](docs/screenshots/fixtures.png)
 
@@ -474,7 +477,8 @@ exhibitions). The **tale of the tape** has a HEAD TO HEAD row with each
 man's wins (FIRST MEETING if they have never fought), and the **newspaper**
 says when a fight was a rematch ("IT WAS THEIR SECOND MEETING: MURRAY
 LEADS THEIR SERIES 2-0."). The round-up gives each fight one line, how it
-ended included ("COLON BEAT LYSENKO (KO R2), LEADS 2-0."), and the
+ended included ("COLON BEAT LYSENKO (KO R2), LEADS 2-0."; any decision is
+just "(POINTS)"), and the
 player's own fight always heads it.
 
 ![A new boxer](docs/screenshots/new_boxer.png)

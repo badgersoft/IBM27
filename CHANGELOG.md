@@ -4,6 +4,16 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.21
+
+* Round-up: a decision now reads "(POINTS)" instead of UD / SD / MD, and a
+  draw is just "DREW".
+* Results pages (the newspaper's RESULTS and the Fixtures' LAST MONTH): the
+  RESULT column says KO 7, TKO 3, POINTS or DRAW, with the full verdict in
+  small type underneath for the record: UNANIMOUS / SPLIT / MAJORITY
+  DECISION, UNANIMOUS / MAJORITY / SPLIT DRAW, KNOCKOUT or TECHNICAL
+  KNOCKOUT. The RESULT column is a little wider (PURSE a little narrower).
+
 ## 0.1.20
 
 * The round-up's rules between fights are gone again.

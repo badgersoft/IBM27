@@ -19,7 +19,8 @@ extends RefCounted
 ## A rematch says so, with the head to head after it: "IT WAS THEIR SECOND
 ## MEETING: COTE LEADS THEIR SERIES 2-0." In the round-up each fight is one
 ## line of at most ROUNDUP_CHARS: "COTE BEAT SMITH (KO R3), LEADS 2-0." (the
-## series only if it fits).
+## series only if it fits). A decision is just "(POINTS)"; the results page
+## has the full verdict.
 ##
 ## Returns {"month", "date", "headline", "standfirst", "stories": [{"title",
 ## "text"}], "roundup": [String], "notes": [String], "results": [Fixture]}. Everything is upper
@@ -159,8 +160,8 @@ static func _roundup(results: Array[Fixture], covered: Array[Fixture], season: S
 	return out
 
 
-## One round-up line: "COTE BEAT SMITH (KO R3).", "COTE BEAT SMITH (UD),
-## LEADS 2-0." or "COTE AND SMITH DREW (SPLIT), LEVEL 1-1-1.". The series
+## One round-up line: "COTE BEAT SMITH (KO R3).", "COTE BEAT SMITH
+## (POINTS), LEADS 2-0." or "COTE AND SMITH DREW, LEVEL 1-1-1.". The series
 ## goes on the end of a rematch only if the line still fits ROUNDUP_CHARS.
 static func _roundup_line(f: Fixture, season: Season) -> String:
 	var w := f.winner()
@@ -168,8 +169,7 @@ static func _roundup_line(f: Fixture, season: Season) -> String:
 	var h := season.head_to_head(f.red, f.blue)
 	var series := ""
 	if w == null:
-		var kind := str(f.result.get("detail", "")).strip_edges()
-		line = "%s AND %s DREW%s" % [f.red.last_name.to_upper(), f.blue.last_name.to_upper(), " (%s)" % kind if kind != "" else ""]
+		line = "%s AND %s DREW" % [f.red.last_name.to_upper(), f.blue.last_name.to_upper()]
 		if h[0] == h[1]:
 			series = ", LEVEL %s" % Season.series_score(h)
 	else:
@@ -189,12 +189,12 @@ static func _roundup_line(f: Fixture, season: Season) -> String:
 	return line + "."
 
 
-## "KO R3", "TKO R10", or the decision: "UD", "SD", "MD".
+## "KO R3", "TKO R10", or "POINTS" for any decision.
 static func _result_short(f: Fixture) -> String:
 	var method: String = f.result["method"]
 	if method in ["KO", "TKO"]:
 		return "%s R%d" % [method, f.result["round"]]
-	return method
+	return "POINTS"
 
 
 ## Adds the head to head to [param story] if [param f] was a rematch.

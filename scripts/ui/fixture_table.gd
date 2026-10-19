@@ -5,7 +5,10 @@ extends Control
 ##
 ##   DIV  RANK RED CORNER         V   RANK BLUE CORNER     RDS   PURSE  RESULT  RATING
 ##   HW      C A. PEREIRA      [belt]    1 D. WATANABE      12   $100M   KO 7    8.4
-##              29-2-2                     22-2-0
+##              29-2-2                     22-2-0                 KNOCKOUT
+##
+## RESULT is short (KO 7, TKO 3, POINTS, DRAW) with the full verdict in
+## small type under it (UNANIMOUS DECISION, SPLIT DRAW, KNOCKOUT...).
 ##
 ## A title fight has the belt where the V would be. Once a fight is over the
 ## winner's name is gold, the loser's dim, and the result and its
@@ -24,6 +27,10 @@ const VALUE_Y := 12              ## As in the Boxers list: name line...
 const RECORD_Y := 30             ## ...and a caption line under it.
 const PAGE_SIZE := 10
 const NAME_CHARS := 16
+## The verdict under RESULT: centred on that column, wide enough for
+## "UNANIMOUS DECISION" (it runs under the empty space below the purse and
+## the rating).
+const VERDICT_W := 176
 
 ## [caption, x, width, alignment]
 const COLUMNS := [
@@ -34,8 +41,8 @@ const COLUMNS := [
 	["RANK",    504,  32, HORIZONTAL_ALIGNMENT_RIGHT],
 	["BLUE",    552, 288, HORIZONTAL_ALIGNMENT_LEFT],
 	["RDS",     848,  64, HORIZONTAL_ALIGNMENT_CENTER],
-	["PURSE",   920, 128, HORIZONTAL_ALIGNMENT_RIGHT],
-	["RESULT", 1064,  96, HORIZONTAL_ALIGNMENT_CENTER],
+	["PURSE",   920, 104, HORIZONTAL_ALIGNMENT_RIGHT],
+	["RESULT", 1040, 112, HORIZONTAL_ALIGNMENT_CENTER],
 	["RATING", 1168,  64, HORIZONTAL_ALIGNMENT_RIGHT],
 ]
 const DIVISION_SHORT: Array[String] = ["LW", "MW", "HW"]
@@ -116,6 +123,10 @@ func _row(f: Fixture, y: float, stripe: bool, rankings: Array[Rankings], clickab
 		var col: Array = COLUMNS[2 if corner == 0 else 5]
 		var record := UiTheme.label(b.record(), UiTheme.CAPTION, Palette.UI_TEXT_DIM)
 		_rows.add_child(UiTheme.place(record, col[1], y + RECORD_Y, col[2], UiTheme.CAPTION))
+	if f.is_done():
+		var res: Array = COLUMNS[8]
+		var verdict := UiTheme.label(f.verdict_text(), UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER)
+		_rows.add_child(UiTheme.place(verdict, res[1] + (res[2] - VERDICT_W) / 2.0, y + RECORD_Y, VERDICT_W, UiTheme.CAPTION))
 	if f.title:
 		var belt := BeltIcon.new(2)
 		var mid: Array = COLUMNS[3]

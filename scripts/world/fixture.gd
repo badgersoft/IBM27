@@ -69,7 +69,29 @@ func result_text() -> String:
 	var method: String = result["method"]
 	if method in ["KO", "TKO"]:
 		return "%s %d" % [method, result["round"]]
-	return method
+	if method == "DRAW":
+		return "DRAW"
+	return "POINTS"
+
+
+## The full verdict, for the record: "UNANIMOUS DECISION", "SPLIT DECISION",
+## "MAJORITY DECISION", "SPLIT DRAW" (or UNANIMOUS / MAJORITY DRAW),
+## "KNOCKOUT" or "TECHNICAL KNOCKOUT" (three knockdowns in a round).
+func verdict_text() -> String:
+	if not is_done():
+		return ""
+	match result["method"]:
+		"KO":
+			return "KNOCKOUT"
+		"TKO":
+			return "TECHNICAL KNOCKOUT"
+		"UD":
+			return "UNANIMOUS DECISION"
+		"SD":
+			return "SPLIT DECISION"
+		"MD":
+			return "MAJORITY DECISION"
+	return ("%s DRAW" % str(result.get("detail", ""))).strip_edges()
 
 
 # ----------------------------------------------------------------------------
