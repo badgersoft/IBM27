@@ -15,8 +15,9 @@ extends Control
 ##          |  OVERALL |  | ten to choose, or none |  | country list           |
 ##          |          |  |                        |  | city list              |
 ##   y 784  +----------+  +------------------------+  +------------------------+
-## The two columns share their rows: the skill rows line up with the BOXER
-## rows, and POINTS LEFT with TRUNKS.
+## The two columns share their rows: POINTS AVAILABLE sits level with NAME
+## and SURNAME, and the six skills line up with the six pickers (DIVISION
+## to TRUNKS).
 
 const FRAME_SIZE := Vector2(1280, 800)
 const PAD := 16
@@ -50,7 +51,7 @@ const VALUE_W := 192
 const SWATCH := Vector2(96, 16)
 
 # SKILLS panel rows.
-const SKILL_ROW_Y := ROW_Y
+const SKILL_ROW_Y := ROW_Y + 2 * ROW_STEP
 const SKILL_STEP := ROW_STEP
 const SKILL_LABEL_W := 208
 const MINUS_X := 232
@@ -58,7 +59,7 @@ const SKILL_VALUE_X := 280
 const SKILL_VALUE_W := 64
 const PLUS_X := 352
 const STEP_W := 40
-const POOL_Y := ROW_Y + 7 * ROW_STEP
+const POOL_Y := ROW_Y + 16
 const MIN_SKILL := 10
 const MAX_SKILL := 65
 
@@ -179,8 +180,8 @@ func _build_skills() -> void:
 		panel.add_child(UiTheme.place(value, SKILL_VALUE_X, y + 4, SKILL_VALUE_W, UiTheme.ROW_H))
 		_skill_labels[skill] = value
 		_button(panel, "+", PLUS_X, y, STEP_W, 32, _change_skill.bind(skill, 1))
-	panel.add_child(UiTheme.block(Color(Palette.UI_TEXT_DIM, 0.4), PAD, POOL_Y - 8, SKILLS.size.x - PAD * 2, 1))
-	panel.add_child(UiTheme.place(UiTheme.label("POINTS LEFT", UiTheme.BODY, Palette.UI_GOLD), PAD, POOL_Y + 4, SKILL_LABEL_W, UiTheme.ROW_H))
+	panel.add_child(UiTheme.block(Color(Palette.UI_TEXT_DIM, 0.4), PAD, SKILL_ROW_Y - 16, SKILLS.size.x - PAD * 2, 1))
+	panel.add_child(UiTheme.place(UiTheme.label("POINTS AVAILABLE", UiTheme.BODY, Palette.UI_GOLD), PAD, POOL_Y + 4, SKILL_VALUE_X - PAD - 8, UiTheme.ROW_H))
 	_pool_label = UiTheme.label("", UiTheme.LARGE, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
 	panel.add_child(UiTheme.place(_pool_label, SKILL_VALUE_X, POOL_Y, SKILL_VALUE_W, UiTheme.LARGE + 8))
 

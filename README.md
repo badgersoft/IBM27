@@ -284,12 +284,13 @@ boxers' **levels**:
 |--------------|---------------------------|--------------|-------------------------------------|
 | Professional | Top third (C and 1 - 9)   | 12 rounds    | $5M - $100M (tens of millions)      |
 | Semi-Pro     | Middle third (10 - 19)    | 10 rounds    | $5K - $50K (mostly $5K - $25K)      |
-| Amateur      | Bottom third (20 - 29)    | 6 rounds     | $200 - $10K (mostly a few hundred)  |
+| Amateur      | Bottom third (20 - 29)    | 6 rounds     | $1.2K - $5K (mostly $1.5K - $3K)    |
 
 A fight's level, length and purse come from the better-ranked man. Within a
 level the purse grows with how high the two men are ranked between them,
 then it is cut to 70% if no title is on the line and scaled by division
-(heavyweight 100%, middleweight 80%, lightweight 60%), so only a
+(heavyweight 100%, middleweight 80%, lightweight 60%). So the most junior
+fight, two lightweights at the bottom, pays about $500, and only a
 heavyweight title fight between the champion and the number 1 reaches
 $100M. The winner takes 60% and the loser 40% (half each for a draw), and
 it goes on their **career earnings**. The starting boxers already have

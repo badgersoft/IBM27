@@ -4,7 +4,17 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
-## 0.1.15
+## 0.1.16
+
+* New boxer screen: POINTS AVAILABLE (was POINTS LEFT) now sits at the top
+  of the SKILLS box, level with NAME and SURNAME, so the six skills line up
+  with the six pickers beside them (DIVISION to TRUNKS).
+* Bigger amateur purses: the amateur range is now $1.2K - $5K (was $200 -
+  $10K), before the usual cuts for a non-title fight and the division. The
+  bottom fight of all, two lightweights, pays about $500 (was about $85);
+  at heavyweight about $850. The best amateur fights now pay the same as
+  the lowest semi-pro ones, so purses climb steadily up the rankings.
+
 
 * New boxer screen tidied: the BOXER and SKILLS boxes are the same height
   and their rows line up (POINTS LEFT sits level with TRUNKS); NICKNAME and
