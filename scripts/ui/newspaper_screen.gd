@@ -27,6 +27,8 @@ const MAIN_W := 792
 const BRIEF_X := 840
 const BRIEF_W := 392
 const STORY_GAP := 24
+## The round-up's rules between fights: fainter than the rules between stories.
+const ROUNDUP_RULE_ALPHA := 0.25
 ## Extra space between wrapped lines, so a paragraph doesn't read as a block.
 const LINE_SPACING := 8
 ## The results pager (shown on the RESULTS page only), after the tabs.
@@ -178,8 +180,11 @@ func _build_front_page() -> void:
 		main.add_child(_rule(MAIN_W))
 		main.add_child(_gap(STORY_GAP - 8))
 		main.add_child(_text("ROUND-UP", UiTheme.LARGE, Palette.UI_GOLD, MAIN_W))
-		for line in roundup:
-			main.add_child(_text(line, UiTheme.BODY, Palette.UI_TEXT, MAIN_W))
+		# Each fight on its own, a faint rule between them.
+		for i in roundup.size():
+			if i > 0:
+				main.add_child(_rule(MAIN_W, ROUNDUP_RULE_ALPHA))
+			main.add_child(_text(roundup[i], UiTheme.BODY, Palette.UI_TEXT, MAIN_W))
 
 	# A rule between the columns, then IN BRIEF.
 	_page.add_child(UiTheme.block(Color(Palette.UI_TEXT_DIM, 0.4), BRIEF_X - PAD - 1, PAD, 1, PAGE.size.y - PAD * 2))
@@ -218,8 +223,8 @@ static func _text(text: String, size: int, colour: Color, width: float) -> Label
 
 
 ## A thin dividing line in a column.
-static func _rule(width: float) -> ColorRect:
-	var line := UiTheme.block(Color(Palette.UI_TEXT_DIM, 0.4), 0, 0, width, 1)
+static func _rule(width: float, alpha := 0.4) -> ColorRect:
+	var line := UiTheme.block(Color(Palette.UI_TEXT_DIM, alpha), 0, 0, width, 1)
 	line.custom_minimum_size = Vector2(width, 1)
 	return line
 

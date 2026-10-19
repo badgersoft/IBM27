@@ -4,6 +4,11 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.19
+
+* The newspaper's round-up has a faint rule between each fight, so every
+  result (and any two-line one) reads on its own.
+
 ## 0.1.18
 
 * The Ringside Gazette's date line moves up to sit midway between the
