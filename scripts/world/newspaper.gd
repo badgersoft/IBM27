@@ -17,7 +17,9 @@ extends RefCounted
 ##     the biggest fights.
 ##
 ## A rematch says so, with the head to head after it: "IT WAS THEIR SECOND
-## MEETING: COTE LEADS THEIR SERIES 2-0." (in the round-up just the series).
+## MEETING: COTE LEADS THEIR SERIES 2-0." In the round-up each fight is one
+## line of at most ROUNDUP_CHARS: "COTE BEAT SMITH (KO R3), LEADS 2-0." (the
+## series only if it fits).
 ##
 ## Returns {"month", "date", "headline", "standfirst", "stories": [{"title",
 ## "text"}], "roundup": [String], "notes": [String], "results": [Fixture]}. Everything is upper
@@ -31,6 +33,9 @@ const FEATURE_RANK := 10
 ## Most stories under the main one, and lines in the round-up.
 const MAX_STORIES := 3
 const ROUNDUP_LINES := 8
+## The most characters on a round-up line, so it never wraps: the front
+## page's main column is 792 px, and the 16 px font is 16 px a character.
+const ROUNDUP_CHARS := 49
 
 const NEW_CHAMPION_HEADLINES: Array[String] = [
 	"{W} IS THE NEW {DIV} CHAMPION!",
@@ -150,17 +155,46 @@ static func _roundup(results: Array[Fixture], covered: Array[Fixture], season: S
 		return a.purse > b.purse)
 	var out: Array[String] = []
 	for f: Fixture in rest.slice(0, ROUNDUP_LINES):
-		var w := f.winner()
-		var line := ""
-		if w == null:
-			line = "%s AND %s DREW." % [f.red.last_name.to_upper(), f.blue.last_name.to_upper()]
-		else:
-			line = "%s BEAT %s (%s)." % [w.last_name.to_upper(), f.opponent_of(w).last_name.to_upper(), f.result_text()]
-		var h := season.head_to_head(f.red, f.blue)
-		if h[0] + h[1] + h[2] > 1:
-			line += " " + Season.series_text(f.red, f.blue, h) + "."
-		out.append(line)
+		out.append(_roundup_line(f, season))
 	return out
+
+
+## One round-up line: "COTE BEAT SMITH (KO R3).", "COTE BEAT SMITH (UD),
+## LEADS 2-0." or "COTE AND SMITH DREW (SPLIT), LEVEL 1-1-1.". The series
+## goes on the end of a rematch only if the line still fits ROUNDUP_CHARS.
+static func _roundup_line(f: Fixture, season: Season) -> String:
+	var w := f.winner()
+	var line := ""
+	var h := season.head_to_head(f.red, f.blue)
+	var series := ""
+	if w == null:
+		var kind := str(f.result.get("detail", "")).strip_edges()
+		line = "%s AND %s DREW%s" % [f.red.last_name.to_upper(), f.blue.last_name.to_upper(), " (%s)" % kind if kind != "" else ""]
+		if h[0] == h[1]:
+			series = ", LEVEL %s" % Season.series_score(h)
+	else:
+		line = "%s BEAT %s (%s)" % [w.last_name.to_upper(), f.opponent_of(w).last_name.to_upper(), _result_short(f)]
+		# The series from the winner's side.
+		var mine := h[0] if w == f.red else h[1]
+		var theirs := h[1] if w == f.red else h[0]
+		var score := Season.series_score(h, w == f.red)
+		if mine > theirs:
+			series = ", LEADS %s" % score
+		elif mine == theirs:
+			series = ", LEVEL %s" % score
+		else:
+			series = ", TRAILS %s" % score
+	if h[0] + h[1] + h[2] > 1 and line.length() + series.length() + 1 <= ROUNDUP_CHARS:
+		line += series
+	return line + "."
+
+
+## "KO R3", "TKO R10", or the decision: "UD", "SD", "MD".
+static func _result_short(f: Fixture) -> String:
+	var method: String = f.result["method"]
+	if method in ["KO", "TKO"]:
+		return "%s R%d" % [method, f.result["round"]]
+	return method
 
 
 ## Adds the head to head to [param story] if [param f] was a rematch.

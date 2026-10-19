@@ -473,8 +473,9 @@ Head to heads count every fight in the season between the two men (not
 exhibitions). The **tale of the tape** has a HEAD TO HEAD row with each
 man's wins (FIRST MEETING if they have never fought), and the **newspaper**
 says when a fight was a rematch ("IT WAS THEIR SECOND MEETING: MURRAY
-LEADS THEIR SERIES 2-0."; just the series in the round-up). The player's
-own fight always heads the round-up.
+LEADS THEIR SERIES 2-0."). The round-up gives each fight one line, how it
+ended included ("COLON BEAT LYSENKO (KO R2), LEADS 2-0."), and the
+player's own fight always heads it.
 
 ![A new boxer](docs/screenshots/new_boxer.png)
 

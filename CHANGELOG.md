@@ -4,6 +4,15 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.20
+
+* The round-up's rules between fights are gone again.
+* Every round-up result fits on one line (at most 49 characters; the
+  longest names make 43), and says how it ended more clearly: "COTE BEAT
+  SMITH (KO R3).", "(TKO R10)", "(UD)", "ZHANG AND WILLIAMS DREW
+  (SPLIT).". A rematch adds the series from the winner's side when it
+  fits: "COLON BEAT LYSENKO (KO R2), LEADS 2-0." (or LEVEL / TRAILS).
+
 ## 0.1.19
 
 * The newspaper's round-up has a faint rule between each fight, so every
