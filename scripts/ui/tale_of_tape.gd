@@ -9,6 +9,7 @@ extends Control
 ## For each skill the better number is shown in gold.
 
 signal dismissed
+signal back_pressed
 
 const W := 1040
 const H := 512
@@ -16,6 +17,8 @@ const PAD := 16
 const VALUE_W := 384
 const LABEL_W := 240
 const TABLE_Y := 64
+## BACK (top left) and FIGHT! (top right), either side of the title.
+const BUTTON_SIZE := Vector2(160, 40)
 
 var _prompt: Label
 var _blink := 0.0
@@ -37,6 +40,17 @@ func setup(red: BoxerData, blue: BoxerData, venue_id: int, rounds: int, title_fi
 	else:
 		bill = "%d ROUNDS  -  EXHIBITION  -  %s" % [rounds, Venues.venue_name(venue_id).to_upper()]
 	add_child(UiTheme.place(UiTheme.label(bill, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), 0, 44, W, UiTheme.CAPTION))
+	var back := Button.new()
+	back.text = "BACK"
+	UiTheme.place(back, PAD, 8, BUTTON_SIZE.x, BUTTON_SIZE.y)
+	back.pressed.connect(func() -> void: back_pressed.emit())
+	add_child(back)
+	var fight := Button.new()
+	fight.text = "FIGHT!"
+	UiTheme.place(fight, W - PAD - BUTTON_SIZE.x, 8, BUTTON_SIZE.x, BUTTON_SIZE.y)
+	fight.add_theme_color_override("font_color", Palette.UI_GOLD)
+	fight.pressed.connect(func() -> void: dismissed.emit())
+	add_child(fight)
 
 	var rows: Array = [
 		["", "RED CORNER", "BLUE CORNER"],

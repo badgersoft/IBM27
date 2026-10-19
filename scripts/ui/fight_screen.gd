@@ -13,6 +13,12 @@ extends Control
 ##
 ## This script only wires things together. The fight itself is FightSim, the
 ## ring and boxers are ArenaView, and each panel is its own small widget.
+##
+## Esc (or the phone's back button): at the tale of the tape it goes back
+## (as BACK does); during the fight it pauses - RESUME, SKIP TO RESULT (the
+## rest of the fight is fought at once), and QUIT FIGHT only for a fight that
+## counts for nothing (a season fight can't be walked out of and watched
+## again); once it is over it goes to the fight stats.
 
 const FRAME_SIZE := Vector2(1280, 800)
 const ARENA_SCALE := 3
@@ -29,6 +35,12 @@ const CHEER_BIG := Vector2(0.85, 3.0)
 const CHEER_KNOCKDOWN := Vector2(1.0, 7.0)
 const CHEER_BEAT_COUNT := Vector2(0.8, 3.0)
 const CHEER_WINNER := Vector2(1.0, 4.0)
+## The pause box: PAUSE_W wide, the title, then a PAUSE_BUTTON for each
+## choice PAUSE_STEP apart.
+const PAUSE_W := 480
+const PAUSE_BUTTON := Vector2(320, 48)
+const PAUSE_FIRST_Y := 96
+const PAUSE_STEP := 64
 
 var sim: FightSim
 var view: ArenaView
@@ -45,6 +57,7 @@ var _tape: TaleOfTape
 var _result: ResultBand
 var _ceremony: Ceremony
 var _post: PostFight
+var _pause: Control = null
 ## What the result did to the two boxers (see Season.record_result), with
 ## their places before and after; filled in when the fight ends.
 var _summary := {}
@@ -85,7 +98,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _capturing:
+	if _capturing or _pause != null:
 		return
 	if sim.phase == FightSim.Phase.INTRO:
 		_intro_time += delta
@@ -103,8 +116,9 @@ func _process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
-		_go_to_menu()
-	elif sim.phase == FightSim.Phase.INTRO:
+		_on_back()
+		get_viewport().set_input_as_handled()
+	elif sim.phase == FightSim.Phase.INTRO and _pause == null:
 		var tapped: bool = event is InputEventMouseButton and event.pressed
 		if tapped or event.is_action_pressed("ui_accept"):
 			_begin_fight()
@@ -113,7 +127,82 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST:   # Android back button.
+		_on_back()
+
+
+## Esc / back (see the top of the file).
+func _on_back() -> void:
+	if _capturing:
+		return
+	if _pause != null:
+		_close_pause()
+	elif sim.phase == FightSim.Phase.INTRO:
+		_leave()
+	elif sim.phase == FightSim.Phase.FINISHED:
+		if _result != null:
+			_show_post_fight()
+	else:
+		_open_pause()
+
+
+## Back to where the fight was chosen, before a punch is thrown: nothing is
+## recorded and the fight can be picked again.
+func _leave() -> void:
+	Sfx.crowd_stop()
+	if GameState.fixture != null:
+		get_tree().change_scene_to_file("res://scenes/fixtures.tscn")
+	elif GameState.exhibition:
+		GameState.picking = true
+		get_tree().change_scene_to_file("res://scenes/roster.tscn")
+	else:
 		_go_to_menu()
+
+
+func _open_pause() -> void:
+	_pause = Control.new()
+	_frame.add_child(UiTheme.place(_pause, 0, 0, FRAME_SIZE.x, FRAME_SIZE.y))
+	_pause.add_child(UiTheme.block(Color(0, 0, 0, 0.55), 0, 0, FRAME_SIZE.x, FRAME_SIZE.y))
+	var choices := [["RESUME", _close_pause], ["SKIP TO RESULT", _skip_to_result]]
+	if GameState.fixture == null:
+		choices.append(["QUIT FIGHT", _leave])
+	var box := Vector2(PAUSE_W, PAUSE_FIRST_Y + choices.size() * PAUSE_STEP + 24)
+	var box_pos := ((FRAME_SIZE - box) / 2.0).floor()
+	_pause.add_child(UiTheme.panel(box_pos.x, box_pos.y, box.x, box.y, Palette.UI_PANEL, Palette.UI_BORDER, 4))
+	_pause.add_child(UiTheme.place(UiTheme.label("PAUSED", UiTheme.TITLE, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_CENTER), box_pos.x, box_pos.y + 32, box.x, UiTheme.TITLE))
+	var first: Button = null
+	for i in choices.size():
+		var b := Button.new()
+		b.text = choices[i][0]
+		b.focus_mode = Control.FOCUS_ALL
+		UiTheme.place(b, box_pos.x + (box.x - PAUSE_BUTTON.x) / 2.0, box_pos.y + PAUSE_FIRST_Y + i * PAUSE_STEP, PAUSE_BUTTON.x, PAUSE_BUTTON.y)
+		b.pressed.connect(choices[i][1])
+		_pause.add_child(b)
+		if first == null:
+			first = b
+	first.grab_focus()
+
+
+func _close_pause() -> void:
+	if _pause != null:
+		_pause.queue_free()
+		_pause = null
+
+
+## Fights the rest of the bout at once (quietly), then carries on to the
+## verdict as if it had been watched to the end.
+func _skip_to_result() -> void:
+	_close_pause()
+	sim.set_block_signals(true)
+	var steps := 0
+	while sim.phase != FightSim.Phase.FINISHED and steps < Season.MAX_STEPS:
+		sim.step(Season.STEP)
+		steps += 1
+	sim.set_block_signals(false)
+	_banner.visible = false
+	view.arena.hide_corner_advice()
+	_sync_rigs()
+	_refresh_hud()
+	_on_fight_finished(sim.result)
 
 
 # ============================================================================
@@ -191,6 +280,7 @@ func _build_layout(red: BoxerData, blue: BoxerData) -> void:
 	_tape.setup(red, blue, GameState.venue_id, sim.rounds, GameState.title_fight, GameState.purse)
 	_tape.position = (arena_size - Vector2(TaleOfTape.W, TaleOfTape.H)) / 2.0
 	_tape.dismissed.connect(_begin_fight)
+	_tape.back_pressed.connect(_leave)
 	_overlay.add_child(_tape)
 
 
@@ -465,7 +555,7 @@ func _run_capture() -> void:
 			view.arena.advance(dt)
 			_update_banner(dt)
 			t += dt
-			if t >= at and _is_capture_moment(show):
+			if t >= at and _is_capture_moment("fight" if show == "pause" else show):
 				break
 		for rig in view.rigs:
 			rig.set_process(false)
@@ -475,6 +565,8 @@ func _run_capture() -> void:
 		if show == "big" or show == "onetwo":
 			view.arena.set_process(false)   # Hold the blood or call-out for the shot.
 		_refresh_hud()
+		if show == "pause":
+			_open_pause()
 		if show in ["result", "announce", "stats"] and sim.phase == FightSim.Phase.FINISHED:
 			_show_result()
 			if show != "announce":

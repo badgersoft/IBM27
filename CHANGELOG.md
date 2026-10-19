@@ -4,7 +4,25 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
-## 0.1.22
+## 0.1.23
+
+* Fixed: a tall boxer could spend a whole fight walking forward without
+  throwing a punch (seen with Kassymov against Watanabe). His walk out of
+  the corner only ended at his favourite distance, which shrinks while he
+  waits to throw; for a big man it could shrink below how close two boxers
+  can stand, so he never got there. The walk out now also ends as soon as
+  he can land a punch. Kassymov now stops Watanabe in 2 - 4 rounds;
+  knockout rates overall are about where they were.
+* The tale of the tape has BACK and FIGHT! buttons. BACK (or Esc) goes back
+  to where the fight was chosen - the fixtures, the exhibition picker or
+  the menu - with nothing recorded.
+* Esc during a fight no longer walks out of it: it pauses, with RESUME,
+  SKIP TO RESULT (the rest of the fight is fought at once, then the
+  verdict) and, for a fight that counts for nothing, QUIT FIGHT. A season
+  fight can't be abandoned and re-watched for a different result. Esc after
+  the verdict goes to the fight stats.
+* Developer: `--show=pause` captures the pause menu.
+
 
 * Results pages: the small type under each result is shorter - UD, SD or
   MD under POINTS, UNANIMOUS / MAJORITY / SPLIT under DRAW, 3 KNOCKDOWNS

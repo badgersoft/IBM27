@@ -315,11 +315,15 @@ func _defend(me: Fighter, opp: Fighter) -> void:
 		me.counter_window = 0.7
 
 
-## Keeps walking out of the corner; false once he is there (or would rather not).
+## Keeps walking out of the corner; false once he is there (or would rather
+## not). He is there at his favourite distance, or as soon as he can land a
+## punch: his favourite distance shrinks while he waits to throw (see
+## IDLE_BEFORE_CLOSING) and for a tall man it could shrink below how close
+## the two can stand, leaving him walking forward all fight, never punching.
 func _come_out(me: Fighter, opp: Fighter, round_number: int) -> bool:
 	var defensive := me.data.style == Style.EVASIVE or me.advice == Advice.DEFEND_MORE or me.hurt_level() > 0.5
 	var want := (_preferred_distance(me, round_number) + COME_OUT_SLACK) * me.height_px
-	if defensive or absf(opp.x - me.x) <= want:
+	if defensive or absf(opp.x - me.x) <= want or not _punches_in_range(me, opp).is_empty():
 		me.coming_out = false
 		return false
 	if me.state != State.MOVE:

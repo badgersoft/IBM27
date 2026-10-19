@@ -38,7 +38,14 @@ Controls:
 | Start / choose a button     | Mouse or Enter       | Tap           |
 | Skip the tale of the tape   | Click, Space, Enter  | Tap           |
 | Skip the judges' read-out   | Click, Space, Enter  | Tap           |
-| Back to the main menu       | Esc                  | Back button   |
+| Back (or pause a fight)     | Esc                  | Back button   |
+
+In the ring, the tale of the tape has BACK and FIGHT! buttons: BACK (or
+Esc) leaves before a punch is thrown and nothing is recorded. Once the
+fight is on, Esc pauses it: RESUME, SKIP TO RESULT (the rest is fought at
+once and the verdict follows), and QUIT FIGHT for a fight that counts for
+nothing. A season fight can't be quit once it has started, so it can't be
+abandoned and watched again for a different result.
 
 The project uses the **Compatibility** renderer so the same build runs on
 desktop and on low-end phones. To make a phone build, install the Android
@@ -673,7 +680,7 @@ Command-line options read by the game (after `--`):
 | `--venue=<0-3>`            | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena                                                                                                                                             |
 | `--rounds=<n>`             | Fight length: 3, 6, 10 or 12 rounds (normally set by the level)                                                                                                                                        |
 | `--capture=<png>`          | Fast-forward, save a screenshot and quit                                                                                                                                                               |
-| `--show=<moment>`          | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch), `onetwo` (a one-two), `taunt` (showing off), `break`, `count`, `announce`, `result`, `stats`, `fixtures`, `paper`, `career_menu`, `exhibition`, `new_boxer`, `career`, `facilities`, `schedule` |
+| `--show=<moment>`          | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch), `onetwo` (a one-two), `taunt` (showing off), `break`, `count`, `announce`, `result`, `stats`, `pause`, `fixtures`, `paper`, `career_menu`, `exhibition`, `new_boxer`, `career`, `facilities`, `schedule` |
 | `--offer`                  | With `--show=schedule`, open the purse offer for the first opponent                                                                                                                                   |
 | `--train=<0-4>`            | Career screens: the boxer trains that session this week (4 = RECOVERY)                                                                                                                                 |
 | `--offers=<n>`             | Career screens: the first n men he could fight are offering him a fight                                                                                                                                |
