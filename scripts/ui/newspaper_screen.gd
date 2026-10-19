@@ -9,7 +9,7 @@ extends Control
 ##
 ## Layout (1280 x 800 frame):
 ##   y   8  THE RINGSIDE GAZETTE (48 px, centred)
-##   y  64  dateline
+##   y  56  dateline (about midway between the masthead and the tabs)
 ##   y  80  [FRONT PAGE][RESULTS]   [<] 1 - 10 OF 14 [>]       [CONTINUE]
 ##   y 120  page panel (1248 x 664)
 ##
@@ -17,6 +17,7 @@ extends Control
 
 const FRAME_SIZE := Vector2(1280, 800)
 const PAGE := Rect2(16, 120, 1248, 664)
+const DATELINE_Y := 56
 const TAB_Y := 80
 const TAB_SIZE := Vector2(256, 40)
 const TAB_GAP := 16
@@ -68,7 +69,7 @@ func _ready() -> void:
 	var masthead := UiTheme.label(Newspaper.NAME, UiTheme.HUGE, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
 	_frame.add_child(UiTheme.place(masthead, 0, 8, FRAME_SIZE.x, UiTheme.HUGE))
 	var dateline := "%s  -  MONTHLY EDITION  -  ALL THE IBC RESULTS INSIDE" % _paper.get("date", "")
-	_frame.add_child(UiTheme.place(UiTheme.label(dateline, UiTheme.CAPTION, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_CENTER), 0, 64, FRAME_SIZE.x, UiTheme.CAPTION))
+	_frame.add_child(UiTheme.place(UiTheme.label(dateline, UiTheme.CAPTION, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_CENTER), 0, DATELINE_Y, FRAME_SIZE.x, UiTheme.CAPTION))
 
 	for i in 2:
 		var tab := Button.new()

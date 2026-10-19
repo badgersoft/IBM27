@@ -4,7 +4,12 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
-## 0.1.17
+## 0.1.18
+
+* The Ringside Gazette's date line moves up to sit midway between the
+  masthead and the tabs (13 px above, 10 px below; it was 2 px from the
+  tabs).
+
 
 * Head to head records, from every fight the two men have had this season
   (exhibitions don't count):
