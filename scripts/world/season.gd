@@ -79,6 +79,7 @@ func start() -> void:
 		for b in table.boxers:
 			b.last_fight_month = first - _rng.randi_range(START_LAST_FIGHT.x, START_LAST_FIGHT.y)
 	for m in range(first, 1):
+		player_requests.clear()   # Only January's requests are still open.
 		_matchmaker.arrange(m)
 		# Fights before January count as fought (results are not made up).
 		for f in fixtures.duplicate():
@@ -161,6 +162,19 @@ func book_player_fight(me: BoxerData, other: BoxerData, purse: int) -> Fixture:
 ## Takes an arranged fight off the calendar (the player called it off).
 func cancel_fixture(f: Fixture) -> void:
 	fixtures.erase(f)
+
+
+## A new career: the warm-up has booked most of the men around the player's
+## boxer for months ahead, so he would have nobody to fight. Their fights
+## after this month are called off (their managers wait to see the new
+## man), leaving them free; this month's fights still go ahead.
+func free_players_rivals() -> void:
+	var table := rankings_of(player)
+	var i := table.index_of(player)
+	for j in range(maxi(i - Matchmaker.ABOVE, 0), mini(i + Matchmaker.BELOW, table.size() - 1) + 1):
+		var f := booking(table.boxers[j])
+		if f != null and f.month > month and not f.title:
+			cancel_fixture(f)
 
 
 func has_vacant_title_fight(division: int) -> bool:

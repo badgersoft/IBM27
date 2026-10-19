@@ -308,6 +308,7 @@ func start_career(player: BoxerData, save := true) -> void:
 	season.player_division = player.division
 	player_division = player.division
 	season.start()
+	season.free_players_rivals()
 	career = PlayerCareer.new(player)
 	career.begin(season)
 	career_path = ""
@@ -329,7 +330,9 @@ func leave_career() -> void:
 
 ## A career screen opened straight from the command line (screenshots)
 ## needs a career: this makes one with a random boxer, a few points spent
-## so he looks the part. It isn't saved.
+## so he looks the part (--train=<0-4> has him train that session, and
+## --offers=<n> has the first n men he could fight offer him one). It isn't
+## saved.
 func ensure_career() -> void:
 	if career != null:
 		return
@@ -338,6 +341,10 @@ func ensure_career() -> void:
 		b.set(skill, b.get(skill) + 6)
 	b.nickname = "Kid Dynamite"
 	start_career(b, false)
+	if options.has("train"):
+		career.train(int(options["train"]))
+	for other in career.opponents(season).slice(0, int(options.get("offers", 0))):
+		career.requests.append(other.id)
 
 
 ## Saves the career to career_path. Returns true if it worked.

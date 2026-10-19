@@ -17,8 +17,8 @@ extends RefCounted
 ## anyone else may need a bigger purse to be tempted. One fight at a time;
 ## calling one off costs FORFEIT of the purse.
 
-const START_MONEY := 20000
-const START_POOL := 40
+const START_MONEY := 5000
+const START_POOL := 45
 const WEEKS_PER_MONTH := 4
 ## The purse offers, as a share of the usual purse for the fight, and how
 ## much each sways an unsure opponent.
@@ -92,7 +92,14 @@ func date_text(season: Season) -> String:
 func train(session: int) -> void:
 	if trained >= 0:
 		return
+	if session == Facilities.Session.RECOVERY and boxer.condition >= 100.0:
+		return   # Nothing to recover.
 	trained = session
+	if session == Facilities.Session.RECOVERY:
+		var before := boxer.condition
+		boxer.condition = minf(boxer.condition + Facilities.rest(boxer, recovery_facility), 100.0)
+		last_gains = {"health": boxer.condition - before}
+		return
 	last_gains = Facilities.train(boxer, session, training_facility)
 
 
@@ -184,7 +191,7 @@ func _new_sponsor_offers(season: Season) -> void:
 	# Few offers for an unknown; more, and from bigger names, as he rises.
 	var count := 0
 	for i in MAX_SPONSOR_OFFERS:
-		if _rng.randf() < 0.25 + value * 0.6:
+		if _rng.randf() < 0.12 + value * 0.7:
 			count += 1
 	var top_tier := clampi(floori(value * 4.0), 0, 3)
 	var names: Array = data["sponsors"]

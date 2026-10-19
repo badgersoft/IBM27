@@ -4,6 +4,32 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.15
+
+* New boxer screen tidied: the BOXER and SKILLS boxes are the same height
+  and their rows line up (POINTS LEFT sits level with TRUNKS); NICKNAME and
+  FROM start and end level, and the lists show whole rows only (no half
+  rows when they scroll).
+* Fewer fight offers at the start: offers piled up over the warm-up before
+  January (five at the start of a career). Now only January's count, a
+  manager who fancies the new man only sometimes makes the offer, and no
+  more than two offer in a month. Sponsor offers for an unknown are rarer
+  too. In a test of four new careers over four months: 0-1 fight offers
+  and 0-2 sponsor offers a month.
+* A new career no longer starts with everyone around him booked for months
+  ahead: their fights after January are called off so he has men to
+  approach in Schedule.
+* Developer options for the career screenshots: `--train=<0-4>` and
+  `--offers=<n>`.
+* Training has a fifth choice, RECOVERY: no skill gains, but extra health
+  back that week (more at a better recovery centre).
+* The training buttons are tinted steel blue so they stand apart from the
+  menu buttons below.
+* Fight offers read "OFFERING A FIGHT", in columns: ranking (right-aligned),
+  name, then the offer. The Schedule list uses the same words.
+* A new boxer starts with every skill at 35 (was 25) and 45 points to spend
+  (was 40), and with $5,000 (was $20,000).
+
 ## 0.1.14
 
 * Main menu: START is now **EXHIBITION** and SEASON is now **CAREER**.

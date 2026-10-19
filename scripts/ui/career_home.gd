@@ -6,12 +6,13 @@ extends Control
 ##   y  16  +-- header (1248 x 232) ------------------------------------------+
 ##          | portrait | NAME "NICK"                  OVERALL  RANKING  ...   |
 ##   y 264  +-- NEXT FIGHT (608 x 160) --+  +-- FIGHT OFFERS (624 x 160) -----+
-##   y 440  +-- TRAINING THIS WEEK (1248 x 168): four sessions -------------+
+##   y 440  +-- TRAINING THIS WEEK (1248 x 168): five sessions -------------+
 ##   y 624  [SCHEDULE] [FACILITIES] [FIXTURES] [NEWS]
 ##   y 696  [BOXERS]   [SAVE]       [MAIN MENU] [NEXT WEEK]
 ##
-## Training: one session a week (WEIGHTS, SPEED, STAMINA or PUNCHING); once
-## chosen, the others are greyed out until next week. NEXT WEEK pays the
+## Training: one session a week (WEIGHTS, SPEED, STAMINA, PUNCHING, or
+## RECOVERY to get his health back); once chosen, the others are greyed out
+## until next week. NEXT WEEK pays the
 ## rent and moves the calendar on; on the month's last week it goes to fight
 ## night (the Fixtures screen) instead.
 
@@ -30,10 +31,16 @@ const DETAIL_X := [560, 912]
 const DETAIL_LABEL_W := [144, 144]
 const DETAIL_ROW_Y := 40
 const DETAIL_ROW_H := 32
-## Training: four session buttons across the panel.
+## Training: five session buttons across the panel.
 const SESSION_Y := 40
-const SESSION_SIZE := Vector2(288, 72)
+const SESSION_SIZE := Vector2(224, 72)
+## Fight offers: up to three rows; columns at x for the rank (right-aligned
+## in OFFER_RANK_W), the name, and OFFERING A FIGHT.
 const MAX_OFFERS_SHOWN := 3
+const OFFER_ROW_Y := 40
+const OFFER_ROW_H := 32
+const OFFER_COLUMNS := [16, 80, 336]
+const OFFER_RANK_W := 48
 
 var _frame: Control
 var _career: PlayerCareer
@@ -159,19 +166,23 @@ func _build_next_fight() -> void:
 
 func _build_offers() -> void:
 	var panel := _panel(OFFERS, "FIGHT OFFERS")
-	# Three lines at most: offers, or two and "AND n MORE".
+	# Three lines at most: offers, or two and "AND n MORE". Columns: the
+	# rank (right-aligned), the name, then OFFERING A FIGHT.
 	var keen := _career.live_requests(_season)
 	var room := MAX_OFFERS_SHOWN if keen.size() <= MAX_OFFERS_SHOWN else MAX_OFFERS_SHOWN - 1
 	var shown := mini(keen.size(), room)
 	for i in shown:
 		var b := keen[i]
-		var text := "%s  %s  WANTS A FIGHT" % [_season.rankings_of(b).rank_label(b), _short(b)]
-		panel.add_child(UiTheme.place(UiTheme.label(text, UiTheme.BODY, Palette.UI_TEXT), PAD, 40 + i * 32, OFFERS.size.x - PAD * 2, UiTheme.ROW_H))
+		var y := OFFER_ROW_Y + i * OFFER_ROW_H
+		var rank := UiTheme.label(_season.rankings_of(b).rank_label(b), UiTheme.BODY, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_RIGHT)
+		panel.add_child(UiTheme.place(rank, OFFER_COLUMNS[0], y, OFFER_RANK_W, UiTheme.ROW_H))
+		panel.add_child(UiTheme.place(UiTheme.label(_short(b), UiTheme.BODY, Palette.UI_TEXT), OFFER_COLUMNS[1], y, OFFER_COLUMNS[2] - OFFER_COLUMNS[1] - 16, UiTheme.ROW_H))
+		panel.add_child(UiTheme.place(UiTheme.label("OFFERING A FIGHT", UiTheme.BODY, Palette.UI_TEXT_DIM), OFFER_COLUMNS[2], y, OFFERS.size.x - PAD - OFFER_COLUMNS[2], UiTheme.ROW_H))
 	if shown == 0:
-		panel.add_child(UiTheme.place(UiTheme.label("NO OFFERS THIS MONTH", UiTheme.BODY, Palette.UI_TEXT_DIM), PAD, 40, OFFERS.size.x - PAD * 2, UiTheme.ROW_H))
+		panel.add_child(UiTheme.place(UiTheme.label("NO OFFERS THIS MONTH", UiTheme.BODY, Palette.UI_TEXT_DIM), PAD, OFFER_ROW_Y, OFFERS.size.x - PAD * 2, UiTheme.ROW_H))
 	elif keen.size() > shown:
 		var more := "AND %d MORE - SEE SCHEDULE" % (keen.size() - shown)
-		panel.add_child(UiTheme.place(UiTheme.label(more, UiTheme.BODY, Palette.UI_TEXT_DIM), PAD, 40 + shown * 32, OFFERS.size.x - PAD * 2, UiTheme.ROW_H))
+		panel.add_child(UiTheme.place(UiTheme.label(more, UiTheme.BODY, Palette.UI_TEXT_DIM), OFFER_COLUMNS[1], OFFER_ROW_Y + shown * OFFER_ROW_H, OFFERS.size.x - PAD - OFFER_COLUMNS[1], UiTheme.ROW_H))
 
 
 func _build_training() -> void:
@@ -179,23 +190,32 @@ func _build_training() -> void:
 	var gym: Dictionary = Facilities.TRAINING[_career.training_facility]
 	var at := "AT THE %s" % str(gym["name"]).to_upper()
 	panel.add_child(UiTheme.place(UiTheme.label(at, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_RIGHT), 400, CAPTION_Y, TRAINING.size.x - PAD - 400, UiTheme.CAPTION))
-	for i in Facilities.SESSIONS.size():
+	var count := Facilities.SESSIONS.size()
+	var gap := (TRAINING.size.x - PAD * 2 - SESSION_SIZE.x * count) / float(count - 1)
+	for i in count:
 		var s: Array = Facilities.SESSIONS[i]
-		var x := PAD + i * (SESSION_SIZE.x + (TRAINING.size.x - PAD * 2 - SESSION_SIZE.x * 4) / 3.0)
+		var x := PAD + i * (SESSION_SIZE.x + gap)
 		var b := Button.new()
 		b.text = s[0]
 		b.focus_mode = Control.FOCUS_ALL
 		UiTheme.place(b, x, SESSION_Y, SESSION_SIZE.x, SESSION_SIZE.y - 24)
+		# Tinted, so the sessions read differently from the menu below.
+		b.add_theme_stylebox_override("normal", UiTheme.box(Palette.UI_TRAIN, Palette.UI_TRAIN_BORDER, 4))
+		b.add_theme_stylebox_override("hover", UiTheme.box(Palette.UI_TRAIN.lightened(0.12), Palette.UI_GOLD, 4))
+		b.add_theme_stylebox_override("pressed", UiTheme.box(Palette.UI_TRAIN.darkened(0.2), Palette.UI_GOLD, 4))
 		b.disabled = _career.trained >= 0
+		var fit := i == Facilities.Session.RECOVERY and _career.boxer.condition >= 100.0
+		if fit:
+			b.disabled = true   # Nothing to recover.
 		if _career.trained == i:
 			# This week's choice stays lit.
 			b.disabled = false
-			b.add_theme_stylebox_override("normal", UiTheme.box(Palette.UI_PANEL.lightened(0.15), Palette.UI_GOLD, 4))
+			b.add_theme_stylebox_override("normal", UiTheme.box(Palette.UI_TRAIN.lightened(0.15), Palette.UI_GOLD, 4))
 			b.add_theme_color_override("font_color", Palette.UI_GOLD)
 			b.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.pressed.connect(_train.bind(i))
 		panel.add_child(b)
-		var note: String = s[5]
+		var note: String = "ALREADY FULLY FIT" if fit else s[5]
 		if _career.trained == i:
 			note = _gains_text()
 		var caption := UiTheme.label(note, UiTheme.CAPTION, Palette.UI_GOLD if _career.trained == i else Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER)
@@ -208,7 +228,10 @@ func _build_training() -> void:
 func _gains_text() -> String:
 	var parts: Array[String] = []
 	for skill in _career.last_gains:
-		parts.append("%s +%.1f" % [str(skill).to_upper(), _career.last_gains[skill]])
+		if skill == "health":
+			parts.append("HEALTH +%d%%" % roundi(_career.last_gains[skill]))
+		else:
+			parts.append("%s +%.1f" % [str(skill).to_upper(), _career.last_gains[skill]])
 	return "  ".join(parts)
 
 

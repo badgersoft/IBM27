@@ -397,25 +397,29 @@ with a random look, name and hometown, all of which can be changed:
   SKIN, HAIR colour, HAIRCUT and TRUNKS colour, each with < and >.
 * NICKNAME: ten made up for him, or NO NICKNAME.
 * FROM: a country, then one of its cities.
-* SKILLS: every skill starts at 25, with **40 points** to spend between
+* SKILLS: every skill starts at 35, with **45 points** to spend between
   them using - and + (from 10 to 65 each). Points taken off a skill go
   back in the pool.
 
 START CAREER builds a fresh world (the starting rosters and a new season)
-with him at the bottom of his division, at 20, 0-0-0, with **$20,000** in
+with him at the bottom of his division, at 20, 0-0-0, with **$5,000** in
 the bank. The career is saved straight away, at the end of every month and
 when leaving for the main menu (SAVE saves it any time). Saves live in
 `user://careers/`; **CONTINUE SAVED CAREER** lists them, newest first.
 
 **The career page** shows the boxer and his overall rating, ranking,
 level, record, health, money, earnings, sponsor and the week's rent, his
-next fight, the men who want to fight him, and the latest news. Time moves
-a **week** at a time, four weeks to a month:
+next fight, the men offering him a fight, and the latest news. Time moves
+a **week** at a time (NEXT WEEK), four weeks to a month:
 
 * **Training**: once a week choose WEIGHTS (strength, some chin), SPEED
-  (speed, some ring sense), STAMINA (stamina, some recovery) or PUNCHING
-  (power, some technique). The other three are greyed out until next week.
-  How much he gains depends on the gym, and less as a skill gets higher.
+  (speed, some ring sense), STAMINA (stamina, some recovery), PUNCHING
+  (power, some technique) or RECOVERY (no skills, but half as much again
+  as a normal week's health comes back on top, more at a better recovery
+  centre; greyed out while he is fully fit). The others are greyed out
+  until next week. How much he gains
+  depends on the gym, and less as a skill gets higher. The training
+  buttons are tinted blue so they stand apart from the menu.
 * **NEXT WEEK** pays the week's rent and lets him recover a little. In the
   last week of the month it reads **FIGHT NIGHT** and opens the fixtures:
   watch his fight (or any other), PLAY MONTH, then READ THE PAPER; the
@@ -447,7 +451,9 @@ can pay for its first week.
 
 * The men he may fight are those in his division no more than 4 places
   above him or 6 below, who are free (no fight arranged, recovered from
-  their last), plus anyone who has asked to fight him (WANTS TO FIGHT).
+  their last), plus anyone who has asked to fight him (OFFERING A FIGHT).
+  Only a few managers ask in a month, and only now and then do they pick
+  an unknown like him.
 * Choose a man to offer him a purse: five choices from LOW (60% of the
   usual purse) through USUAL to HIGH (150%). He must have half the purse
   in the bank to offer it. A man who wants the fight nearly always says
@@ -652,6 +658,8 @@ Command-line options read by the game (after `--`):
 | `--capture=<png>`          | Fast-forward, save a screenshot and quit                                                                                                                                                               |
 | `--show=<moment>`          | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch), `onetwo` (a one-two), `taunt` (showing off), `break`, `count`, `announce`, `result`, `stats`, `fixtures`, `paper`, `career_menu`, `exhibition`, `new_boxer`, `career`, `facilities`, `schedule` |
 | `--offer`                  | With `--show=schedule`, open the purse offer for the first opponent                                                                                                                                   |
+| `--train=<0-4>`            | Career screens: the boxer trains that session this week (4 = RECOVERY)                                                                                                                                 |
+| `--offers=<n>`             | Career screens: the first n men he could fight are offering him a fight                                                                                                                                |
 | `--wait=<seconds>`         | Real seconds to wait before the shot (e.g. mid read-out)                                                                                                                                               |
 | `--at=<seconds>`           | Earliest real second of round 1 to capture (default 20)                                                                                                                                                |
 

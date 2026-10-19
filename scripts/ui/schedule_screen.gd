@@ -2,7 +2,7 @@ extends Control
 ## The career's Schedule: arranging the boxer's next fight.
 ##
 ## The list is everyone he can fight right now (PlayerCareer.opponents): men
-## who have asked to fight him first (WANTS TO FIGHT), then the men ranked
+## who have asked to fight him first (OFFERING A FIGHT), then the men ranked
 ## no more than four places above him or six below in his division, all
 ## free. Choosing one offers him a purse: five figures, the usual purse in
 ## the middle with two lower and two higher either side. He needs half the
@@ -122,7 +122,9 @@ func _build_fight() -> void:
 	var f := _season.booking(_career.boxer)
 	var keen := _career.live_requests(_season).size()
 	var main := "NONE ARRANGED"
-	var sub := "PICK AN OPPONENT BELOW  -  %d WANT%s TO FIGHT YOU" % [keen, "S" if keen == 1 else ""]
+	var sub := "PICK AN OPPONENT BELOW"
+	if keen > 0:
+		sub += "  -  %d OFFERING A FIGHT" % keen
 	if f != null:
 		var other := f.opponent_of(_career.boxer)
 		main = "V %s  -  END OF %s" % [other.display_name().to_upper(), Season.date_text(f.month)]
@@ -171,7 +173,7 @@ func _build_list() -> void:
 		UiTheme.place(row, 8, y, LIST.size.x - 16, ROW_H)
 		row.pressed.connect(_offer.bind(b))
 		panel.add_child(row)
-		var note := "WANTS TO FIGHT" if keen else ""
+		var note := "OFFERING A FIGHT" if keen else ""
 		if turned_down:
 			note = "TURNED YOU DOWN"
 		var dim := not usable

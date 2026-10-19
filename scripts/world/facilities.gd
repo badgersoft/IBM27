@@ -10,7 +10,7 @@ extends RefCounted
 ## when the week ends.
 
 enum Kind { TRAINING, RECOVERY }
-enum Session { WEIGHTS, SPEED, STAMINA, PUNCHING }
+enum Session { WEIGHTS, SPEED, STAMINA, PUNCHING, RECOVERY }
 
 const TRAINING: Array = [
 	{"name": "Local Gym",           "cost": 0,     "boost": 1.0, "blurb": "A heavy bag, a rope and a mirror."},
@@ -27,13 +27,15 @@ const RECOVERY: Array = [
 	{"name": "Elite Medical Institute", "cost": 40000, "boost": 3.0, "blurb": "The best doctors money can buy."},
 ]
 
-## The four kinds of session: [name, main skill, its share, second skill,
-## its share, what it is shown as doing].
+## The kinds of session: [name, main skill, its share, second skill, its
+## share, what it is shown as doing]. RECOVERY trains nothing: it is a week
+## of rest and treatment that brings his health back (REST_RECOVERY).
 const SESSIONS: Array = [
 	["WEIGHTS",  "strength", 1.0, "chin",         0.5, "STRENGTH AND CHIN"],
 	["SPEED",    "speed",    1.0, "intelligence", 0.4, "SPEED AND RING SENSE"],
 	["STAMINA",  "stamina",  1.0, "recovery",     0.5, "STAMINA AND RECOVERY"],
 	["PUNCHING", "power",    1.0, "intelligence", 0.4, "POWER AND TECHNIQUE"],
+	["RECOVERY", "",         0.0, "",             0.0, "HEALTH AND ENERGY"],
 ]
 ## Skill points from one session at the Local Gym, for a skill of 50. Weak
 ## skills improve faster (CATCH_UP more per point under 50), strong ones
@@ -45,6 +47,8 @@ const MAX_SKILL := 97
 ## his recovery skill.
 const RECOVERY_BASE := 6.0
 const RECOVERY_SKILL := 0.10
+## A RECOVERY session gets back this many weeks' worth on top.
+const REST_RECOVERY := 1.5
 
 
 static func list(kind: Kind) -> Array:
@@ -55,6 +59,8 @@ static func list(kind: Kind) -> Array:
 ## facility [param gym]: {skill: points}.
 static func session_gains(b: BoxerData, session: int, gym: int) -> Dictionary:
 	var s: Array = SESSIONS[session]
+	if session == Session.RECOVERY:
+		return {}
 	var boost: float = TRAINING[gym]["boost"]
 	var youth := clampf(1.3 - (b.age - 20) * 0.03, 0.6, 1.3)
 	var out := {}
@@ -83,6 +89,11 @@ static func train(b: BoxerData, session: int, gym: int) -> Dictionary:
 ## Condition [param b] gets back in a week at recovery facility [param spa].
 static func weekly_recovery(b: BoxerData, spa: int) -> float:
 	return (RECOVERY_BASE + b.recovery * RECOVERY_SKILL) * float(RECOVERY[spa]["boost"])
+
+
+## The extra condition a RECOVERY session gives [param b] at [param spa].
+static func rest(b: BoxerData, spa: int) -> float:
+	return weekly_recovery(b, spa) * REST_RECOVERY
 
 
 ## "FIT", "BRUISED", "HURT" or "INJURED" for a condition.

@@ -8,22 +8,37 @@ extends Control
 ##
 ## Layout (1280 x 800 frame):
 ##   y  16  NEW BOXER                          [START CAREER]  [BACK]
-##   y  80  +-portrait-+  +-- BOXER (448 x 368) --+  +-- SKILLS (432 x 320) --+
+##   y  80  +-portrait-+  +-- BOXER (448 x 368) --+  +-- SKILLS (432 x 368) --+
 ##          | 336 x 704|  | name, division, style, |  | six skills, - and +,   |
 ##          |          |  | skin, hair, trunks     |  | points left            |
-##          |          |  +-- NICKNAME -----------+  +-- FROM ----------------+
+##   y 464  |          |  +-- NICKNAME (x 320) --+  +-- FROM (x 320) --------+
 ##          |  OVERALL |  | ten to choose, or none |  | country list           |
 ##          |          |  |                        |  | city list              |
 ##   y 784  +----------+  +------------------------+  +------------------------+
+## The two columns share their rows: the skill rows line up with the BOXER
+## rows, and POINTS LEFT with TRUNKS.
 
 const FRAME_SIZE := Vector2(1280, 800)
 const PAD := 16
 const PORTRAIT := Rect2(16, 80, 336, 704)
 const BOXER := Rect2(368, 80, 448, 368)
 const NICKNAME := Rect2(368, 464, 448, 320)
-const SKILLS := Rect2(832, 80, 432, 320)
-const FROM := Rect2(832, 416, 432, 368)
+const SKILLS := Rect2(832, 80, 432, 368)
+const FROM := Rect2(832, 464, 432, 320)
 const CAPTION_Y := 10
+## Scrolling lists: a frame LIST_INSET bigger all round than the list,
+## which shows a whole number of LIST_ROW_H rows and clips the rest, so no
+## row is ever cut in half.
+const LIST_INSET := 8
+const LIST_ROW_H := 24
+## NICKNAME panel: ten rows shown (the eleventh choice scrolls), its frame
+## level with the country list's top and the city list's bottom.
+const NICKNAME_Y := 48
+const NICKNAME_ROWS := 10
+## FROM panel: the country and city lists, four rows each.
+const COUNTRY_Y := 48
+const CITY_Y := 192
+const PLACE_ROWS := 4
 
 # BOXER panel rows: label, then a text box or a < value > selector.
 const ROW_Y := 32
@@ -35,15 +50,15 @@ const VALUE_W := 192
 const SWATCH := Vector2(96, 16)
 
 # SKILLS panel rows.
-const SKILL_ROW_Y := 32
-const SKILL_STEP := 40
+const SKILL_ROW_Y := ROW_Y
+const SKILL_STEP := ROW_STEP
 const SKILL_LABEL_W := 208
 const MINUS_X := 232
 const SKILL_VALUE_X := 280
 const SKILL_VALUE_W := 64
 const PLUS_X := 352
 const STEP_W := 40
-const POOL_Y := 280
+const POOL_Y := ROW_Y + 7 * ROW_STEP
 const MIN_SKILL := 10
 const MAX_SKILL := 65
 
@@ -146,9 +161,8 @@ func _build_boxer() -> void:
 
 func _build_nickname() -> void:
 	var panel := _panel(NICKNAME, "NICKNAME")
-	_nicknames = ItemList.new()
+	_nicknames = _list(panel, NICKNAME_Y, NICKNAME.size.x, NICKNAME_ROWS)
 	_nicknames.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	panel.add_child(UiTheme.place(_nicknames, PAD, 32, NICKNAME.size.x - PAD * 2, NICKNAME.size.y - 32 - PAD))
 	_nicknames.item_selected.connect(func(i: int) -> void:
 		_boxer.nickname = "" if i >= _nickname_options.size() else _nickname_options[i].capitalize())
 	_new_nicknames()
@@ -177,13 +191,11 @@ func _build_from() -> void:
 	var panel := _panel(FROM, "FROM")
 	var list_w := FROM.size.x - PAD * 2
 	panel.add_child(UiTheme.place(UiTheme.label("COUNTRY", UiTheme.CAPTION, Palette.UI_TEXT_DIM), PAD, 32, list_w, UiTheme.CAPTION))
-	panel.add_child(UiTheme.place(UiTheme.label("CITY", UiTheme.CAPTION, Palette.UI_TEXT_DIM), PAD, 200, list_w, UiTheme.CAPTION))
-	_countries = ItemList.new()
-	_cities = ItemList.new()
+	panel.add_child(UiTheme.place(UiTheme.label("CITY", UiTheme.CAPTION, Palette.UI_TEXT_DIM), PAD, CITY_Y - 16, list_w, UiTheme.CAPTION))
+	_countries = _list(panel, COUNTRY_Y, FROM.size.x, PLACE_ROWS)
+	_cities = _list(panel, CITY_Y, FROM.size.x, PLACE_ROWS)
 	for list in [_countries, _cities]:
 		list.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	panel.add_child(UiTheme.place(_countries, PAD, 48, list_w, 144))
-	panel.add_child(UiTheme.place(_cities, PAD, 216, list_w, FROM.size.y - 216 - PAD))
 	_country_data = _generator.countries()
 	var current := 0
 	for i in _country_data.size():
@@ -283,6 +295,7 @@ func _new_nicknames() -> void:
 			pick = i
 	_nicknames.add_item(NO_NICKNAME)
 	_nicknames.select(pick)
+	_nicknames.ensure_current_is_visible()
 	_boxer.nickname = "" if pick >= _nickname_options.size() else _nickname_options[pick].capitalize()
 
 
@@ -317,6 +330,20 @@ func _start_career() -> void:
 # ============================================================================
 #  Helpers
 # ============================================================================
+
+## A scrolling list [param rows] rows tall in its own frame, the panel's
+## width less PAD each side, with its frame's top at [param y].
+func _list(panel: Control, y: float, panel_w: float, rows: int) -> ItemList:
+	var w := panel_w - PAD * 2
+	var h := rows * LIST_ROW_H
+	panel.add_child(UiTheme.panel(PAD, y, w, h + LIST_INSET * 2, Palette.UI_PANEL_DARK, Color(Palette.UI_TEXT_DIM, 0.6), 2))
+	var list := ItemList.new()
+	list.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	list.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	list.clip_contents = true
+	panel.add_child(UiTheme.place(list, PAD + LIST_INSET, y + LIST_INSET, w - LIST_INSET * 2, h))
+	return list
+
 
 func _panel(rect: Rect2, caption: String) -> Control:
 	var holder := Control.new()

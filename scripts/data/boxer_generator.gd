@@ -55,7 +55,7 @@ const NAME_ATTEMPTS := 40
 ## Share of managers from their boxer's own country.
 const HOME_MANAGER := 0.7
 ## A new career's boxer starts with this in every skill.
-const PLAYER_START_SKILL := 25
+const PLAYER_START_SKILL := 35
 ## Chance a new prospect already has a nickname.
 const PROSPECT_NICKNAME := 0.3
 

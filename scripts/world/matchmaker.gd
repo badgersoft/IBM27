@@ -55,6 +55,11 @@ const PROTECTIVE_REFUSES := 4
 const MONEY_SECOND_CHOICE := 0.25
 const DEFENCE_DUE := 9
 const VOLUNTARY_DEFENCE := 0.6
+## A manager whose pick is the player's boxer keeps his man free for him,
+## but offers the fight only this often, and no more than
+## MAX_PLAYER_REQUESTS offer in a month.
+const PLAYER_ASK := 0.35
+const MAX_PLAYER_REQUESTS := 2
 ## Tries before a boxer gives up for the month (other managers refusing).
 const OFFERS := 3
 
@@ -184,9 +189,11 @@ func _find_opponent(b: BoxerData, month: int) -> BoxerData:
 			return null
 		var pick := _choose(b, options)
 		if pick.is_player:
-			# The player decides his own fights: this manager asks him, and
-			# his man waits for an answer.
-			if not _season.player_requests.has(b.id):
+			# The player decides his own fights: his man stays free this
+			# month so the player can approach him, and now and then his
+			# manager makes the first move and offers the fight.
+			if _season.player_requests.size() < MAX_PLAYER_REQUESTS and _rng.randf() < PLAYER_ASK \
+					and not _season.player_requests.has(b.id):
 				_season.player_requests.append(b.id)
 			return null
 		if _accepts(pick, b, month):

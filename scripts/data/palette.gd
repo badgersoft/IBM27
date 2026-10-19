@@ -104,6 +104,10 @@ const UI_BLUE       := Color("4a82f0")
 const UI_GOOD       := Color("58c85a")
 const UI_WARN       := Color("e8b030")
 const UI_BAD        := Color("e04848")
+## The career's training buttons: a light steel-blue tint, so they read
+## differently from the menu buttons.
+const UI_TRAIN        := Color("223552")
+const UI_TRAIN_BORDER := Color("7aa8d0")
 
 ## UI accent colour for a corner (0 = red, 1 = blue).
 static func corner_color(corner: int) -> Color:
