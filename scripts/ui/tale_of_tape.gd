@@ -29,8 +29,11 @@ func setup(red: BoxerData, blue: BoxerData, venue_id: int, rounds: int, title_fi
 	var billing := "%s  -  %s" % [FightLengths.level_name(rounds).to_upper(), red.division_name().to_upper()]
 	if title_fight:
 		billing = "%s %s TITLE" % [Rankings.TITLE_NAME, red.division_name().to_upper()]
-	var bill := "%d ROUNDS  -  %s  -  %s  -  PURSE %s" % [rounds, billing,
-			Venues.venue_name(venue_id).to_upper(), Purse.money_text(purse)]
+	var bill := "%d ROUNDS  -  %s  -  %s" % [rounds, billing, Venues.venue_name(venue_id).to_upper()]
+	if purse > 0:
+		bill += "  -  PURSE %s" % Purse.money_text(purse)
+	else:
+		bill = "%d ROUNDS  -  EXHIBITION  -  %s" % [rounds, Venues.venue_name(venue_id).to_upper()]
 	add_child(UiTheme.place(UiTheme.label(bill, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), 0, 44, W, UiTheme.CAPTION))
 
 	var rows: Array = [

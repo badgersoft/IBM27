@@ -84,6 +84,12 @@ func arrange(month: int) -> Array[Fixture]:
 		var top := table.contenders(2)
 		if top.size() < 2:
 			continue
+		if top[0].is_player or top[1].is_player:
+			# The player is one of the two: the other man asks him for it.
+			var other := top[1] if top[0].is_player else top[0]
+			if _available(other, month) and not _season.player_requests.has(other.id):
+				_season.player_requests.append(other.id)
+			continue
 		if _available(top[0], month) and _available(top[1], month):
 			made.append(_book(top[0], top[1], month, fight_month, true))
 		else:
@@ -118,7 +124,7 @@ func arrange(month: int) -> Array[Fixture]:
 
 ## A boxer free to have a fight arranged in [param month].
 func _available(b: BoxerData, month: int) -> bool:
-	return _season.booking(b) == null and month - b.last_fight_month >= RECOVERY_MONTHS \
+	return not b.is_player and _season.booking(b) == null and month - b.last_fight_month >= RECOVERY_MONTHS \
 			and not _reserved.has(b) and _rankings[b.division].index_of(b) >= 0
 
 
@@ -138,7 +144,7 @@ func candidates(b: BoxerData, month: int) -> Array[BoxerData]:
 	var i := table.index_of(b)
 	for j in range(maxi(i - ABOVE, 0), mini(i + BELOW, table.size() - 1) + 1):
 		var other := table.boxers[j]
-		if other != b and _available(other, month):
+		if other != b and (_available(other, month) or _player_free(other, month)):
 			out.append(other)
 	if _rng.randf() < CROSS_DIVISION:
 		if b.division + 1 < _rankings.size():
@@ -166,12 +172,23 @@ func _available_from(table: Rankings, count: int, from_bottom: bool, month: int)
 	return out
 
 
+## The player's boxer is free to be asked for a fight.
+func _player_free(b: BoxerData, month: int) -> bool:
+	return b.is_player and _season.booking(b) == null and month - b.last_fight_month >= RECOVERY_MONTHS
+
+
 func _find_opponent(b: BoxerData, month: int) -> BoxerData:
 	var options := candidates(b, month)
 	for attempt in OFFERS:
 		if options.is_empty():
 			return null
 		var pick := _choose(b, options)
+		if pick.is_player:
+			# The player decides his own fights: this manager asks him, and
+			# his man waits for an answer.
+			if not _season.player_requests.has(b.id):
+				_season.player_requests.append(b.id)
+			return null
 		if _accepts(pick, b, month):
 			return pick
 		options.erase(pick)
@@ -218,7 +235,7 @@ func _book(a: BoxerData, b: BoxerData, month: int, fight_month: int, vacant: boo
 		var champ: BoxerData = a if table.is_champion(a) else (b if table.is_champion(b) else null)
 		if champ != null:
 			title = fight_month - table.last_defence_month >= DEFENCE_DUE or _rng.randf() < VOLUNTARY_DEFENCE
-	var f := _terms(a, b, title)
+	var f := terms(a, b, title)
 	f.vacant = vacant
 	f.month = fight_month
 	f.arranged = month
@@ -227,7 +244,7 @@ func _book(a: BoxerData, b: BoxerData, month: int, fight_month: int, vacant: boo
 
 
 ## The fight's corners, weight, length, purse and venue.
-func _terms(a: BoxerData, b: BoxerData, title: bool) -> Fixture:
+func terms(a: BoxerData, b: BoxerData, title: bool) -> Fixture:
 	var f := Fixture.new()
 	var ia := _rankings[a.division].index_of(a)
 	var ib := _rankings[b.division].index_of(b)

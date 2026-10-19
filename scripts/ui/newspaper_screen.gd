@@ -111,7 +111,12 @@ func _notification(what: int) -> void:
 		_continue()
 
 
+## Back to the fixtures, or in a career to the boxer's home page once the
+## month's paper is read.
 func _continue() -> void:
+	if GameState.career != null:
+		get_tree().change_scene_to_file("res://scenes/career_home.tscn")
+		return
 	get_tree().change_scene_to_file("res://scenes/fixtures.tscn")
 
 

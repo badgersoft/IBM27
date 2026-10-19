@@ -297,7 +297,11 @@ func _on_fight_finished(result: Dictionary) -> void:
 ## Adds this fight to both boxers' records, pays the purse and moves them in
 ## the rankings (kept for the rest of the session). A season fixture is
 ## completed in the season, which also rates it and keeps it for the paper.
+## An exhibition counts for nothing.
 func _update_records(result: Dictionary) -> void:
+	if GameState.exhibition:
+		_summary = {}
+		return
 	var f := GameState.fixture
 	if f != null and not f.is_done():
 		f.watched = true
@@ -359,10 +363,14 @@ func _show_post_fight() -> void:
 		return
 	_post = PostFight.new()
 	var season_fight := GameState.fixture != null
-	_post.setup(sim, _summary, Excitement.rate(sim), GameState.purse, GameState.venue_id,
-			"FIXTURES" if season_fight else "NEW FIGHT")
+	var next_text := "FIXTURES" if season_fight else "NEW FIGHT"
+	var next: Callable = _to_fixtures if season_fight else _new_fight
+	if GameState.exhibition:
+		next_text = "NEW EXHIBITION"
+		next = _new_exhibition
+	_post.setup(sim, _summary, Excitement.rate(sim), GameState.purse, GameState.venue_id, next_text)
 	_post.position = Vector2(MARGIN, MARGIN)
-	_post.next_pressed.connect(_to_fixtures if season_fight else _new_fight)
+	_post.next_pressed.connect(next)
 	_post.menu_pressed.connect(_go_to_menu)
 	_frame.add_child(_post)
 	_post.focus()
@@ -373,14 +381,21 @@ func _new_fight() -> void:
 	get_tree().reload_current_scene()
 
 
+func _new_exhibition() -> void:
+	Sfx.crowd_stop()
+	GameState.picking = true
+	get_tree().change_scene_to_file("res://scenes/roster.tscn")
+
+
 func _to_fixtures() -> void:
 	Sfx.crowd_stop()
 	get_tree().change_scene_to_file("res://scenes/fixtures.tscn")
 
 
+## The main menu, or the career's home page in a career.
 func _go_to_menu() -> void:
 	Sfx.crowd_stop()
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	get_tree().change_scene_to_file("res://scenes/career_home.tscn" if GameState.career != null else "res://scenes/main_menu.tscn")
 
 
 # ============================================================================

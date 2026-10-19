@@ -75,12 +75,14 @@ var champion: BoxerData = null
 var last_defence_month := -99
 
 
-func _init(division_id: int, ranked: Array[BoxerData], ranking_mode: Mode) -> void:
+## [param keep_points] keeps each boxer's ranking points (a loaded career).
+func _init(division_id: int, ranked: Array[BoxerData], ranking_mode: Mode, keep_points: bool = false) -> void:
 	division = division_id
 	mode = ranking_mode
 	boxers = ranked.duplicate()
-	for i in boxers.size():
-		boxers[i].rank_points = POINTS_TOP - i * POINTS_STEP
+	if not keep_points:
+		for i in boxers.size():
+			boxers[i].rank_points = POINTS_TOP - i * POINTS_STEP
 	# The best man starts as champion.
 	champion = boxers[0] if not boxers.is_empty() else null
 

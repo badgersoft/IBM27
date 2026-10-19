@@ -34,6 +34,8 @@ enum Advice { NONE, ATTACK_MORE, DEFEND_MORE, KEEP_IT_UP, ALL_OUT }
 const ADVICE_TEXT: Array[String] = ["", "ATTACK MORE!", "DEFEND MORE!", "KEEP IT UP!", "GO ALL OUT!"]
 
 const MAX_HEALTH := 100.0
+## Share of his usual starting health a boxer has at 0% condition.
+const CONDITION_FLOOR := 0.6
 const MAX_ENERGY := 100.0
 ## Footwork speed multiplier while walking out of the corner at the bell.
 const COME_OUT_SPEED := 1.8
@@ -99,7 +101,8 @@ func _init(boxer: BoxerData, corner_index: int) -> void:
 	corner = corner_index
 	facing = 1 if corner_index == 0 else -1
 	height_px = BoxerSkeleton.pixel_height(boxer.height_cm)
-	health = boxer.start_health
+	# Not fully recovered from his last fight: he starts a little short.
+	health = boxer.start_health * lerpf(CONDITION_FLOOR, 1.0, boxer.condition / 100.0)
 	round_stats = _empty_stats()
 	fight_stats = _empty_stats()
 

@@ -52,6 +52,12 @@ const STYLE_BLURBS: Array[String] = [
 @export var earnings: int = 0            ## Career prize money, in dollars.
 ## Ranking points, used when the rankings run on points (see Rankings).
 @export var rank_points: float = 0.0
+## The career player's own boxer (managed by the player, not the computer).
+@export var is_player: bool = false
+## How fit he is between fights (percent). Only the player's boxer carries
+## knocks from one fight to the next; he starts a fight with less health
+## when he is not fully recovered (see Fighter).
+@export_range(0.0, 100.0) var condition: float = 100.0
 
 # --- Season ------------------------------------------------------------------
 @export var birth_month: int = 0          ## 0 = January: he turns a year older then.

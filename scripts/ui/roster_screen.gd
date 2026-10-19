@@ -7,6 +7,11 @@ extends Control
 ## Choosing a boxer opens his profile (all his skills and a portrait).
 ## Records shown include any fights played this session.
 ##
+## As the EXHIBITION screen (GameState.picking) the same list is for picking
+## two boxers, from any divisions: the first goes in the red corner, the
+## second in the blue (choose one again to take him out). RANDOM lets the
+## computer pick, and FIGHT starts a three-round exhibition.
+##
 ## Layout (1280 x 800 frame):
 ##   y  16  THE BOXERS               size range  [ ORDER: OVR ]  [ BACK ]
 ##   y  80  [ LIGHTWEIGHT ][ MIDDLEWEIGHT ][ HEAVYWEIGHT ]  [<] 1-10 OF 30 [>]
@@ -73,6 +78,10 @@ const BELT_GAP := 16
 const LEVEL_COLOURS: Array[Color] = [Palette.UI_TEXT_DIM, Palette.UI_TEXT, Palette.UI_GOLD]
 ## The ORDER button, between the captions and BACK.
 const ORDER_W := 224
+## Exhibition: where the corners are shown, and the RANDOM / FIGHT buttons.
+const PICK_X := 384
+const PICK_BUTTON_W := 176
+
 ## Longest name shown in full; longer names are shortened to an initial and
 ## surname so every name is the same size and clear of the FROM column.
 const NAME_CHARS := 18
@@ -89,9 +98,16 @@ var _page_label: Label
 var _prev: Button
 var _next: Button
 var _order: Button
+# Exhibition picking: the two corners and their labels.
+var _picks: Array = [null, null]
+var _pick_labels: Array[Label] = []
+var _fight: Button
 
 
 func _ready() -> void:
+	var show: String = GameState.options.get("show", "")
+	if GameState.options.has("capture") and show == "exhibition":
+		GameState.picking = true
 	theme = UiTheme.get_theme()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var bg := UiTheme.block(Palette.UI_BACKGROUND, 0, 0, 0, 0)
@@ -107,7 +123,8 @@ func _ready() -> void:
 	_frame.offset_bottom = FRAME_SIZE.y / 2.0
 	add_child(_frame)
 
-	_frame.add_child(UiTheme.place(UiTheme.label("THE BOXERS", UiTheme.TITLE, Palette.UI_GOLD), 24, 24, 640, UiTheme.TITLE))
+	var heading := "EXHIBITION" if GameState.picking else "THE BOXERS"
+	_frame.add_child(UiTheme.place(UiTheme.label(heading, UiTheme.TITLE, Palette.UI_GOLD), 24, 24, 640, UiTheme.TITLE))
 	var back := Button.new()
 	back.text = "BACK"
 	UiTheme.place(back, FRAME_SIZE.x - 16 - 192, 16, 192, 48)
@@ -135,6 +152,10 @@ func _ready() -> void:
 	_frame.add_child(UiTheme.place(_caption, caption_x, 24, caption_w, UiTheme.CAPTION))
 	var hint := UiTheme.label("CHOOSE A BOXER FOR HIS PROFILE", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_RIGHT)
 	_frame.add_child(UiTheme.place(hint, caption_x, 40, caption_w, UiTheme.CAPTION))
+	if GameState.picking:
+		_build_picking(back)
+		_caption.visible = false
+		hint.visible = false
 
 	_prev = _pager_button("<", PAGER_X, _turn.bind(-1))
 	_page_label = UiTheme.label("", UiTheme.BODY, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
@@ -147,7 +168,9 @@ func _ready() -> void:
 	_select(clampi(start, 0, Divisions.count() - 1), true)
 	_tabs[_division].grab_focus()
 
-	if GameState.options.has("capture") and GameState.options.get("show", "") == "roster":
+	if GameState.options.has("capture") and show in ["roster", "exhibition"]:
+		if show == "exhibition":
+			_random_pair()
 		_capture(GameState.options["capture"])
 
 
@@ -163,6 +186,75 @@ func _pager_button(text: String, x: float, action: Callable) -> Button:
 
 func _page_count() -> int:
 	return ceili(GameState.boxers_in(_division).size() / float(PAGE_SIZE))
+
+
+## The exhibition's title row: who is in each corner, RANDOM and FIGHT in
+## place of the ORDER button and captions.
+##   EXHIBITION   RED  A. PEREIRA      [RANDOM] [FIGHT] [BACK]
+##                BLUE -
+func _build_picking(back: Button) -> void:
+	_order.visible = false
+	_fight = Button.new()
+	_fight.text = "FIGHT!"
+	UiTheme.place(_fight, back.position.x - 16 - PICK_BUTTON_W, 16, PICK_BUTTON_W, 48)
+	_fight.pressed.connect(_start_exhibition)
+	_frame.add_child(_fight)
+	var random := Button.new()
+	random.text = "RANDOM"
+	UiTheme.place(random, _fight.position.x - 16 - PICK_BUTTON_W, 16, PICK_BUTTON_W, 48)
+	random.pressed.connect(_random_pair)
+	_frame.add_child(random)
+	for corner in 2:
+		var y := 16 + corner * UiTheme.ROW_H
+		var tag := UiTheme.label("RED" if corner == 0 else "BLUE", UiTheme.BODY, Palette.corner_color(corner))
+		_frame.add_child(UiTheme.place(tag, PICK_X, y, 80, UiTheme.ROW_H))
+		var who := UiTheme.label("-", UiTheme.BODY, Palette.UI_TEXT)
+		_frame.add_child(UiTheme.place(who, PICK_X + 80, y, random.position.x - 16 - PICK_X - 80, UiTheme.ROW_H))
+		_pick_labels.append(who)
+	_show_picks()
+
+
+## A row was chosen: into the first empty corner (or out again if he is in
+## one already); with both corners full he replaces the blue corner.
+func _pick(b: BoxerData) -> void:
+	var at := _picks.find(b)
+	if at >= 0:
+		_picks[at] = null
+	elif _picks[0] == null:
+		_picks[0] = b
+	else:
+		_picks[1] = b
+	_show_picks()
+	_build_page()
+
+
+func _random_pair() -> void:
+	var pair := GameState.random_exhibition_pair()
+	_picks = [pair[0], pair[1]]
+	# Show the page the red corner's man is on.
+	_select(pair[0].division)
+	_page = floori(GameState.listed_boxers(_division).find(pair[0]) / float(PAGE_SIZE))
+	_build_page()
+	_show_picks()
+
+
+## "B. THOMAS"
+static func _initial_name(b: BoxerData) -> String:
+	return "%s. %s" % [b.first_name.substr(0, 1).to_upper(), b.last_name.to_upper()]
+
+
+func _show_picks() -> void:
+	for corner in 2:
+		var b: BoxerData = _picks[corner]
+		_pick_labels[corner].text = _initial_name(b) if b != null else "-"
+	_fight.disabled = _picks[0] == null or _picks[1] == null
+
+
+func _start_exhibition() -> void:
+	if _picks[0] == null or _picks[1] == null:
+		return
+	GameState.start_exhibition(_picks[0], _picks[1])
+	get_tree().change_scene_to_file("res://scenes/fight.tscn")
 
 
 ## Switches between best-first by overall rating and ranking order.
@@ -248,11 +340,15 @@ func _notification(what: int) -> void:
 
 
 func _go_back() -> void:
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	get_tree().change_scene_to_file(GameState.back_scene)
 
 
-## Opens boxer [param index]'s profile (his place in the whole division).
+## Opens boxer [param index]'s profile (his place in the whole division),
+## or, when picking an exhibition, puts him in a corner.
 func _open_profile(index: int) -> void:
+	if GameState.picking:
+		_pick(GameState.listed_boxers(_division)[index])
+		return
 	GameState.profile_division = _division
 	GameState.profile_index = index
 	get_tree().change_scene_to_file("res://scenes/profile.tscn")
@@ -281,6 +377,10 @@ func _build_table(frame: Control) -> void:
 	for i in range(first, mini(first + PAGE_SIZE, roster.size())):
 		var b: BoxerData = roster[i]
 		var y := FIRST_ROW_Y + (i - first) * ROW_H
+		var corner := _picks.find(b)
+		if corner >= 0:
+			# Picked for the exhibition: tinted in his corner's colour.
+			panel.add_child(UiTheme.block(Color(Palette.corner_color(corner), 0.25), 8, y, PANEL.size.x - 16, ROW_H))
 		if i % 2 == 0:
 			panel.add_child(UiTheme.block(Color(1, 1, 1, 0.04), 8, y, PANEL.size.x - 16, ROW_H))
 		_rows.append(_row_button(panel, i, y))

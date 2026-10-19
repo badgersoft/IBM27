@@ -70,3 +70,43 @@ func result_text() -> String:
 	if method in ["KO", "TKO"]:
 		return "%s %d" % [method, result["round"]]
 	return method
+
+
+# ----------------------------------------------------------------------------
+#  Saving
+# ----------------------------------------------------------------------------
+
+## Everything about the fight as plain data (boxers as their ids).
+func to_dict() -> Dictionary:
+	var saved_summary := summary.duplicate()
+	for key in ["winner", "loser"]:
+		if saved_summary.has(key):
+			saved_summary[key] = (saved_summary[key] as BoxerData).id
+	return {
+		"red": red.id, "blue": blue.id, "division": division, "month": month, "arranged": arranged,
+		"title": title, "vacant": vacant, "rounds": rounds, "purse": purse, "venue": venue,
+		"result": result, "summary": saved_summary, "excitement": excitement, "watched": watched,
+	}
+
+
+## A fight from to_dict(); [param by_id] finds each boxer by id.
+static func from_dict(d: Dictionary, by_id: Dictionary) -> Fixture:
+	var f := Fixture.new()
+	f.red = by_id[int(d["red"])]
+	f.blue = by_id[int(d["blue"])]
+	f.division = int(d["division"])
+	f.month = int(d["month"])
+	f.arranged = int(d["arranged"])
+	f.title = d["title"]
+	f.vacant = d["vacant"]
+	f.rounds = int(d["rounds"])
+	f.purse = int(d["purse"])
+	f.venue = int(d["venue"])
+	f.result = d["result"]
+	f.summary = (d["summary"] as Dictionary).duplicate()
+	for key in ["winner", "loser"]:
+		if f.summary.has(key):
+			f.summary[key] = by_id[int(f.summary[key])]
+	f.excitement = float(d["excitement"])
+	f.watched = d["watched"]
+	return f

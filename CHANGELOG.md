@@ -4,6 +4,40 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.14
+
+* Main menu: START is now **EXHIBITION** and SEASON is now **CAREER**.
+* **Exhibition**: the Boxers list in pick mode. Choose the red corner, then
+  the blue (any division), or RANDOM to let the computer choose, then
+  FIGHT!. Exhibitions are 3 rounds and count for nothing: no record, purse
+  or ranking change. After the fight, NEW EXHIBITION picks again.
+* **Career** pops up START NEW CAREER, and CONTINUE SAVED CAREER when
+  there are saved careers (a list, newest first).
+* **New boxer** screen: a random look to start with; name and surname;
+  division (Lightweight by default), style, skin, hair colour, haircut and
+  trunks colour with < and >; a nickname from ten made up for him or none;
+  scrolling lists of countries and their cities; every skill at 25 with a
+  pool of 40 points to spend with - and +.
+* **Career page**: the boxer's portrait, overall rating, ranking, level,
+  record, health, money ($20,000 to start), earnings, sponsor and rent; his
+  next fight and the fight offers; the week's training (WEIGHTS, SPEED,
+  STAMINA or PUNCHING, one a week, the rest greyed out); and SCHEDULE,
+  FACILITIES, FIXTURES, NEWS, BOXERS, SAVE, MAIN MENU and NEXT WEEK (FIGHT
+  NIGHT in the last week of the month).
+* **Facilities**: five gyms from the free Local Gym to the Olympic Complex
+  and five recovery centres from the Local Day Spa to the Elite Medical
+  Institute, rented by the week; and sponsors - a long list of made-up
+  firms, from local shops to global brands, offering a one-off payment
+  for 3, 6 or 12 months depending on how valuable the boxer is.
+* **Schedule**: the men he may fight (4 above to 6 below in his division,
+  free, plus anyone who has asked), five purse offers from LOW to HIGH
+  (half the purse must be in the bank), keen men nearly always accept and
+  unsure ones are swayed by the money; one fight at a time, with CANCEL
+  FIGHT for a forfeit of a quarter of the purse.
+* A boxer who isn't fully recovered starts a fight with less health.
+* Careers are saved in `user://careers/`: at the start, at every month
+  end, on SAVE and when going back to the main menu.
+
 ## 0.1.13
 
 * The new IBC belt, design B (Classic): a black strap, lit along its top

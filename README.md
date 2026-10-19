@@ -6,9 +6,19 @@ An ode to *Barry McGuigan World Championship Boxing* (Commodore 64, 1985),
 drawn in a 16-bit Amiga style but keeping the classic side-on view of the
 ring. Built with **Godot 4.7** for PC and mobile.
 
-This is the first build. It concentrates on the ring, the boxers and a fight
-that plays itself out logically. There is no human trainer yet: both corners
-are run by the AI.
+It started with the ring, the boxers and a fight that plays itself out
+logically; both corners are run by the AI. Around that there is now a whole
+world of rankings, titles and a monthly season, and a **career**: create a
+boxer and manage him from the bottom of the amateurs.
+
+The main menu has three buttons:
+
+* **EXHIBITION** - pick any two boxers (or let the computer pick with
+  RANDOM) for a one-off 3-round fight. It counts for nothing: no record,
+  no purse, no change in the rankings.
+* **CAREER** - start a new career, or continue a saved one (only offered
+  when there is one). See *The career*.
+* **BOXERS** - everyone in the three divisions, and their profiles.
 
 ![Grand Arena](docs/screenshots/fight_grand_arena.png)
 
@@ -39,8 +49,9 @@ preset under *Project > Export*.
 
 ## What happens in a fight
 
-* START picks a weight division and a boxer at random, and an opponent
-  ranked near him (no more than 4 places above or 6 below). The fight's
+* A fight opened on its own (the fight scene run from the editor or the
+  command line) picks a weight division and a boxer at random, and an
+  opponent ranked near him (no more than 4 places above or 6 below). The fight's
   length, purse and venue (Small Town Gym, City Gym, Boxing Hall or Grand
   Arena) suit the better man's level, and a fight involving the champion is
   for his IBC title, at the Grand Arena (see *Rankings, titles and money*).
@@ -324,8 +335,8 @@ him moves up as if he had beaten the number 1.
 
 ### The season
 
-**SEASON** on the main menu opens the fixtures. The season starts in
-January 2027 and runs a month at a time:
+In a career, **FIXTURES** on the career page opens the season's fixtures.
+The season starts in January 2027 and runs a month at a time:
 
 * **Arranging fights.** At the start of each month the managers arrange
   fights for two months on: that is the boxer's **training camp**, during
@@ -376,6 +387,85 @@ faces. RESULTS lists every fight of the month with its rating.
 
 ![The newspaper](docs/screenshots/newspaper.png)
 
+### The career
+
+**CAREER > START NEW CAREER** opens the **new boxer** screen. He starts
+with a random look, name and hometown, all of which can be changed:
+
+* NAME and SURNAME, typed in.
+* DIVISION (Lightweight to start with), STYLE (the five standard types),
+  SKIN, HAIR colour, HAIRCUT and TRUNKS colour, each with < and >.
+* NICKNAME: ten made up for him, or NO NICKNAME.
+* FROM: a country, then one of its cities.
+* SKILLS: every skill starts at 25, with **40 points** to spend between
+  them using - and + (from 10 to 65 each). Points taken off a skill go
+  back in the pool.
+
+START CAREER builds a fresh world (the starting rosters and a new season)
+with him at the bottom of his division, at 20, 0-0-0, with **$20,000** in
+the bank. The career is saved straight away, at the end of every month and
+when leaving for the main menu (SAVE saves it any time). Saves live in
+`user://careers/`; **CONTINUE SAVED CAREER** lists them, newest first.
+
+**The career page** shows the boxer and his overall rating, ranking,
+level, record, health, money, earnings, sponsor and the week's rent, his
+next fight, the men who want to fight him, and the latest news. Time moves
+a **week** at a time, four weeks to a month:
+
+* **Training**: once a week choose WEIGHTS (strength, some chin), SPEED
+  (speed, some ring sense), STAMINA (stamina, some recovery) or PUNCHING
+  (power, some technique). The other three are greyed out until next week.
+  How much he gains depends on the gym, and less as a skill gets higher.
+* **NEXT WEEK** pays the week's rent and lets him recover a little. In the
+  last week of the month it reads **FIGHT NIGHT** and opens the fixtures:
+  watch his fight (or any other), PLAY MONTH, then READ THE PAPER; the
+  month ends (purses banked, sponsor's months counted down, new offers)
+  and the paper's CONTINUE returns to the career page.
+* **Health**: he comes out of a fight with the health he ended it with
+  (FIT, BRUISED, HURT, INJURED) and gets it back week by week. A boxer who
+  isn't fully fit starts his next fight with less health.
+
+**FACILITIES** has three tabs:
+
+* **TRAINING** - Local Gym (free, x1.0), Boxing Club ($400 a week, x1.3),
+  Fight Academy ($2.5K, x1.7), Performance Centre ($12K, x2.2) and
+  Olympic Complex ($50K, x3.0). BOOST multiplies every training session.
+* **RECOVERY** - Local Day Spa (free), Physio Clinic ($300), Sports
+  Injury Clinic ($2K), Private Hospital ($9K) and Elite Medical Institute
+  ($40K): how quickly he gets his health back between fights.
+* **SPONSORS** - each month a few firms may offer a one-off payment for 3,
+  6 or 12 months. An unknown amateur gets few offers, all from small local
+  firms; the higher he is ranked (and the better his record) the more
+  offers come, from regional, national and finally global names, and for
+  much more. There is no catch, but he can have only one sponsor at a
+  time.
+
+Rent is paid at the end of each week; a facility can only be chosen if he
+can pay for its first week.
+
+**SCHEDULE** arranges his fights:
+
+* The men he may fight are those in his division no more than 4 places
+  above him or 6 below, who are free (no fight arranged, recovered from
+  their last), plus anyone who has asked to fight him (WANTS TO FIGHT).
+* Choose a man to offer him a purse: five choices from LOW (60% of the
+  usual purse) through USUAL to HIGH (150%). He must have half the purse
+  in the bank to offer it. A man who wants the fight nearly always says
+  yes; an unsure one is swayed by money, and may turn down a low offer
+  (then he is marked TURNED YOU DOWN for the rest of the week).
+* One fight at a time, two months on, like everyone else's. Once it is
+  arranged the list is greyed out and **CANCEL FIGHT** calls it off, for a
+  forfeit of a quarter of the purse.
+* A fight between the top two men for a vacant title is for the title.
+
+![A new boxer](docs/screenshots/new_boxer.png)
+
+![The career page](docs/screenshots/career_home.png)
+
+![Facilities](docs/screenshots/facilities.png)
+
+![Arranging a fight](docs/screenshots/schedule_offer.png)
+
 ### Excitement ratings
 
 Every fight, watched or simulated, is rated out of 10 for excitement from
@@ -420,9 +510,14 @@ project.godot
 data/
   world.json                  Regions, countries, cities, names, nicknames
   officials.json              Judges (fairness, secret likes) and TV pundits
+  sponsors.json               Made-up sponsors, local firms to global brands
 assets/fonts/                 Press Start 2P pixel font (SIL Open Font License)
 scenes/
-  main_menu.tscn              START, SEASON and BOXERS
+  main_menu.tscn              EXHIBITION, CAREER and BOXERS
+  new_boxer.tscn              Creating the career's boxer
+  career_home.tscn            The career page: the boxer, training, menus
+  facilities.tscn             Gyms, recovery and sponsors
+  schedule.tscn               Arranging the boxer's fights
   fight.tscn
   roster.tscn                 The Boxers screen (one table per division)
   fixtures.tscn               The season's fixtures, results and PLAY MONTH
@@ -449,6 +544,9 @@ scripts/
     training.gd               A month of training and getting older
     excitement.gd             Rating a fight out of 10
     newspaper.gd              Writing the monthly paper
+    player_career.gd          The player's boxer: money, weeks, fights, sponsors
+    facilities.gd             Gyms and recovery centres, training sessions
+    career_save.gd            A saved career (Resource, in user://careers)
   fight/
     fight_sim.gd              Clock, bell, punches, knockdowns, count, result
     fighter.gd                One boxer's live state during a fight
@@ -546,13 +644,14 @@ Command-line options read by the game (after `--`):
 | `--ranking=ladder\|points` | How results move the rankings (default ladder)                                                                                                                                                         |
 | `--order=rank`             | The Boxers list opens in ranking order                                                                                                                                                                 |
 | `--months=<n>`             | Play the first n months of the season at start-up                                                                                                                                                      |
-| `--tab=<n>`                | Which tab the Boxers, Fixtures or newspaper screen opens on                                                                                                                                            |
+| `--tab=<n>`                | Which tab the Boxers, Fixtures, newspaper or Facilities screen opens on                                                                                                                                |
 | `--page=<1-3>`             | Which page of the division the Boxers screen opens on                                                                                                                                                  |
 | `--index=<0-29>`           | Which boxer's profile opens (with `--division`)                                                                                                                                                        |
 | `--venue=<0-3>`            | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena                                                                                                                                             |
 | `--rounds=<n>`             | Fight length: 3, 6, 10 or 12 rounds (normally set by the level)                                                                                                                                        |
 | `--capture=<png>`          | Fast-forward, save a screenshot and quit                                                                                                                                                               |
-| `--show=<moment>`          | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch), `onetwo` (a one-two), `taunt` (showing off), `break`, `count`, `announce`, `result`, `stats`, `fixtures`, `paper` |
+| `--show=<moment>`          | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch), `onetwo` (a one-two), `taunt` (showing off), `break`, `count`, `announce`, `result`, `stats`, `fixtures`, `paper`, `career_menu`, `exhibition`, `new_boxer`, `career`, `facilities`, `schedule` |
+| `--offer`                  | With `--show=schedule`, open the purse offer for the first opponent                                                                                                                                   |
 | `--wait=<seconds>`         | Real seconds to wait before the shot (e.g. mid read-out)                                                                                                                                               |
 | `--at=<seconds>`           | Earliest real second of round 1 to capture (default 20)                                                                                                                                                |
 

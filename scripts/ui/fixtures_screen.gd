@@ -122,7 +122,7 @@ func _notification(what: int) -> void:
 func _go_back() -> void:
 	if _playing:
 		return
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	get_tree().change_scene_to_file(GameState.back_scene)
 
 
 # ============================================================================
@@ -212,6 +212,9 @@ func _on_play() -> void:
 	if season.month_finished():
 		GameState.paper_index = season.papers.size()
 		season.finish_month()
+		if GameState.career != null:
+			GameState.career.end_month(season)
+			GameState.save_career()
 		get_tree().change_scene_to_file("res://scenes/newspaper.tscn")
 		return
 	var todo: Array[Fixture] = []

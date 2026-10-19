@@ -46,6 +46,12 @@ var retired: Array[BoxerData] = []
 var notes: Array[String] = []
 ## The human boxer's division: the newspaper notes who climbs its rankings.
 var player_division: int = Divisions.Id.MIDDLEWEIGHT
+## The career player's boxer (null outside a career). The managers never
+## book him: a manager who picks him asks instead (player_requests, boxer
+## ids), and his purses go to player_winnings for the career to bank.
+var player: BoxerData = null
+var player_requests: Array[int] = []
+var player_winnings := 0
 
 var _rankings: Array[Rankings]
 var _rng := RandomNumberGenerator.new()
@@ -132,6 +138,31 @@ func fought_recently(a: BoxerData, b: BoxerData, since: int) -> bool:
 	return false
 
 
+func rankings_of(b: BoxerData) -> Rankings:
+	return _rankings[b.division]
+
+
+## Books the player's fight with [param other] for two months on (the camp)
+## at [param purse]; for the title if [param other] is the champion, or if
+## the title is vacant and they are its two best contenders.
+func book_player_fight(me: BoxerData, other: BoxerData, purse: int) -> Fixture:
+	var table := _rankings[me.division]
+	var top := table.contenders(2)
+	var vacant := table.champion == null and top.has(me) and top.has(other)
+	var f := _matchmaker.terms(me, other, table.is_champion(other) or vacant)
+	f.vacant = vacant
+	f.purse = purse
+	f.month = month + Matchmaker.CAMP_MONTHS
+	f.arranged = month
+	add_fixture(f)
+	return f
+
+
+## Takes an arranged fight off the calendar (the player called it off).
+func cancel_fixture(f: Fixture) -> void:
+	fixtures.erase(f)
+
+
 func has_vacant_title_fight(division: int) -> bool:
 	for f in fixtures:
 		if f.vacant and f.division == division and not f.is_done():
@@ -206,6 +237,12 @@ func complete(f: Fixture, sim: FightSim) -> void:
 		_rankings[f.division].last_defence_month = f.month
 	f.red.last_fight_month = f.month
 	f.blue.last_fight_month = f.month
+	if player != null and f.involves(player):
+		# His share of the purse, and the knocks he carries out of the ring.
+		var won: bool = summary["winner"] == player and not summary["draw"]
+		player_winnings += summary["winner_purse"] if won else summary["loser_purse"]
+		var me := sim.red if f.red == player else sim.blue
+		player.condition = clampf(100.0 * me.health / maxf(player.start_health, 1.0), 25.0, 100.0)
 	f.result = sim.result
 	f.summary = summary
 	f.excitement = Excitement.rate(sim)
@@ -268,10 +305,10 @@ func finish_month() -> Dictionary:
 		for b in table.boxers.duplicate():
 			var next := booking(b)
 			var in_camp: bool = b.last_fight_month == month or (next != null and next.month - month <= 1)
-			Training.month(b, in_camp)
+			Training.month(b, in_camp, b.is_player)
 			if posmod(month, 12) == b.birth_month:
 				b.age += 1
-			if next == null and _retires(b):
+			if next == null and not b.is_player and _retires(b):
 				_retire(b, table)
 	var paper := Newspaper.write(self, month, _rng)
 	papers.append(paper)
@@ -314,3 +351,44 @@ func _retire(b: BoxerData, table: Rankings) -> void:
 	notes.append(line)
 	notes.append("NEW FACE: %s, %d, FROM %s, JOINS THE %sS." % [fresh.display_name().to_upper(), fresh.age,
 			fresh.city.to_upper(), Divisions.division_name(table.division).to_upper()])
+
+
+# ----------------------------------------------------------------------------
+#  Saving
+# ----------------------------------------------------------------------------
+
+## The calendar as plain data: fixtures, newspapers (their results as
+## fixture numbers), retirements and the player's requests and winnings.
+func to_dict() -> Dictionary:
+	var saved_papers := []
+	for paper in papers:
+		var copy := paper.duplicate()
+		copy["results"] = (paper["results"] as Array).map(func(f: Fixture) -> int: return fixtures.find(f))
+		saved_papers.append(copy)
+	return {
+		"month": month, "next_id": _next_id,
+		"fixtures": fixtures.map(func(f: Fixture) -> Dictionary: return f.to_dict()),
+		"papers": saved_papers,
+		"player_requests": player_requests, "player_winnings": player_winnings,
+	}
+
+
+## Restores the calendar from to_dict() ([param by_id] finds boxers by id,
+## retired ones included).
+func load_dict(d: Dictionary, by_id: Dictionary) -> void:
+	month = int(d["month"])
+	_next_id = int(d["next_id"])
+	_rng.seed = _rng.seed + month
+	fixtures.clear()
+	for fd in d["fixtures"]:
+		fixtures.append(Fixture.from_dict(fd, by_id))
+	papers.clear()
+	for pd in d["papers"]:
+		var paper: Dictionary = (pd as Dictionary).duplicate()
+		var results: Array[Fixture] = []
+		for i in pd["results"]:
+			results.append(fixtures[int(i)])
+		paper["results"] = results
+		papers.append(paper)
+	player_requests.assign(d["player_requests"])
+	player_winnings = int(d["player_winnings"])

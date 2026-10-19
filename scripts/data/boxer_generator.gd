@@ -54,6 +54,8 @@ const SPECIAL_MIN_FIGHTS := 12
 const NAME_ATTEMPTS := 40
 ## Share of managers from their boxer's own country.
 const HOME_MANAGER := 0.7
+## A new career's boxer starts with this in every skill.
+const PLAYER_START_SKILL := 25
 ## Chance a new prospect already has a nickname.
 const PROSPECT_NICKNAME := 0.3
 
@@ -155,6 +157,62 @@ func generate_prospect(division: Divisions.Id, avoid_names: Array[String],
 	if _rng.randf() < PROSPECT_NICKNAME:
 		b.nickname = _pick_nickname(b, avoid_nicknames)
 	return b
+
+
+## A new career's boxer: a random look, name and hometown in
+## [param division], aged 20 with no fights, every skill at
+## PLAYER_START_SKILL (the player spends PLAYER_POOL more on the setup
+## screen) and no nickname yet.
+func generate_player(division: Divisions.Id) -> BoxerData:
+	var b := generate_boxer([], division)
+	b.is_player = true
+	b.style = BoxerData.Style.BOXER
+	for skill in ["power", "speed", "stamina", "chin", "strength", "intelligence"]:
+		b.set(skill, PLAYER_START_SKILL)
+	b.recovery = PLAYER_START_SKILL
+	b.age = 20
+	b.wins = 0
+	b.losses = 0
+	b.draws = 0
+	b.kos = 0
+	b.nickname = ""
+	b.birth_month = _rng.randi_range(0, 11)
+	b.start_health = 90.0
+	return b
+
+
+## Height and weight to suit [param b]'s division (after a change of division).
+func roll_size(b: BoxerData) -> void:
+	_roll_size(b)
+
+
+## Up to [param count] nicknames that suit [param boxer] and nobody in
+## [param used] has, all different.
+func nickname_choices(boxer: BoxerData, used: Array[String], count: int) -> Array[String]:
+	var taken := used.duplicate()
+	var out: Array[String] = []
+	for i in count * 3:
+		var nick := _pick_nickname(boxer, taken)
+		if nick.is_empty():
+			break
+		if not out.has(nick):
+			out.append(nick)
+			taken.append(nick)
+		if out.size() >= count:
+			break
+	return out
+
+
+## Every country in world.json as [code, name, cities], sorted by name.
+func countries() -> Array:
+	var out := []
+	for code in _world["countries"]:
+		var c: Dictionary = _world["countries"][code]
+		var cities: Array = c["cities"].duplicate()
+		cities.sort()
+		out.append([code, c["name"], cities])
+	out.sort_custom(func(a: Array, b: Array) -> bool: return a[1] < b[1])
+	return out
 
 
 ## A manager for [param boxer]: usually from his own country (the

@@ -28,14 +28,16 @@ const MAX_SKILL := 97
 
 
 ## One month for [param b]; [param in_camp] if he has a fight within the
-## next two months.
-static func month(b: BoxerData, in_camp: bool) -> void:
+## next two months. The player's boxer ([param self_trained]) only gets the
+## effect of his age: his training is the player's weekly choice
+## (Facilities.train).
+static func month(b: BoxerData, in_camp: bool, self_trained: bool = false) -> void:
 	var age_change := 0.0
 	for band in AGE_CHANGE:
 		if b.age <= band[0]:
 			age_change = band[1]
 			break
-	var training := TRAINING * (CAMP_BOOST if in_camp else 1.0)
+	var training := 0.0 if self_trained else TRAINING * (CAMP_BOOST if in_camp else 1.0)
 	for skill in SKILLS:
 		var change := age_change
 		if change < 0.0:

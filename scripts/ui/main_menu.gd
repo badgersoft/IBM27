@@ -1,14 +1,15 @@
 extends Control
 ## Main menu: title, a window onto the Boxing Hall with two boxers from the
-## roster squaring up, and three buttons: START a quick fight, the SEASON
-## (fixtures, results and the newspaper), or look at the BOXERS.
+## roster squaring up, and three buttons: an EXHIBITION (pick any two boxers,
+## or let the computer pick), a CAREER (start one or carry on a saved one), or
+## look at the BOXERS.
 ##
 ## Vertical rhythm (1280 x 800 frame, all on the 8 px grid):
 ##   y  40  "BADGER-SOFT PRESENTS"          body, dim
 ##   y  72  "INTERNATIONAL BOXING MANAGER"  title
 ##   y 112  "2027"                          96 px, gold
 ##   y 248  arena window                    848 x 336 (arena at x2)
-##   y 632  [ START ] [ SEASON ] [ BOXERS ] 288 x 64 each, 32 apart
+##   y 632  [EXHIBITION] [CAREER] [BOXERS]  288 x 64 each, 32 apart
 ##   y 752  version line                    caption
 
 const FRAME_SIZE := Vector2(1280, 800)
@@ -39,6 +40,7 @@ func _ready() -> void:
 	frame.offset_bottom = FRAME_SIZE.y / 2.0
 	add_child(frame)
 
+	GameState.leave_career()
 	_build_backdrop(frame)
 
 	var presents := UiTheme.label("BADGER-SOFT PRESENTS", UiTheme.BODY, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER)
@@ -55,15 +57,18 @@ func _ready() -> void:
 	frame.add_child(UiTheme.place(year, 0, 112, FRAME_SIZE.x, 96))
 
 	var left := (FRAME_SIZE.x - BUTTON_SIZE.x * 3 - BUTTON_GAP * 2) / 2.0
-	_start = _menu_button(frame, "START", left, _on_start)
-	_menu_button(frame, "SEASON", left + BUTTON_SIZE.x + BUTTON_GAP, _on_season)
+	_start = _menu_button(frame, "EXHIBITION", left, _on_exhibition)
+	_menu_button(frame, "CAREER", left + BUTTON_SIZE.x + BUTTON_GAP, _on_career)
 	_menu_button(frame, "BOXERS", left + (BUTTON_SIZE.x + BUTTON_GAP) * 2, _on_boxers)
 	_start.grab_focus()
 
 	var version := "VERSION %s  -  PROTOTYPE BUILD  -  2027 BADGER-SOFT" % ProjectSettings.get_setting("application/config/version", "0.1")
 	frame.add_child(UiTheme.place(UiTheme.label(version, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), 0, 752, FRAME_SIZE.x, 12))
 
-	if GameState.options.has("capture") and GameState.options.get("show", "") == "menu":
+	var show: String = GameState.options.get("show", "")
+	if GameState.options.has("capture") and show in ["menu", "career_menu"]:
+		if show == "career_menu":
+			_on_career()
 		_capture(GameState.options["capture"])
 
 
@@ -104,17 +109,20 @@ func _menu_button(frame: Control, text: String, x: float, action: Callable) -> B
 	return b
 
 
-func _on_season() -> void:
-	get_tree().change_scene_to_file("res://scenes/fixtures.tscn")
+func _on_career() -> void:
+	var menu := CareerMenu.new()
+	menu.closed.connect(func() -> void: _start.grab_focus())
+	add_child(menu)
 
 
 func _on_boxers() -> void:
+	GameState.picking = false
 	get_tree().change_scene_to_file("res://scenes/roster.tscn")
 
 
-func _on_start() -> void:
-	GameState.new_fight()
-	get_tree().change_scene_to_file("res://scenes/fight.tscn")
+func _on_exhibition() -> void:
+	GameState.picking = true
+	get_tree().change_scene_to_file("res://scenes/roster.tscn")
 
 
 func _capture(path: String) -> void:

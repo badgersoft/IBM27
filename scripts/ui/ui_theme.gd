@@ -44,6 +44,27 @@ static func get_theme() -> Theme:
 	_theme.set_color("font_hover_color", "Button", Palette.UI_GOLD)
 	_theme.set_color("font_pressed_color", "Button", Palette.UI_GOLD)
 	_theme.set_color("font_focus_color", "Button", Palette.UI_TEXT)
+	# Greyed out: no gold, dim text.
+	_theme.set_stylebox("disabled", "Button", box(Palette.UI_PANEL_DARK, Color(Palette.UI_TEXT_DIM, 0.35), 4))
+	_theme.set_color("font_disabled_color", "Button", Color(Palette.UI_TEXT_DIM, 0.55))
+
+	# Text boxes (names) and scrolling lists (countries, cities, nicknames).
+	_theme.set_stylebox("normal", "LineEdit", box(Palette.UI_PANEL_DARK, Color(Palette.UI_TEXT_DIM, 0.6), 2, 8))
+	_theme.set_stylebox("focus", "LineEdit", box(Color(0, 0, 0, 0), Palette.UI_GOLD, 2))
+	_theme.set_color("font_color", "LineEdit", Palette.UI_TEXT)
+	_theme.set_color("caret_color", "LineEdit", Palette.UI_GOLD)
+	_theme.set_stylebox("panel", "ItemList", box(Palette.UI_PANEL_DARK, Color(Palette.UI_TEXT_DIM, 0.6), 2, 8))
+	_theme.set_stylebox("focus", "ItemList", box(Color(0, 0, 0, 0), Palette.UI_GOLD, 2))
+	_theme.set_stylebox("selected", "ItemList", box(Palette.UI_PANEL.lightened(0.15), Palette.UI_GOLD, 2))
+	_theme.set_stylebox("selected_focus", "ItemList", box(Palette.UI_PANEL.lightened(0.15), Palette.UI_GOLD, 2))
+	_theme.set_stylebox("hovered", "ItemList", box(Color(1, 1, 1, 0.07), Color(0, 0, 0, 0), 0))
+	_theme.set_stylebox("cursor", "ItemList", StyleBoxEmpty.new())
+	_theme.set_stylebox("cursor_unfocused", "ItemList", StyleBoxEmpty.new())
+	_theme.set_color("font_color", "ItemList", Palette.UI_TEXT)
+	_theme.set_color("font_selected_color", "ItemList", Palette.UI_GOLD)
+	_theme.set_color("font_hovered_color", "ItemList", Palette.UI_GOLD)
+	_theme.set_constant("v_separation", "ItemList", 8)
+	_theme.set_color("guide_color", "ItemList", Color(0, 0, 0, 0))
 
 	_theme.set_stylebox("panel", "Panel", box(Palette.UI_PANEL, Palette.UI_BORDER, 2))
 	_theme.set_stylebox("panel", "PanelContainer", box(Palette.UI_PANEL, Palette.UI_BORDER, 2))

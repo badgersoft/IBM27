@@ -155,8 +155,11 @@ func _result_box(sim: FightSim, summary: Dictionary, purse: int) -> void:
 		var w: Fighter = sim.fighters[winner]
 		lines.append(["WINNER", w.data.display_name().to_upper(), Palette.corner_color(winner)])
 	lines.append(["METHOD", how, Palette.UI_TEXT])
-	var shares := Purse.split(purse, winner < 0)
-	lines.append(["PURSE", "%s  (%s / %s)" % [Purse.money_text(purse), Purse.money_text(shares[0]), Purse.money_text(shares[1])], Palette.UI_TEXT])
+	if purse > 0:
+		var shares := Purse.split(purse, winner < 0)
+		lines.append(["PURSE", "%s  (%s / %s)" % [Purse.money_text(purse), Purse.money_text(shares[0]), Purse.money_text(shares[1])], Palette.UI_TEXT])
+	else:
+		lines.append(["PURSE", "NONE - EXHIBITION", Palette.UI_TEXT_DIM])
 	for corner in 2:
 		lines.append(["RED" if corner == 0 else "BLUE", _rank_change(sim, summary, corner), Palette.UI_TEXT,
 				Palette.corner_color(corner)])
