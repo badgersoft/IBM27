@@ -26,6 +26,11 @@ const HYPE_LOUDEST_DB := -8.0
 const HYPE_FADE := 0.25
 ## How fast the volume follows the excitement (a second's share of the gap).
 const HYPE_FOLLOW := 6.0
+## By venue (Small Town Gym, City Gym, Boxing Hall, Grand Arena): the
+## murmur's volume, and how much quieter the cheering and roars are than in
+## the Grand Arena - fewer people, less noise.
+const CROWD_DB: Array[float] = [-24.0, -19.0, -14.0, -10.0]
+const CHEER_DB: Array[float] = [-11.0, -7.0, -3.5, 0.0]
 ## The crowd's reaction time, seconds: [shortest, longest].
 const CROWD_DELAY := Vector2(0.25, 0.4)
 
@@ -46,6 +51,7 @@ var _roar_player: AudioStreamPlayer
 var _hype_player: AudioStreamPlayer
 var _hype_level := 0.0          ## 0 - 1, how excited the crowd is.
 var _hype_hold := 0.0           ## Seconds before the cheering starts to fade.
+var _venue_db := 0.0            ## This venue's CHEER_DB.
 var _rng := RandomNumberGenerator.new()
 ## Crowd reactions still to come: [seconds left, Callable].
 var _pending: Array = []
@@ -107,22 +113,24 @@ func big_hit() -> void:
 
 ## The crowd approves of a judge's score.
 func cheer() -> void:
-	_play(_cheer, -13.0, _rng.randf_range(0.97, 1.03))
+	_play(_cheer, -13.0 + _venue_db, _rng.randf_range(0.97, 1.03))
 
 
 ## The crowd is not so sure about a judge's score.
 func oooh() -> void:
-	_play(_oooh, -17.0, _rng.randf_range(0.97, 1.03))
+	_play(_oooh, -17.0 + _venue_db, _rng.randf_range(0.97, 1.03))
 
 
 func block() -> void:
 	_play(_block, -10.0, _rng.randf_range(0.95, 1.1))
 
 
-## Starts the crowd murmur. Bigger venues are louder.
+## Starts the crowd murmur and sets how loud this venue's crowd is
+## (CROWD_DB, CHEER_DB): bigger venues are louder.
 func crowd_start(venue_id: int) -> void:
-	var levels := [-24.0, -19.0, -14.0, -10.0]
-	_crowd_player.volume_db = levels[clampi(venue_id, 0, levels.size() - 1)]
+	var venue := clampi(venue_id, 0, CROWD_DB.size() - 1)
+	_crowd_player.volume_db = CROWD_DB[venue]
+	_venue_db = CHEER_DB[venue]
 	if not _crowd_player.playing:
 		_crowd_player.play()
 
@@ -162,7 +170,7 @@ func _process(delta: float) -> void:
 		_hype_hold -= delta
 	else:
 		_hype_level = maxf(_hype_level - HYPE_FADE * delta, 0.0)
-	var target := lerpf(HYPE_QUIET_DB, HYPE_LOUDEST_DB, sqrt(_hype_level)) if _hype_level > 0.0 else HYPE_QUIET_DB
+	var target := lerpf(HYPE_QUIET_DB, HYPE_LOUDEST_DB + _venue_db, sqrt(_hype_level)) if _hype_level > 0.0 else HYPE_QUIET_DB
 	_hype_player.volume_db = lerpf(_hype_player.volume_db, target, minf(HYPE_FOLLOW * delta, 1.0))
 
 
@@ -172,7 +180,7 @@ func roar(amount: float) -> void:
 
 
 func _roar_now(amount: float) -> void:
-	_roar_player.volume_db = lerpf(-20.0, -6.0, clampf(amount, 0.0, 1.0))
+	_roar_player.volume_db = lerpf(-20.0, -6.0, clampf(amount, 0.0, 1.0)) + _venue_db
 	_roar_player.play()
 
 

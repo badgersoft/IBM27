@@ -4,6 +4,13 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.26
+
+* Smaller venues have quieter crowds: the cheering, the roars and the
+  crowd's reaction to the judges' scores are 11 dB quieter at the Small
+  Town Gym, 7 dB at the City Gym and 3.5 dB at the Boxing Hall than at the
+  Grand Arena (the murmur was already quieter in small venues).
+
 ## 0.1.25
 
 * The crowd reacts a moment after the punch: its roars and cheering now
