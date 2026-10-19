@@ -50,14 +50,14 @@ const BUBBLE_EDGE := 8.0        ## Gap between a bubble and the screen edge.
 const FRONT_ROPE_ALPHA := 0.45
 # --- Blood: a big punch sprays drops away from the puncher ---------------------------
 const BLOOD_TONES: Array[Color] = [Color("5c0809"), Color("9a0e12"), Color("d01c22")]
-const BLOOD_DROPS := Vector2i(14, 22)
+const BLOOD_DROPS := Vector2i(8, 13)
 const BLOOD_SPEED := Vector2(40.0, 110.0)    ## Sideways, arena pixels a second.
 const BLOOD_LIFT := Vector2(15.0, 60.0)      ## Upwards at the start.
-const BLOOD_BIG_DROP := 0.45                 ## Share of drops 2 pixels across.
+const BLOOD_BIG_DROP := 0.30                 ## Share of drops 2 pixels across.
 const BLOOD_GRAVITY := 260.0
 ## Drops land at the boxers' feet, a little nearer or further away.
 const BLOOD_FLOOR_SPREAD := 4.0
-const MAX_STAINS := 90
+const MAX_STAINS := 60
 const CALLOUT_SECONDS := 1.0    ## How long a "ONE-TWO!" call-out shows.
 const CALLOUT_RISE := 6.0       ## Pixels it drifts up while it shows.
 

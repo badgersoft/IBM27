@@ -4,6 +4,12 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.24
+
+* Less blood on big punches: 8 - 13 drops a punch (was 14 - 22), fewer of
+  them the bigger 2-pixel drops (30%, was 45%), and at most 60 stains on
+  the canvas (was 90).
+
 ## 0.1.23
 
 * Fixed: a tall boxer could spend a whole fight walking forward without
