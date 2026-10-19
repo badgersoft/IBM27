@@ -13,7 +13,11 @@ extends RefCounted
 ##   * Side notes: anyone in the player's division (Season.player_division)
 ##     who moved up the rankings, then retirements and new faces.
 ##
-##   * A round-up of the other results, biggest fights first.
+##   * A round-up of the other results: the player's own fight first, then
+##     the biggest fights.
+##
+## A rematch says so, with the head to head after it: "IT WAS THEIR SECOND
+## MEETING: COTE LEADS THEIR SERIES 2-0." (in the round-up just the series).
 ##
 ## Returns {"month", "date", "headline", "standfirst", "stories": [{"title",
 ## "text"}], "roundup": [String], "notes": [String], "results": [Fixture]}. Everything is upper
@@ -69,6 +73,7 @@ const LEAD_HEADLINES: Array[String] = [
 	"{W} SHINES AT THE {VENUE}",
 ]
 const QUIET_HEADLINE := "A QUIET MONTH IN THE RING"
+const ORDINALS: Array[String] = ["", "FIRST", "SECOND", "THIRD", "FOURTH", "FIFTH", "SIXTH"]
 
 
 static func write(season: Season, month: int, rng: RandomNumberGenerator) -> Dictionary:
@@ -99,13 +104,13 @@ static func write(season: Season, month: int, rng: RandomNumberGenerator) -> Dic
 	var stories: Array = []
 	var covered: Array[Fixture] = []
 	for f in titles:
-		stories.append(_title_story(f, rng))
+		stories.append(_with_series(_title_story(f, rng), f, season))
 		covered.append(f)
 
 	# Features: great professional fights with a top man in them.
 	for f in results:
 		if f.is_done() and not titles.has(f) and _is_feature(f):
-			stories.append(_feature_story(f, rng))
+			stories.append(_with_series(_feature_story(f, rng), f, season))
 			covered.append(f)
 	# A title fight that was also a classic gets the feature's praise too.
 	for i in titles.size():
@@ -115,7 +120,7 @@ static func write(season: Season, month: int, rng: RandomNumberGenerator) -> Dic
 	if stories.is_empty():
 		var lead := _lead_fight(results)
 		if lead != null:
-			stories.append(_lead_story(lead, rng))
+			stories.append(_with_series(_lead_story(lead, rng), lead, season))
 			covered.append(lead)
 	if not stories.is_empty():
 		paper["headline"] = stories[0]["title"]
@@ -123,29 +128,49 @@ static func write(season: Season, month: int, rng: RandomNumberGenerator) -> Dic
 		paper["stories"] = stories.slice(1, 1 + MAX_STORIES)
 
 	covered.resize(mini(covered.size(), 1 + MAX_STORIES))
-	paper["roundup"] = _roundup(results, covered)
+	paper["roundup"] = _roundup(results, covered, season)
 	paper["notes"] = _movers(results, season.player_division) + season.notes
 	return paper
 
 
 ## One line for each fight not in a story: the longest (best) fights first.
-static func _roundup(results: Array[Fixture], covered: Array[Fixture]) -> Array[String]:
+static func _roundup(results: Array[Fixture], covered: Array[Fixture], season: Season) -> Array[String]:
 	var rest: Array[Fixture] = []
 	for f in results:
 		if f.is_done() and not covered.has(f):
 			rest.append(f)
+	var player := season.player
 	rest.sort_custom(func(a: Fixture, b: Fixture) -> bool:
+		var a_mine := player != null and a.involves(player)
+		var b_mine := player != null and b.involves(player)
+		if a_mine != b_mine:
+			return a_mine
 		if a.rounds != b.rounds:
 			return a.rounds > b.rounds
 		return a.purse > b.purse)
 	var out: Array[String] = []
 	for f: Fixture in rest.slice(0, ROUNDUP_LINES):
 		var w := f.winner()
+		var line := ""
 		if w == null:
-			out.append("%s AND %s DREW." % [f.red.last_name.to_upper(), f.blue.last_name.to_upper()])
+			line = "%s AND %s DREW." % [f.red.last_name.to_upper(), f.blue.last_name.to_upper()]
 		else:
-			out.append("%s BEAT %s (%s)." % [w.last_name.to_upper(), f.opponent_of(w).last_name.to_upper(), f.result_text()])
+			line = "%s BEAT %s (%s)." % [w.last_name.to_upper(), f.opponent_of(w).last_name.to_upper(), f.result_text()]
+		var h := season.head_to_head(f.red, f.blue)
+		if h[0] + h[1] + h[2] > 1:
+			line += " " + Season.series_text(f.red, f.blue, h) + "."
+		out.append(line)
 	return out
+
+
+## Adds the head to head to [param story] if [param f] was a rematch.
+static func _with_series(story: Dictionary, f: Fixture, season: Season) -> Dictionary:
+	var h := season.head_to_head(f.red, f.blue)
+	var meetings := h[0] + h[1] + h[2]
+	if meetings > 1:
+		var nth: String = ORDINALS[meetings] if meetings < ORDINALS.size() else "%dTH" % meetings
+		story["text"] += " IT WAS THEIR %s MEETING: %s." % [nth, Season.series_text(f.red, f.blue, h)]
+	return story
 
 
 # ----------------------------------------------------------------------------

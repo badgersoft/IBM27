@@ -139,6 +139,42 @@ func fought_recently(a: BoxerData, b: BoxerData, since: int) -> bool:
 	return false
 
 
+## Their head to head: [[param a]'s wins, [param b]'s wins, draws] in the
+## fights between them that have been fought (exhibitions are not kept).
+func head_to_head(a: BoxerData, b: BoxerData) -> Array[int]:
+	var out: Array[int] = [0, 0, 0]
+	for f in fixtures:
+		if f.is_done() and f.involves(a) and f.involves(b):
+			var w := f.winner()
+			if w == null:
+				out[2] += 1
+			elif w == a:
+				out[0] += 1
+			else:
+				out[1] += 1
+	return out
+
+
+## A head to head as a score: "2-1", or "2-1-1" with draws.
+static func series_score(h: Array[int], a_first := true) -> String:
+	var first := h[0] if a_first else h[1]
+	var second := h[1] if a_first else h[0]
+	if h[2] > 0:
+		return "%d-%d-%d" % [first, second, h[2]]
+	return "%d-%d" % [first, second]
+
+
+## "COTE LEADS THEIR SERIES 2-1", "THEIR SERIES IS ALL SQUARE AT 1-1", or
+## "" if [param a] and [param b] have never met.
+static func series_text(a: BoxerData, b: BoxerData, h: Array[int]) -> String:
+	if h[0] + h[1] + h[2] == 0:
+		return ""
+	if h[0] == h[1]:
+		return "THEIR SERIES IS ALL SQUARE AT %s" % series_score(h)
+	var leader := a if h[0] > h[1] else b
+	return "%s LEADS THEIR SERIES %s" % [leader.last_name.to_upper(), series_score(h, leader == a)]
+
+
 func rankings_of(b: BoxerData) -> Rankings:
 	return _rankings[b.division]
 

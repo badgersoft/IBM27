@@ -102,6 +102,12 @@ func _ready() -> void:
 	if options.get("order", "") == "rank":
 		roster_order = ListOrder.RANKING
 	_new_world()
+	if options.has("career") and load_career(str(options["career"])):
+		# A saved career (screenshots): his next fight, if he has one, is the
+		# one a fight scene shows.
+		var next := season.booking(career.boxer)
+		if next != null:
+			watch_fixture(next)
 	for m in int(options.get("months", 0)):
 		season.play_month()
 	paper_index = season.papers.size() - 1

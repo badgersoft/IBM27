@@ -26,23 +26,28 @@ const FIRST_ROW_Y := 48
 const ROW_H := 52
 const MAX_ROWS := 10
 ## Opponent columns inside the list: [caption, x, width, alignment].
+## VS YOU is the head to head with him (your wins first), "-" if you have
+## never met.
 const COLUMNS := [
 	["RANK",    24,  48, HORIZONTAL_ALIGNMENT_RIGHT],
-	["NAME",    96, 320, HORIZONTAL_ALIGNMENT_LEFT],
-	["",       424, 224, HORIZONTAL_ALIGNMENT_LEFT],
-	["RECORD", 656, 176, HORIZONTAL_ALIGNMENT_CENTER],
+	["NAME",    96, 256, HORIZONTAL_ALIGNMENT_LEFT],
+	["",       360, 176, HORIZONTAL_ALIGNMENT_LEFT],
+	["VS YOU", 544, 112, HORIZONTAL_ALIGNMENT_CENTER],
+	["RECORD", 664, 168, HORIZONTAL_ALIGNMENT_CENTER],
 	["OVR",    840,  80, HORIZONTAL_ALIGNMENT_CENTER],
 	["STYLE",  928,  96, HORIZONTAL_ALIGNMENT_CENTER],
 	["PURSE", 1040, 176, HORIZONTAL_ALIGNMENT_RIGHT],
 ]
 ## The purse offer pop-up (and the answer).
 const OFFER_W := 1120
-const OFFER_H := 336
+const OFFER_H := 360
+const OFFER_MOOD_Y := 80
+const OFFER_H2H_Y := 112
 const OFFER_BUTTON := Vector2(192, 56)
-const OFFER_BUTTON_Y := 128
-const OFFER_NAME_Y := 192
-const OFFER_RULE_Y := 232
-const OFFER_OK_Y := 272
+const OFFER_BUTTON_Y := 152
+const OFFER_NAME_Y := 216
+const OFFER_RULE_Y := 256
+const OFFER_OK_Y := 296
 const OFFER_NAMES: Array[String] = ["LOW", "LOWER", "USUAL", "HIGHER", "HIGH"]
 
 var _frame: Control
@@ -177,9 +182,11 @@ func _build_list() -> void:
 		if turned_down:
 			note = "TURNED YOU DOWN"
 		var dim := not usable
+		var h := _season.head_to_head(_career.boxer, b)
+		var met := h[0] + h[1] + h[2] > 0
 		var values := [
-			table.rank_label(b), _short(b), note, b.record(), str(b.overall()), b.style_short(),
-			Purse.money_text(_career.usual_purse(_season, b)),
+			table.rank_label(b), _short(b), note, Season.series_score(h) if met else "-", b.record(),
+			str(b.overall()), b.style_short(), Purse.money_text(_career.usual_purse(_season, b)),
 		]
 		for c in COLUMNS.size():
 			var col: Array = COLUMNS[c]
@@ -188,6 +195,9 @@ func _build_list() -> void:
 				colour = Palette.UI_GOLD
 			if c == 2:
 				colour = Palette.UI_GOLD if keen and not dim else Palette.UI_TEXT_DIM
+			if c == 3 and not dim:
+				# Gold if you lead him, dim if you have never met.
+				colour = Palette.UI_GOLD if h[0] > h[1] else (Palette.UI_TEXT if met else Palette.UI_TEXT_DIM)
 			var size := UiTheme.CAPTION if c == 2 else UiTheme.BODY
 			var cell := UiTheme.label(values[c], size, colour, col[3])
 			panel.add_child(UiTheme.place(cell, col[1], y + (ROW_H - UiTheme.ROW_H) / 2.0, col[2], UiTheme.ROW_H))
@@ -203,7 +213,11 @@ func _offer(b: BoxerData) -> void:
 	var offers := _career.purse_offers(_season, b)
 	var keen := _career.requests.has(b.id)
 	var mood := "HE WANTS THIS FIGHT - ANY FAIR OFFER SHOULD DO." if keen else "HE IS UNSURE - A BIGGER PURSE MAY TEMPT HIM."
-	box.add_child(UiTheme.place(UiTheme.label(mood, UiTheme.BODY, Palette.UI_GOLD if keen else Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER), 0, 80, OFFER_W, UiTheme.ROW_H))
+	box.add_child(UiTheme.place(UiTheme.label(mood, UiTheme.BODY, Palette.UI_GOLD if keen else Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER), 0, OFFER_MOOD_Y, OFFER_W, UiTheme.ROW_H))
+	var h := _season.head_to_head(_career.boxer, b)
+	var h2h := "HEAD TO HEAD: " + _series_for_you(h)
+	var h2h_colour := Palette.UI_TEXT if h[0] + h[1] + h[2] > 0 else Palette.UI_TEXT_DIM
+	box.add_child(UiTheme.place(UiTheme.label(h2h, UiTheme.BODY, h2h_colour, HORIZONTAL_ALIGNMENT_CENTER), 0, OFFER_H2H_Y, OFFER_W, UiTheme.ROW_H))
 	var row_w := OFFER_BUTTON.x * 5 + PAD * 4
 	var x0 := (OFFER_W - row_w) / 2.0
 	var first: Button = null
@@ -224,6 +238,17 @@ func _offer(b: BoxerData) -> void:
 	box.add_child(UiTheme.place(UiTheme.label(rule, UiTheme.BODY, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), 0, OFFER_RULE_Y, OFFER_W, UiTheme.ROW_H))
 	var cancel := _popup_button("CANCEL", (OFFER_W - 256) / 2.0, OFFER_OK_Y, _close_popup)
 	(first if first != null else cancel).grab_focus()
+
+
+## "FIRST MEETING", "YOU LEAD 2-1", "HE LEADS 1-0" or "ALL SQUARE AT 1-1".
+static func _series_for_you(h: Array[int]) -> String:
+	if h[0] + h[1] + h[2] == 0:
+		return "FIRST MEETING"
+	if h[0] == h[1]:
+		return "ALL SQUARE AT %s" % Season.series_score(h)
+	if h[0] > h[1]:
+		return "YOU LEAD %s" % Season.series_score(h)
+	return "HE LEADS %s" % Season.series_score(h, false)
 
 
 func _make_offer(b: BoxerData, offer: int) -> void:

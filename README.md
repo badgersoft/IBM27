@@ -464,6 +464,17 @@ can pay for its first week.
   arranged the list is greyed out and **CANCEL FIGHT** calls it off, for a
   forfeit of a quarter of the purse.
 * A fight between the top two men for a vacant title is for the title.
+* **Head to head**: the VS YOU column shows his record against each man
+  (his wins first: 2-0, or 1-1-1 with a draw), "-" if they have never met;
+  gold if he leads. The purse offer says it too: FIRST MEETING, YOU LEAD
+  2-0, HE LEADS 1-0 or ALL SQUARE AT 1-1.
+
+Head to heads count every fight in the season between the two men (not
+exhibitions). The **tale of the tape** has a HEAD TO HEAD row with each
+man's wins (FIRST MEETING if they have never fought), and the **newspaper**
+says when a fight was a rematch ("IT WAS THEIR SECOND MEETING: MURRAY
+LEADS THEIR SERIES 2-0."; just the series in the round-up). The player's
+own fight always heads the round-up.
 
 ![A new boxer](docs/screenshots/new_boxer.png)
 
@@ -661,6 +672,7 @@ Command-line options read by the game (after `--`):
 | `--offer`                  | With `--show=schedule`, open the purse offer for the first opponent                                                                                                                                   |
 | `--train=<0-4>`            | Career screens: the boxer trains that session this week (4 = RECOVERY)                                                                                                                                 |
 | `--offers=<n>`             | Career screens: the first n men he could fight are offering him a fight                                                                                                                                |
+| `--career=<path>`          | Load a saved career (e.g. `user://careers/career_1.tres`); a fight scene shows his next fight                                                                                                           |
 | `--wait=<seconds>`         | Real seconds to wait before the shot (e.g. mid read-out)                                                                                                                                               |
 | `--at=<seconds>`           | Earliest real second of round 1 to capture (default 20)                                                                                                                                                |
 

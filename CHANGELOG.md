@@ -4,7 +4,21 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
-## 0.1.16
+## 0.1.17
+
+* Head to head records, from every fight the two men have had this season
+  (exhibitions don't count):
+  * Schedule: a VS YOU column with your record against each man (your wins
+    first, gold if you lead, "-" if you have never met), and the purse
+    offer says FIRST MEETING, YOU LEAD 2-0, HE LEADS 1-0 or ALL SQUARE.
+  * Tale of the tape: a HEAD TO HEAD row with each man's wins, or FIRST
+    MEETING (the tape is a row taller).
+  * Newspaper: a rematch says so ("IT WAS THEIR SECOND MEETING: MURRAY
+    LEADS THEIR SERIES 2-0."), in the round-up just the series. The
+    player's own fight now always heads the round-up.
+* Developer option `--career=<path>` loads a saved career (a fight scene
+  then shows his next fight).
+
 
 * New boxer screen: POINTS AVAILABLE (was POINTS LEFT) now sits at the top
   of the SKILLS box, level with NAME and SURNAME, so the six skills line up

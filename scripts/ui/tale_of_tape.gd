@@ -1,6 +1,8 @@
 class_name TaleOfTape
 extends Control
-## Pre-fight "tale of the tape" comparing the two boxers (1040 x 488).
+## Pre-fight "tale of the tape" comparing the two boxers (1040 x 512).
+## HEAD TO HEAD gives each man's wins in their earlier fights (gold for the
+## man who leads), or FIRST MEETING.
 ##
 ## Classic layout: red corner values right-aligned against the centre labels,
 ## blue corner values left-aligned, so the eye can run straight across a row.
@@ -9,7 +11,7 @@ extends Control
 signal dismissed
 
 const W := 1040
-const H := 488
+const H := 512
 const PAD := 16
 const VALUE_W := 384
 const LABEL_W := 240
@@ -44,6 +46,7 @@ func setup(red: BoxerData, blue: BoxerData, venue_id: int, rounds: int, title_fi
 		["HOMETOWN", red.hometown().to_upper(), blue.hometown().to_upper()],
 		["AGE", str(red.age), str(blue.age)],
 		["RECORD", red.record_with_kos(), blue.record_with_kos()],
+		_head_to_head(red, blue),
 		["HEIGHT", _height(red), _height(blue)],
 		["WEIGHT", "%d LB" % red.weight_lb, "%d LB" % blue.weight_lb],
 		["STYLE", red.style_name().to_upper(), blue.style_name().to_upper()],
@@ -62,6 +65,10 @@ func setup(red: BoxerData, blue: BoxerData, venue_id: int, rounds: int, title_fi
 		if i == 0:
 			red_colour = Palette.UI_RED
 			blue_colour = Palette.UI_BLUE
+		elif row[0] == "HEAD TO HEAD":
+			var h := GameState.season.head_to_head(red, blue)
+			red_colour = Palette.UI_GOLD if h[0] > h[1] else Palette.UI_TEXT
+			blue_colour = Palette.UI_GOLD if h[1] > h[0] else Palette.UI_TEXT
 		elif row[0] == "RANKING":
 			# The champion's line is in gold.
 			red_colour = Palette.UI_GOLD if GameState.is_champion(red) else Palette.UI_TEXT
@@ -94,6 +101,20 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
 		dismissed.emit()
 		accept_event()
+
+
+## [label, red, blue]: each man's wins (and any draws) against the other, or
+## FIRST MEETING with nothing either side.
+static func _head_to_head(red: BoxerData, blue: BoxerData) -> Array:
+	var h := GameState.season.head_to_head(red, blue)
+	if h[0] + h[1] + h[2] == 0:
+		return ["FIRST MEETING", "", ""]
+	var draws := "  %d DRAW%s" % [h[2], "S" if h[2] > 1 else ""] if h[2] > 0 else ""
+	return ["HEAD TO HEAD", _wins(h[0]) + draws, _wins(h[1]) + draws]
+
+
+static func _wins(n: int) -> String:
+	return "%d WIN%s" % [n, "" if n == 1 else "S"]
 
 
 static func _nick(b: BoxerData) -> String:
