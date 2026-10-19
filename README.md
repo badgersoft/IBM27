@@ -383,9 +383,9 @@ or best fight leads. A round-up of the other results follows, and IN BRIEF
 notes everyone who climbed the rankings in the player's division (the
 middleweights, until there is a player's boxer), plus retirements and new
 faces. RESULTS lists every fight of the month with its rating, and keeps
-the full verdict under each result for the record (UNANIMOUS, SPLIT or
-MAJORITY DECISION, the kind of draw, KNOCKOUT or TECHNICAL KNOCKOUT); the
-Fixtures screen's LAST MONTH shows the same.
+the kind of result under each one for the record (UD, SD or MD under
+POINTS, UNANIMOUS / MAJORITY / SPLIT under DRAW, 3 KNOCKDOWNS under a TKO);
+the Fixtures screen's LAST MONTH shows the same.
 
 ![The fixtures](docs/screenshots/fixtures.png)
 

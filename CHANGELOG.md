@@ -4,6 +4,12 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.22
+
+* Results pages: the small type under each result is shorter - UD, SD or
+  MD under POINTS, UNANIMOUS / MAJORITY / SPLIT under DRAW, 3 KNOCKDOWNS
+  under a TKO, and nothing under a KO - and stays inside the RESULT column.
+
 ## 0.1.21
 
 * Round-up: a decision now reads "(POINTS)" instead of UD / SD / MD, and a

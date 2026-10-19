@@ -74,24 +74,20 @@ func result_text() -> String:
 	return "POINTS"
 
 
-## The full verdict, for the record: "UNANIMOUS DECISION", "SPLIT DECISION",
-## "MAJORITY DECISION", "SPLIT DRAW" (or UNANIMOUS / MAJORITY DRAW),
-## "KNOCKOUT" or "TECHNICAL KNOCKOUT" (three knockdowns in a round).
+## The kind of result, in short, for the record under result_text(): the
+## decision (UD unanimous, SD split, MD majority), the kind of draw
+## (UNANIMOUS, MAJORITY, SPLIT), "3 KNOCKDOWNS" for a TKO, nothing for a KO.
 func verdict_text() -> String:
 	if not is_done():
 		return ""
 	match result["method"]:
 		"KO":
-			return "KNOCKOUT"
+			return ""
 		"TKO":
-			return "TECHNICAL KNOCKOUT"
-		"UD":
-			return "UNANIMOUS DECISION"
-		"SD":
-			return "SPLIT DECISION"
-		"MD":
-			return "MAJORITY DECISION"
-	return ("%s DRAW" % str(result.get("detail", ""))).strip_edges()
+			return "3 KNOCKDOWNS"
+		"UD", "SD", "MD":
+			return result["method"]
+	return str(result.get("detail", ""))
 
 
 # ----------------------------------------------------------------------------
