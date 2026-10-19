@@ -4,6 +4,12 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.25
+
+* The crowd reacts a moment after the punch: its roars and cheering now
+  start 0.25 - 0.4 seconds after the thud (a little different each time),
+  instead of on the same instant.
+
 ## 0.1.24
 
 * Less blood on big punches: 8 - 13 drops a punch (was 14 - 22), fewer of

@@ -13,6 +13,10 @@ extends Node
 ##   roar   - the crowd reacting to a big moment
 ##   hype   - a looping cheer under everything that swells when the crowd
 ##            gets excited and holds for a while before it dies away (excite)
+##
+## The crowd reacts a moment after the punch: roar and excite wait
+## CROWD_DELAY seconds (a little more or less each time) before they sound,
+## so the thud comes first and the cheer follows it.
 
 const RATE := 22050
 ## The cheering bed: silent at rest, HYPE_LOUDEST at full excitement. Once
@@ -22,6 +26,8 @@ const HYPE_LOUDEST_DB := -8.0
 const HYPE_FADE := 0.25
 ## How fast the volume follows the excitement (a second's share of the gap).
 const HYPE_FOLLOW := 6.0
+## The crowd's reaction time, seconds: [shortest, longest].
+const CROWD_DELAY := Vector2(0.25, 0.4)
 
 var _bell: AudioStreamWAV
 var _start_bell: AudioStreamWAV
@@ -41,6 +47,8 @@ var _hype_player: AudioStreamPlayer
 var _hype_level := 0.0          ## 0 - 1, how excited the crowd is.
 var _hype_hold := 0.0           ## Seconds before the cheering starts to fade.
 var _rng := RandomNumberGenerator.new()
+## Crowd reactions still to come: [seconds left, Callable].
+var _pending: Array = []
 
 
 func _ready() -> void:
@@ -120,6 +128,7 @@ func crowd_start(venue_id: int) -> void:
 
 
 func crowd_stop() -> void:
+	_pending.clear()
 	_crowd_player.stop()
 	_hype_player.stop()
 	_hype_level = 0.0
@@ -130,6 +139,10 @@ func crowd_stop() -> void:
 ## up for [param hold] seconds before it slowly dies away. A bigger moment
 ## lifts it further; a smaller one never cuts a bigger one short.
 func excite(amount: float, hold: float) -> void:
+	_later(_excite_now.bind(amount, hold))
+
+
+func _excite_now(amount: float, hold: float) -> void:
 	if not _hype_player.playing:
 		_hype_player.play()
 	_hype_level = maxf(_hype_level, clampf(amount, 0.0, 1.0))
@@ -137,6 +150,12 @@ func excite(amount: float, hold: float) -> void:
 
 
 func _process(delta: float) -> void:
+	for i in range(_pending.size() - 1, -1, -1):
+		_pending[i][0] -= delta
+		if _pending[i][0] <= 0.0:
+			var react: Callable = _pending[i][1]
+			_pending.remove_at(i)
+			react.call()
 	if not _hype_player.playing:
 		return
 	if _hype_hold > 0.0:
@@ -149,6 +168,10 @@ func _process(delta: float) -> void:
 
 ## The crowd reacts. [param amount] 0 - 1.
 func roar(amount: float) -> void:
+	_later(_roar_now.bind(amount))
+
+
+func _roar_now(amount: float) -> void:
 	_roar_player.volume_db = lerpf(-20.0, -6.0, clampf(amount, 0.0, 1.0))
 	_roar_player.play()
 
@@ -156,6 +179,11 @@ func roar(amount: float) -> void:
 # ============================================================================
 #  Playback
 # ============================================================================
+
+## Runs [param react] after the crowd's reaction time.
+func _later(react: Callable) -> void:
+	_pending.append([_rng.randf_range(CROWD_DELAY.x, CROWD_DELAY.y), react])
+
 
 func _play(stream: AudioStream, volume_db: float, pitch: float) -> void:
 	var p := _players[_next_player]
