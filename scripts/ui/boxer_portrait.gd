@@ -44,8 +44,10 @@ func _init(view: Vector2i, scale_by: int, figure: float, feet: float) -> void:
 	add_child(UiTheme.place(picture, 0, 0, size.x, size.y))
 
 
-## Draws [param b] (gloves in his trunks' colour; there is no corner here).
+## Draws [param b] (in his own gloves if he has them, otherwise gloves in
+## his trunks' colour; there is no corner here).
 func show_boxer(b: BoxerData) -> void:
 	_rig.setup_boxer(b, 0, true, figure_size)
-	_rig.set_glove_tones(Palette.TRUNKS[b.trunks_index]["tones"])
+	var gloves := b.gloves_index if b.gloves_index >= 0 else b.trunks_index
+	_rig.set_glove_tones(Palette.TRUNKS[gloves]["tones"])
 	_rig.queue_redraw()

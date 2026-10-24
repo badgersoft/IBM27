@@ -54,8 +54,15 @@ const SPECIAL_MIN_FIGHTS := 12
 const NAME_ATTEMPTS := 40
 ## Share of managers from their boxer's own country.
 const HOME_MANAGER := 0.7
-## A new career's boxer starts with this in every skill.
+## A new career's boxer starts with this in every skill...
 const PLAYER_START_SKILL := 35
+## ...except these, by division (Lightweight, Middleweight, Heavyweight):
+## lighter men are quicker, heavier men hit harder.
+const PLAYER_DIVISION_START: Array[Dictionary] = [
+	{"speed": 45},
+	{"speed": 40, "power": 40},
+	{"power": 45},
+]
 ## Chance a new prospect already has a nickname.
 const PROSPECT_NICKNAME := 0.3
 
@@ -118,7 +125,7 @@ func generate_boxer(avoid_trunks: Array[int] = [], division: Divisions.Id = Divi
 	b.skin_index = _rng.randi_range(0, Palette.SKIN_TONES.size() - 1)
 	b.hair_index = _rng.randi_range(0, Palette.HAIR_TONES.size() - 1)
 	b.hair_style = _rng.randi_range(0, Palette.HAIR_STYLES.size() - 1)
-	b.boots_index = _rng.randi_range(0, Palette.BOOTS.size() - 1)
+	b.boots_index = _rng.randi_range(0, Palette.NPC_BOOTS - 1)
 	b.trunks_index = _pick_trunks(avoid_trunks)
 
 	# --- Fighting style and skills ---------------------------------------------
@@ -159,16 +166,18 @@ func generate_prospect(division: Divisions.Id, avoid_names: Array[String],
 	return b
 
 
-## A new career's boxer: a random look, name and hometown in
-## [param division], aged 20 with no fights, every skill at
-## PLAYER_START_SKILL (the player spends PLAYER_POOL more on the setup
+## A new career's boxer: a random look (his own gloves and boots too), name
+## and hometown in [param division], aged 20 with no fights, every skill at
+## player_start_skill() (the player spends PLAYER_POOL more on the setup
 ## screen) and no nickname yet.
 func generate_player(division: Divisions.Id) -> BoxerData:
 	var b := generate_boxer([], division)
 	b.is_player = true
 	b.style = BoxerData.Style.BOXER
+	b.gloves_index = _rng.randi_range(0, Palette.TRUNKS.size() - 1)
+	b.boots_index = _rng.randi_range(0, Palette.BOOTS.size() - 1)
 	for skill in ["power", "speed", "stamina", "chin", "strength", "intelligence"]:
-		b.set(skill, PLAYER_START_SKILL)
+		b.set(skill, player_start_skill(division, skill))
 	b.recovery = PLAYER_START_SKILL
 	b.age = 20
 	b.wins = 0
@@ -179,6 +188,11 @@ func generate_player(division: Divisions.Id) -> BoxerData:
 	b.birth_month = _rng.randi_range(0, 11)
 	b.start_health = 90.0
 	return b
+
+
+## Where a new career's boxer starts in [param skill] in [param division].
+static func player_start_skill(division: int, skill: String) -> int:
+	return int(PLAYER_DIVISION_START[division].get(skill, PLAYER_START_SKILL))
 
 
 ## Height and weight to suit [param b]'s division (after a change of division).

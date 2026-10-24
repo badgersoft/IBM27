@@ -4,7 +4,37 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
-## 0.1.26
+## 0.1.27
+
+* New boxer screen: GLOVES and BOOTS colours to choose as well as TRUNKS.
+  He wears his own gloves in the ring whichever corner he is in (the
+  computer's boxers keep their corner's red or blue). DIVISION and STYLE
+  moved under his portrait (a little smaller) to make room.
+* Starting skills by division: a lightweight starts with speed 45, a
+  middleweight with speed 40 and power 40, a heavyweight with power 45
+  (the rest 35). Points already spent stay with him if he changes
+  division.
+* Fixed: the month only moved on if you read the paper after fight night.
+  Now it ends the moment the last fight is done (on fight night - the
+  fights can't be fought earlier in the month), and READ THE PAPER is just
+  for reading it.
+* The player's own fight is always fought in the ring: on fight night the
+  fixtures button reads YOUR FIGHT and goes to the ring; PLAY MONTH (which
+  never simulates his fight) comes after.
+* In his own fights the player is in his boxer's corner:
+  * Between rounds, ORDERS for the next round (the bell waits): HANDS UP,
+    STAY SAFE / STICK TO THE PLAN / TURN UP THE HEAT / TAKE HIM OUT.
+  * Once a round, a shout for 15 seconds (buttons along the bottom of the
+    ring, or A / D / K): ATTACK! (about 50% more punches), DEFEND! (about a
+    third fewer, more guarding and slipping, fewer big shots taken) or
+    KNOCK HIM OUT! (as many punches as ATTACK!, more power punches, about
+    three times the big punches - and about three times the big counters
+    coming back).
+* All trainers' corner advice uses the same words (TURN UP THE HEAT!,
+  HANDS UP, STAY SAFE!, STICK TO THE PLAN!, TAKE HIM OUT!).
+* Developer: `--manage=<0|1>` puts the player in a corner of any fight,
+  and `--show=orders` captures the orders between rounds.
+
 
 * Smaller venues have quieter crowds: the cheering, the roars and the
   crowd's reaction to the judges' scores are 11 dB quieter at the Small

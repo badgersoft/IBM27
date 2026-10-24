@@ -19,6 +19,12 @@ extends Control
 ## rest of the fight is fought at once), and QUIT FIGHT only for a fight that
 ## counts for nothing (a season fight can't be walked out of and watched
 ## again); once it is over it goes to the fight stats.
+##
+## The player's own fight (his boxer in a career fixture, or --manage=<0|1>):
+## he is in that boxer's corner. Between rounds an ORDERS panel asks for the
+## next round's tactic (the bell waits for it); during a round three SHOUT
+## buttons (or A / D / K) give one shout a round - ATTACK, DEFEND or KNOCK
+## HIM OUT (see Fighter.Shout).
 
 const FRAME_SIZE := Vector2(1280, 800)
 const ARENA_SCALE := 3
@@ -41,6 +47,18 @@ const PAUSE_W := 480
 const PAUSE_BUTTON := Vector2(320, 48)
 const PAUSE_FIRST_Y := 96
 const PAUSE_STEP := 64
+## The ORDERS panel between rounds: the tactics in the order shown (two by
+## two), and its size.
+const ORDERS: Array[Fighter.Advice] = [Fighter.Advice.DEFEND_MORE, Fighter.Advice.KEEP_IT_UP,
+		Fighter.Advice.ATTACK_MORE, Fighter.Advice.ALL_OUT]
+const ORDERS_SIZE := Vector2(720, 216)
+const ORDER_BUTTON := Vector2(320, 48)
+## The SHOUT bar along the bottom of the ring during a round.
+const SHOUTS: Array[Fighter.Shout] = [Fighter.Shout.ATTACK, Fighter.Shout.DEFEND, Fighter.Shout.KNOCKOUT]
+const SHOUT_KEYS: Array[Key] = [KEY_A, KEY_D, KEY_K]
+const SHOUT_BUTTON := Vector2(304, 40)
+const SHOUT_GAP := 16
+const SHOUT_BOTTOM := 16
 
 var sim: FightSim
 var view: ArenaView
@@ -58,6 +76,10 @@ var _result: ResultBand
 var _ceremony: Ceremony
 var _post: PostFight
 var _pause: Control = null
+var _human := -1                 ## The player's corner, or -1.
+var _orders: Control = null
+var _shout_bar: Control = null
+var _shout_buttons: Array[Button] = []
 ## What the result did to the two boxers (see Season.record_result), with
 ## their places before and after; filled in when the fight ends.
 var _summary := {}
@@ -82,6 +104,8 @@ func _ready() -> void:
 
 	sim = FightSim.new(red, blue, GameState.fight_seed(), GameState.rounds)
 	sim.title_fight = GameState.title_fight
+	_human = _players_corner(red, blue)
+	sim.human_corner = _human
 	_connect_sim()
 
 	view = ArenaView.new()
@@ -97,6 +121,17 @@ func _ready() -> void:
 		_run_capture()
 
 
+## The corner the player is in: his boxer's in his own fixture (or
+## --manage for screenshots), otherwise -1.
+static func _players_corner(red: BoxerData, blue: BoxerData) -> int:
+	if GameState.options.has("manage"):
+		return clampi(int(GameState.options["manage"]), 0, 1)
+	var career := GameState.career
+	if career == null or GameState.fixture == null or not GameState.fixture.involves(career.boxer):
+		return -1
+	return 0 if red == career.boxer else 1
+
+
 func _process(delta: float) -> void:
 	if _capturing or _pause != null:
 		return
@@ -106,6 +141,7 @@ func _process(delta: float) -> void:
 			_begin_fight()
 	sim.step(delta)
 	_sync_rigs()
+	_update_shout_bar()
 	_update_banner(delta)
 	_refresh_hud(delta)
 	if _result_clock >= 0.0:
@@ -118,6 +154,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		_on_back()
 		get_viewport().set_input_as_handled()
+	elif event is InputEventKey and event.pressed and not event.echo and _human >= 0 and _pause == null:
+		var i := SHOUT_KEYS.find((event as InputEventKey).keycode)
+		if i >= 0:
+			_shout(SHOUTS[i])
+			get_viewport().set_input_as_handled()
 	elif sim.phase == FightSim.Phase.INTRO and _pause == null:
 		var tapped: bool = event is InputEventMouseButton and event.pressed
 		if tapped or event.is_action_pressed("ui_accept"):
@@ -192,6 +233,8 @@ func _close_pause() -> void:
 ## verdict as if it had been watched to the end.
 func _skip_to_result() -> void:
 	_close_pause()
+	_close_orders()
+	sim.release_human()
 	sim.set_block_signals(true)
 	var steps := 0
 	while sim.phase != FightSim.Phase.FINISHED and steps < Season.MAX_STEPS:
@@ -281,6 +324,8 @@ func _build_layout(red: BoxerData, blue: BoxerData) -> void:
 	_tape.position = (arena_size - Vector2(TaleOfTape.W, TaleOfTape.H)) / 2.0
 	_tape.dismissed.connect(_begin_fight)
 	_tape.back_pressed.connect(_leave)
+	if _human >= 0:
+		_build_shout_bar()
 	_overlay.add_child(_tape)
 
 
@@ -301,6 +346,8 @@ func _connect_sim() -> void:
 	sim.fighter_rose.connect(_on_fighter_rose)
 	sim.ropes_hit.connect(func(side: int) -> void: view.arena.shake_ropes(side))
 	sim.corner_advice.connect(func(corner: int, text: String) -> void: view.arena.show_corner_advice(corner, text, 6.5))
+	sim.tactic_wanted.connect(func(_corner: int) -> void: _open_orders())
+	sim.shouted.connect(_on_shouted)
 	sim.fight_finished.connect(_on_fight_finished)
 
 
@@ -374,6 +421,9 @@ func _on_fighter_rose(_corner: int) -> void:
 
 
 func _on_fight_finished(result: Dictionary) -> void:
+	_close_orders()
+	if _shout_bar != null:
+		_shout_bar.visible = false
 	_update_records(result)
 	view.arena.excitement = 1.0
 	if result["method"] in ["KO", "TKO"]:
@@ -489,6 +539,87 @@ func _go_to_menu() -> void:
 
 
 # ============================================================================
+#  The player's corner: orders between rounds, shouts during them
+# ============================================================================
+
+## The SHOUT bar along the bottom of the ring (the player's fight only).
+func _build_shout_bar() -> void:
+	var arena_size := Vector2(ArenaRenderer.SIZE * ARENA_SCALE)
+	var row_w := SHOUT_BUTTON.x * SHOUTS.size() + SHOUT_GAP * (SHOUTS.size() - 1)
+	_shout_bar = Control.new()
+	_shout_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_overlay.add_child(UiTheme.place(_shout_bar, (arena_size.x - row_w) / 2.0, arena_size.y - SHOUT_BOTTOM - SHOUT_BUTTON.y, row_w, SHOUT_BUTTON.y))
+	for i in SHOUTS.size():
+		var b := Button.new()
+		b.text = "%s (%s)" % [Fighter.SHOUT_TEXT[SHOUTS[i]].trim_suffix("!"), OS.get_keycode_string(SHOUT_KEYS[i])]
+		b.focus_mode = Control.FOCUS_NONE
+		UiTheme.place(b, i * (SHOUT_BUTTON.x + SHOUT_GAP), 0, SHOUT_BUTTON.x, SHOUT_BUTTON.y)
+		b.pressed.connect(_shout.bind(SHOUTS[i]))
+		_shout_bar.add_child(b)
+		_shout_buttons.append(b)
+	_update_shout_bar()
+
+
+## Shouts can be used once a round, during the round.
+func _update_shout_bar() -> void:
+	if _shout_bar == null:
+		return
+	var f: Fighter = sim.fighters[_human] if _human >= 0 else null
+	var open := f != null and sim.phase == FightSim.Phase.ROUND and not f.shouted_this_round
+	_shout_bar.visible = sim.phase in [FightSim.Phase.ROUND, FightSim.Phase.COUNT]
+	for b in _shout_buttons:
+		b.disabled = not open
+
+
+func _shout(kind: Fighter.Shout) -> void:
+	sim.shout(kind)
+
+
+## The shout over the player's boxer, like a one-two's call-out.
+func _on_shouted(corner: int, kind: int) -> void:
+	var f: Fighter = sim.fighters[corner]
+	view.arena.callout(Fighter.SHOUT_TEXT[kind], Vector2(f.x, ArenaRenderer.FIGHT_Y - f.height_px - 10.0))
+	_update_shout_bar()
+
+
+## Between rounds: the next round's orders. The bell waits for them.
+func _open_orders() -> void:
+	_close_orders()
+	var arena_size := Vector2(ArenaRenderer.SIZE * ARENA_SCALE)
+	var pos := ((arena_size - ORDERS_SIZE) / 2.0).floor()
+	_orders = Control.new()
+	_overlay.add_child(UiTheme.place(_orders, pos.x, pos.y, ORDERS_SIZE.x, ORDERS_SIZE.y))
+	_orders.add_child(UiTheme.panel(0, 0, ORDERS_SIZE.x, ORDERS_SIZE.y, Palette.UI_PANEL, Palette.UI_BORDER, 4))
+	var title := "ORDERS FOR ROUND %d" % (sim.round_number + 1)
+	_orders.add_child(UiTheme.place(UiTheme.label(title, UiTheme.LARGE, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_CENTER), 0, 16, ORDERS_SIZE.x, UiTheme.LARGE))
+	var x0 := (ORDERS_SIZE.x - ORDER_BUTTON.x * 2 - 16) / 2.0
+	var focus: Button = null
+	for i in ORDERS.size():
+		var b := Button.new()
+		b.text = Fighter.ADVICE_TEXT[ORDERS[i]].trim_suffix("!")
+		b.focus_mode = Control.FOCUS_ALL
+		UiTheme.place(b, x0 + (i % 2) * (ORDER_BUTTON.x + 16), 56 + (i / 2) * (ORDER_BUTTON.y + 16), ORDER_BUTTON.x, ORDER_BUTTON.y)
+		b.pressed.connect(_choose_order.bind(ORDERS[i]))
+		_orders.add_child(b)
+		if ORDERS[i] == Fighter.Advice.KEEP_IT_UP:
+			focus = b
+	var note := UiTheme.label("THE BELL WAITS FOR YOUR ORDERS", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER)
+	_orders.add_child(UiTheme.place(note, 0, ORDERS_SIZE.y - 32, ORDERS_SIZE.x, UiTheme.CAPTION))
+	focus.grab_focus()
+
+
+func _choose_order(advice: Fighter.Advice) -> void:
+	sim.choose_tactic(advice)
+	_close_orders()
+
+
+func _close_orders() -> void:
+	if _orders != null:
+		_orders.queue_free()
+		_orders = null
+
+
+# ============================================================================
 #  Per-frame updates
 # ============================================================================
 
@@ -565,6 +696,7 @@ func _run_capture() -> void:
 		if show == "big" or show == "onetwo":
 			view.arena.set_process(false)   # Hold the blood or call-out for the shot.
 		_refresh_hud()
+		_update_shout_bar()
 		if show == "pause":
 			_open_pause()
 		if show in ["result", "announce", "stats"] and sim.phase == FightSim.Phase.FINISHED:
@@ -587,6 +719,8 @@ func _is_capture_moment(show: String) -> bool:
 	match show:
 		"break":
 			return sim.phase == FightSim.Phase.BREAK and sim.break_time > FightSim.ADVICE_AT + 0.6
+		"orders":
+			return sim.phase == FightSim.Phase.BREAK and sim.break_time > 2.0
 		"count":
 			return sim.phase == FightSim.Phase.COUNT and sim.count_value >= 2
 		"result", "announce", "stats":

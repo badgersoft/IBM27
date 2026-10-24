@@ -4,8 +4,16 @@ extends Control
 ##   THIS MONTH   the fights at the end of this month. Choose one to watch it
 ##                in the ring; PLAY MONTH has the rest fought (simulated by
 ##                the same fight engine, on a worker thread so the screen
-##                keeps moving) and fills in each result as it comes in. Then
-##                READ THE PAPER finishes the month and opens the newspaper.
+##                keeps moving) and fills in each result as it comes in. The
+##                moment the last one is done the month ends (everyone trains,
+##                the paper is written, the career moves on to next month)
+##                and READ THE PAPER opens the newspaper.
+##
+## In a career the fights happen on fight night, the last week of the month
+## (PlayerCareer.fight_week): before that they can only be looked at. If the
+## player's boxer is on the card his fight comes first and is always fought
+## in the ring: the button reads YOUR FIGHT, and PLAY MONTH (which never
+## simulates his fight) only appears once it is over.
 ##   BOOKED       fights arranged for the months after, with their month.
 ##   LAST MONTH   last month's results.
 ##
@@ -27,6 +35,9 @@ const PAGER_BUTTON_W := 96
 const PAGER_LABEL_W := 208
 const BUTTON_H := 48
 const HINT := "CHOOSE A FIGHT TO WATCH IT, OR PLAY MONTH TO HAVE THEM ALL FOUGHT"
+const HINT_YOUR_FIGHT := "YOUR FIGHT IS ON THE CARD - FIGHT IT FIRST, THEN PLAY MONTH FOR THE REST"
+const HINT_NOT_YET := "THE FIGHTS ARE ON FIGHT NIGHT, THE LAST WEEK OF THE MONTH"
+const HINT_DONE := "THE MONTH IS OVER - READ ALL ABOUT IT IN THE PAPER"
 
 var _frame: Control
 var _title: Label
@@ -40,6 +51,8 @@ var _next: Button
 var _play: Button
 var _paper: Button
 var _back: Button
+var _hint: Label
+var _month_over := false             ## The month ended on this visit.
 
 # Playing the month on a worker thread.
 var _thread: Thread
@@ -84,10 +97,12 @@ func _ready() -> void:
 	_table.row_pressed.connect(_watch)
 	_frame.add_child(_table)
 	# The hint sits in the table's top margin, above the column captions.
-	var hint := UiTheme.label(HINT, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_RIGHT)
-	_frame.add_child(UiTheme.place(hint, TABLE_POS.x + 24, TABLE_POS.y + 10, FixtureTable.W - 48, UiTheme.CAPTION))
+	_hint = UiTheme.label(HINT, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_RIGHT)
+	_frame.add_child(UiTheme.place(_hint, TABLE_POS.x + 24, TABLE_POS.y + 10, FixtureTable.W - 48, UiTheme.CAPTION))
 
 	_select(int(GameState.options.get("tab", Tab.THIS_MONTH)))
+	# Back from the ring with the last fight of the night done.
+	_end_month_if_done()
 	_tabs[_tab].grab_focus()
 
 	if GameState.options.has("capture") and GameState.options.get("show", "") == "fixtures":
@@ -162,25 +177,35 @@ func _refresh() -> void:
 	var empty := "NO FIGHTS ARRANGED"
 	if _tab == Tab.LAST_MONTH:
 		empty = "NO FIGHTS LAST MONTH"
-	_table.show_page(list, _page, GameState.rankings, _tab == Tab.THIS_MONTH and not _playing, _tab == Tab.BOOKED, empty)
+	_table.show_page(list, _page, GameState.rankings, _tab == Tab.THIS_MONTH and not _playing and _fight_night(), _tab == Tab.BOOKED, empty)
 	var count := FixtureTable.page_count(list.size())
 	var first := _page * FixtureTable.PAGE_SIZE
 	_page_label.text = "%d - %d OF %d" % [mini(first + 1, list.size()), mini(first + FixtureTable.PAGE_SIZE, list.size()), list.size()]
 	_prev.disabled = _page == 0
 	_next.disabled = _page >= count - 1
 	_paper.disabled = season.papers.is_empty() or _playing
+	_play.remove_theme_color_override("font_color")
+	_play.disabled = false
+	_hint.text = HINT
 	if _playing:
 		var done := 0
 		for f in season.fixtures_in(season.month):
 			done += 1 if f.is_done() else 0
 		_play.text = "%d / %d" % [done, season.fixtures_in(season.month).size()]
 		_play.disabled = true
-	elif season.month_finished():
+	elif _month_over:
 		_play.text = "READ THE PAPER"
-		_play.disabled = false
+		_hint.text = HINT_DONE
+	elif not _fight_night():
+		_play.text = "PLAY MONTH"
+		_play.disabled = true
+		_hint.text = HINT_NOT_YET
+	elif _players_fight() != null:
+		_play.text = "YOUR FIGHT"
+		_play.add_theme_color_override("font_color", Palette.UI_GOLD)
+		_hint.text = HINT_YOUR_FIGHT
 	else:
 		_play.text = "PLAY MONTH"
-		_play.disabled = false
 	_back.disabled = _playing
 
 
@@ -200,8 +225,41 @@ func _style_tab(tab: Button, selected: bool) -> void:
 #  Watching and playing
 # ============================================================================
 
+## Fights can be fought now: always outside a career, on fight night in one.
+func _fight_night() -> bool:
+	return GameState.career == null or GameState.career.fight_week()
+
+
+## The player's fight this month, if it hasn't been fought yet.
+func _players_fight() -> Fixture:
+	var me := GameState.season.player
+	if me == null:
+		return null
+	for f in GameState.season.fixtures_in(GameState.season.month):
+		if f.involves(me) and not f.is_done():
+			return f
+	return null
+
+
+## Once the last fight of fight night is done the month ends at once: the
+## season moves on (training, the paper) and so does the career. The results
+## stay on screen under LAST MONTH.
+func _end_month_if_done() -> void:
+	var season := GameState.season
+	if _month_over or not _fight_night() or not season.month_finished():
+		return
+	GameState.paper_index = season.papers.size()
+	season.finish_month()
+	if GameState.career != null:
+		GameState.career.end_month(season)
+		GameState.save_career()
+	_month_over = true
+	_select(Tab.LAST_MONTH)
+	_play.grab_focus()
+
+
 func _watch(f: Fixture) -> void:
-	if _playing or f.is_done():
+	if _playing or f.is_done() or not _fight_night():
 		return
 	GameState.watch_fixture(f)
 	get_tree().change_scene_to_file("res://scenes/fight.tscn")
@@ -209,18 +267,19 @@ func _watch(f: Fixture) -> void:
 
 func _on_play() -> void:
 	var season := GameState.season
-	if season.month_finished():
-		GameState.paper_index = season.papers.size()
-		season.finish_month()
-		if GameState.career != null:
-			GameState.career.end_month(season)
-			GameState.save_career()
-		get_tree().change_scene_to_file("res://scenes/newspaper.tscn")
+	if _month_over:
+		_open_paper()
+		return
+	if not _fight_night():
+		return
+	var mine := _players_fight()
+	if mine != null:
+		_watch(mine)   # His fight is fought in the ring, never simulated.
 		return
 	var todo: Array[Fixture] = []
 	var seeds: Array[int] = []
 	for f in season.fixtures_in(season.month):
-		if not f.is_done():
+		if not f.is_done() and not (season.player != null and f.involves(season.player)):
 			todo.append(f)
 			seeds.append(season.fight_seed(f))
 	_playing = true
@@ -254,6 +313,7 @@ func _process(_delta: float) -> void:
 		_thread = null
 		_playing = false
 		_play.grab_focus()
+		_end_month_if_done()
 	_refresh()
 
 

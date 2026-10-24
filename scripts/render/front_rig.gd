@@ -94,7 +94,8 @@ func setup_boxer(boxer: BoxerData, corner_index: int, wear_gloves: bool = true, 
 	_trunks = Palette.TRUNKS[boxer.trunks_index]["tones"]
 	_trim = Palette.TRUNKS[boxer.trunks_index]["trim"]
 	_boots = Palette.BOOTS[boxer.boots_index]
-	_gloves = Palette.GLOVES[corner_index]
+	# His corner's colour, unless he has his own (the player's choice).
+	_gloves = Palette.GLOVES[corner_index] if boxer.gloves_index < 0 else Palette.TRUNKS[boxer.gloves_index]["tones"]
 	_time = randf() * 3.0        # Boxers do not breathe in step.
 	solve()
 

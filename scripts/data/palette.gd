@@ -67,11 +67,19 @@ const TRUNKS: Array = [
 ]
 
 ## Boot colours: [base, shadow].
+## [base, shadow]. The first NPC_BOOTS are the everyday colours the
+## computer's boxers wear; the rest are there for the player to choose.
 const BOOTS: Array = [
-	[Color("f0ede6"), Color("b4b0a8")],
-	[Color("222226"), Color("101012")],
-	[Color("b02428"), Color("7a161a")],
+	[Color("f0ede6"), Color("b4b0a8")],   # White
+	[Color("222226"), Color("101012")],   # Black
+	[Color("b02428"), Color("7a161a")],   # Red
+	[Color("2a4fc8"), Color("1b338a")],   # Royal
+	[Color("dcae38"), Color("a07a1c")],   # Gold
+	[Color("2a9a4a"), Color("1a6630")],   # Green
+	[Color("7a3aa8"), Color("4f2270")],   # Purple
+	[Color("a8acb4"), Color("74787e")],   # Silver
 ]
+const NPC_BOOTS := 3
 
 ## Gloves are coloured by corner so the two fighters are always easy to tell
 ## apart: index 0 = red corner, 1 = blue corner. [base, shadow, highlight].

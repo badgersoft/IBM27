@@ -2,22 +2,24 @@ extends Control
 ## Creating the boxer for a new career.
 ##
 ## He starts with a random look, name and hometown, and every skill at
-## BoxerGenerator.PLAYER_START_SKILL. PlayerCareer.START_POOL more points go
-## where the player likes: + takes a point from the pool, - gives it back
-## (down to MIN_SKILL, up to MAX_SKILL).
+## BoxerGenerator.player_start_skill() for his division (a lightweight is
+## quicker, a heavyweight hits harder). PlayerCareer.START_POOL more points
+## go where the player likes: + takes a point from the pool, - gives it back
+## (down to MIN_SKILL, up to MAX_SKILL). The points he has spent stay with
+## him if he changes division.
 ##
 ## Layout (1280 x 800 frame):
 ##   y  16  NEW BOXER                          [START CAREER]  [BACK]
 ##   y  80  +-portrait-+  +-- BOXER (448 x 368) --+  +-- SKILLS (432 x 368) --+
-##          | 336 x 704|  | name, division, style, |  | six skills, - and +,   |
-##          |          |  | skin, hair, trunks     |  | points left            |
-##   y 464  |          |  +-- NICKNAME (x 320) --+  +-- FROM (x 320) --------+
-##          |  OVERALL |  | ten to choose, or none |  | country list           |
-##          |          |  |                        |  | city list              |
+##          | 336 x 704|  | name, skin, hair,      |  | six skills, - and +,   |
+##          |          |  | trunks, gloves, boots  |  | points left            |
+##   y 464  |  OVERALL |  +-- NICKNAME (x 320) --+  +-- FROM (x 320) --------+
+##          | DIVISION |  | ten to choose, or none |  | country list           |
+##          |  STYLE   |  |                        |  | city list              |
 ##   y 784  +----------+  +------------------------+  +------------------------+
 ## The two columns share their rows: POINTS AVAILABLE sits level with NAME
-## and SURNAME, and the six skills line up with the six pickers (DIVISION
-## to TRUNKS).
+## and SURNAME, and the six skills line up with the six pickers (SKIN to
+## BOOTS). DIVISION and STYLE sit under the portrait.
 
 const FRAME_SIZE := Vector2(1280, 800)
 const PAD := 16
@@ -27,6 +29,15 @@ const NICKNAME := Rect2(368, 464, 448, 320)
 const SKILLS := Rect2(832, 80, 432, 368)
 const FROM := Rect2(832, 464, 432, 320)
 const CAPTION_Y := 10
+## The portrait panel: the picture, OVERALL and his size, then DIVISION and
+## STYLE (a caption over each < value > picker).
+const PICTURE_VIEW := Vector2i(104, 152)
+const PICTURE_FIGURE := 1.22
+const PICTURE_FEET := 141.0
+const OVERALL_Y := 480
+const SIZE_Y := 512
+const SIDE_PICKERS_Y: Array[int] = [568, 632]
+const SIDE_CAPTION_GAP := 16
 ## Scrolling lists: a frame LIST_INSET bigger all round than the list,
 ## which shows a whole number of LIST_ROW_H rows and clips the rest, so no
 ## row is ever cut in half.
@@ -74,6 +85,7 @@ var _frame: Control
 var _generator := BoxerGenerator.new()
 var _boxer: BoxerData
 var _pool := PlayerCareer.START_POOL
+var _spent := {}                   ## Skill -> points spent (+) or taken off (-).
 var _portrait: BoxerPortrait
 var _overall: Label
 var _size_label: Label
@@ -139,25 +151,27 @@ func _go_back() -> void:
 
 func _build_portrait() -> void:
 	var panel := _panel(PORTRAIT, "")
-	_portrait = BoxerPortrait.new(Vector2i(104, 200), 3, 1.6, 186.0)
+	_portrait = BoxerPortrait.new(PICTURE_VIEW, 3, PICTURE_FIGURE, PICTURE_FEET)
 	_portrait.position = Vector2((PORTRAIT.size.x - _portrait.size.x) / 2.0, 8)
 	panel.add_child(_portrait)
 	_overall = UiTheme.label("", UiTheme.LARGE, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
-	panel.add_child(UiTheme.place(_overall, 0, 624, PORTRAIT.size.x, UiTheme.LARGE))
+	panel.add_child(UiTheme.place(_overall, 0, OVERALL_Y, PORTRAIT.size.x, UiTheme.LARGE))
 	_size_label = UiTheme.label("", UiTheme.BODY, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
-	panel.add_child(UiTheme.place(_size_label, 0, 664, PORTRAIT.size.x, UiTheme.ROW_H))
+	panel.add_child(UiTheme.place(_size_label, 0, SIZE_Y, PORTRAIT.size.x, UiTheme.ROW_H))
+	_side_picker(panel, SIDE_PICKERS_Y[0], "DIVISION", _cycle_division)
+	_side_picker(panel, SIDE_PICKERS_Y[1], "STYLE", _cycle_style)
 
 
 func _build_boxer() -> void:
 	var panel := _panel(BOXER, "BOXER")
 	_first = _text_row(panel, 0, "NAME", _boxer.first_name)
 	_last = _text_row(panel, 1, "SURNAME", _boxer.last_name)
-	_picker_row(panel, 2, "DIVISION", _cycle_division)
-	_picker_row(panel, 3, "STYLE", _cycle_style)
-	_picker_row(panel, 4, "SKIN", _cycle_skin, true)
-	_picker_row(panel, 5, "HAIR", _cycle_hair)
-	_picker_row(panel, 6, "HAIRCUT", _cycle_haircut)
-	_picker_row(panel, 7, "TRUNKS", _cycle_trunks, true)
+	_picker_row(panel, 2, "SKIN", _cycle_skin, true)
+	_picker_row(panel, 3, "HAIR", _cycle_hair)
+	_picker_row(panel, 4, "HAIRCUT", _cycle_haircut)
+	_picker_row(panel, 5, "TRUNKS", _cycle_trunks, true)
+	_picker_row(panel, 6, "GLOVES", _cycle_gloves, true)
+	_picker_row(panel, 7, "BOOTS", _cycle_boots, true)
 
 
 func _build_nickname() -> void:
@@ -235,6 +249,9 @@ func _fill_cities(country: int, city: String) -> void:
 func _cycle_division(dir: int) -> void:
 	_boxer.division = posmod(_boxer.division + dir, Divisions.count()) as Divisions.Id
 	_generator.roll_size(_boxer)
+	# His division's starting skills, plus whatever he has spent.
+	for skill in _skill_labels:
+		_boxer.set(skill, clampi(BoxerGenerator.player_start_skill(_boxer.division, skill) + int(_spent.get(skill, 0)), MIN_SKILL, MAX_SKILL))
 	_new_nicknames()
 	_refresh()
 
@@ -265,6 +282,16 @@ func _cycle_trunks(dir: int) -> void:
 	_refresh()
 
 
+func _cycle_gloves(dir: int) -> void:
+	_boxer.gloves_index = posmod(_boxer.gloves_index + dir, Palette.TRUNKS.size())
+	_refresh()
+
+
+func _cycle_boots(dir: int) -> void:
+	_boxer.boots_index = posmod(_boxer.boots_index + dir, Palette.BOOTS.size())
+	_refresh()
+
+
 ## + takes a point from the pool, - gives one back.
 func _change_skill(skill: String, dir: int) -> void:
 	var value := int(_boxer.get(skill))
@@ -273,6 +300,7 @@ func _change_skill(skill: String, dir: int) -> void:
 	if dir < 0 and value <= MIN_SKILL:
 		return
 	_boxer.set(skill, value + dir)
+	_spent[skill] = int(_spent.get(skill, 0)) + dir
 	_pool -= dir
 	_refresh()
 
@@ -307,6 +335,8 @@ func _refresh() -> void:
 	_values["HAIRCUT"].text = Palette.HAIR_STYLES[_boxer.hair_style].to_upper()
 	_swatches["SKIN"].color = Palette.SKIN_TONES[_boxer.skin_index][0]
 	_swatches["TRUNKS"].color = Palette.TRUNKS[_boxer.trunks_index]["tones"][0]
+	_swatches["GLOVES"].color = Palette.TRUNKS[_boxer.gloves_index]["tones"][0]
+	_swatches["BOOTS"].color = Palette.BOOTS[_boxer.boots_index][0]
 	for skill in _skill_labels:
 		_skill_labels[skill].text = str(_boxer.get(skill))
 	_pool_label.text = str(_pool)
@@ -384,6 +414,18 @@ func _picker_row(panel: Control, row: int, label: String, action: Callable, swat
 		panel.add_child(UiTheme.place(value, value_x, y + 4, VALUE_W, UiTheme.ROW_H))
 		_values[label] = value
 	_button(panel, ">", value_x + VALUE_W + 8, y, ARROW_W, 32, action.bind(1))
+
+
+## A < value > selector under the portrait, its [param caption] over it,
+## the full width of the panel.
+func _side_picker(panel: Control, y: float, caption: String, action: Callable) -> void:
+	panel.add_child(UiTheme.place(UiTheme.label(caption, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), 0, y, PORTRAIT.size.x, UiTheme.CAPTION))
+	var row_y := y + SIDE_CAPTION_GAP
+	_button(panel, "<", PAD, row_y, ARROW_W, 32, action.bind(-1))
+	_button(panel, ">", PORTRAIT.size.x - PAD - ARROW_W, row_y, ARROW_W, 32, action.bind(1))
+	var value := UiTheme.label("", UiTheme.BODY, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
+	panel.add_child(UiTheme.place(value, PAD + ARROW_W + 8, row_y + 4, PORTRAIT.size.x - (PAD + ARROW_W + 8) * 2, UiTheme.ROW_H))
+	_values[caption] = value
 
 
 func _button(parent: Control, text: String, x: float, y: float, w: float, h: float, action: Callable) -> Button:

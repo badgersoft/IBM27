@@ -25,6 +25,9 @@ signal count_changed(corner: int, count: int)
 signal fighter_rose(corner: int)
 signal ropes_hit(side: int)
 signal corner_advice(corner: int, text: String)
+signal shouted(corner: int, shout: int)
+## Between rounds, waiting for the player to give his boxer his orders.
+signal tactic_wanted(corner: int)
 signal fight_finished(result: Dictionary)
 
 enum Phase { INTRO, ROUND, COUNT, BREAK, FINISHED }
@@ -102,6 +105,10 @@ const BIG_TIRED := 0.05           ## Opponent completely exhausted.
 const BIG_GUARD_DOWN := 0.020     ## Opponent hurt, showboating or hands dropped.
 const BIG_COUNTER := 0.025        ## Caught him punching / punished his miss.
 const BIG_MAX := 0.25
+## KNOCK HIM OUT (Fighter.Shout.KNOCKOUT): his big-punch chance, and the
+## chance of one coming back at him, are multiplied by these.
+const SHOUT_KO_BIG := 2.4
+const SHOUT_KO_OPEN := 1.8
 const BIG_DAMAGE := Vector2(1.6, 2.0)   ## Damage multiplier range.
 const BIG_KNOCKDOWN := 2.0        ## Knockdown chance multiplier.
 
@@ -128,6 +135,11 @@ var result := {}
 
 var _count_timer := 0.0
 var _advice_given := false
+## The player's own corner (0 red, 1 blue), or -1 when the computer runs
+## both. The player gives that boxer his orders between rounds (choose_tactic;
+## the next round waits for them) and may shout once a round (shout).
+var human_corner := -1
+var _tactic_chosen := true
 var _finish_timer := 0.0
 
 
@@ -200,6 +212,9 @@ func _start_round() -> void:
 		f.combo.clear()
 		f.streak = 0
 		f.idle_time = 0.0
+		f.shout = Fighter.Shout.NONE
+		f.shout_time = 0.0
+		f.shouted_this_round = false
 		f.coming_out = true
 		f.think_timer = rng.randf_range(0.2, 0.6)
 		f.set_state(State.IDLE, "stance")
@@ -227,6 +242,39 @@ func _end_round() -> void:
 	var t := judges.pundit_totals()
 	red.advice = ai.corner_advice(red, t[0], t[1], round_number + 1, rounds)
 	blue.advice = ai.corner_advice(blue, t[1], t[0], round_number + 1, rounds)
+	_tactic_chosen = human_corner < 0
+	if human_corner >= 0:
+		fighters[human_corner].advice = Fighter.Advice.KEEP_IT_UP
+		tactic_wanted.emit(human_corner)
+
+
+## The player's orders for his boxer for the next round.
+func choose_tactic(advice: Fighter.Advice) -> void:
+	if human_corner < 0:
+		return
+	fighters[human_corner].advice = advice
+	_tactic_chosen = true
+	corner_advice.emit(human_corner, Fighter.ADVICE_TEXT[advice])
+
+
+## The player shouts to his boxer (once a round, during the round).
+func shout(kind: Fighter.Shout) -> bool:
+	if human_corner < 0 or phase != Phase.ROUND:
+		return false
+	var f: Fighter = fighters[human_corner]
+	if f.shouted_this_round:
+		return false
+	f.shout = kind
+	f.shout_time = Fighter.SHOUT_SECONDS
+	f.shouted_this_round = true
+	shouted.emit(human_corner, kind)
+	return true
+
+
+## The computer takes over the player's corner (skipping to the result).
+func release_human() -> void:
+	human_corner = -1
+	_tactic_chosen = true
 
 
 ## A minute in the corner: water, a towel and some breath back. Works out
@@ -265,8 +313,10 @@ func _update_break(dt: float) -> void:
 	if not _advice_given and break_time >= ADVICE_AT:
 		_advice_given = true
 		for f in fighters:
-			corner_advice.emit(f.corner, Fighter.ADVICE_TEXT[f.advice])
-	if break_time >= BREAK_SECONDS:
+			if f.corner != human_corner:
+				corner_advice.emit(f.corner, Fighter.ADVICE_TEXT[f.advice])
+	# The bell waits for the player's orders.
+	if break_time >= BREAK_SECONDS and _tactic_chosen:
 		for f in fighters:
 			f.health = f.corner_to.x   # However long the walk took.
 			f.energy = f.corner_to.y
@@ -279,6 +329,10 @@ func _update_break(dt: float) -> void:
 # ============================================================================
 
 func _update_fighter(f: Fighter, o: Fighter, dt: float) -> void:
+	if f.shout_time > 0.0:
+		f.shout_time -= dt
+		if f.shout_time <= 0.0:
+			f.shout = Fighter.Shout.NONE
 	# Head clears and breath returns a little all the time.
 	f.stun = maxf(f.stun - dt * lerpf(5.0, 9.0, f.data.chin / 99.0), 0.0)
 	f.spend_energy(0.28 * f.energy_drain_scale() * dt)
@@ -539,6 +593,12 @@ func _big_punch_chance(a: Fighter, d: Fighter, caught_punching: bool) -> float:
 	if caught_punching or a.counter_window > 0.0:
 		chance += BIG_COUNTER * (0.5 + a.skill("intelligence") / 99.0)
 	chance *= 0.6 + 0.5 * a.skill("power") / 99.0 + 0.3 * a.skill("intelligence") / 99.0
+	# Told to knock him out: he loads up for the big one, and drops his
+	# caution - so the big ones come back at him too.
+	if a.shout == Fighter.Shout.KNOCKOUT:
+		chance *= SHOUT_KO_BIG
+	if d.shout == Fighter.Shout.KNOCKOUT:
+		chance *= SHOUT_KO_OPEN
 	return clampf(chance, 0.0, BIG_MAX)
 
 

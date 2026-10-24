@@ -39,6 +39,7 @@ Controls:
 | Skip the tale of the tape   | Click, Space, Enter  | Tap           |
 | Skip the judges' read-out   | Click, Space, Enter  | Tap           |
 | Back (or pause a fight)     | Esc                  | Back button   |
+| Shout ATTACK / DEFEND / KO  | A / D / K            | Shout buttons |
 
 In the ring, the tale of the tape has BACK and FIGHT! buttons: BACK (or
 Esc) leaves before a punch is thrown and nothing is recorded. Once the
@@ -404,13 +405,19 @@ the Fixtures screen's LAST MONTH shows the same.
 with a random look, name and hometown, all of which can be changed:
 
 * NAME and SURNAME, typed in.
-* DIVISION (Lightweight to start with), STYLE (the five standard types),
-  SKIN, HAIR colour, HAIRCUT and TRUNKS colour, each with < and >.
+* SKIN, HAIR colour, HAIRCUT, and the colours of his TRUNKS, GLOVES and
+  BOOTS, each with < and >. His gloves are his own: in the ring he wears
+  them whichever corner he is in (the computer's boxers wear their
+  corner's red or blue).
+* Under his portrait: DIVISION (Lightweight to start with) and STYLE (the
+  standard types).
 * NICKNAME: ten made up for him, or NO NICKNAME.
 * FROM: a country, then one of its cities.
-* SKILLS: every skill starts at 35, with **45 points** to spend between
-  them using - and + (from 10 to 65 each). Points taken off a skill go
-  back in the pool.
+* SKILLS: every skill starts at 35, except by division - a lightweight
+  starts with speed 45, a middleweight with speed 40 and power 40, a
+  heavyweight with power 45. There are **45 points** to spend between them
+  using - and + (from 10 to 65 each); points taken off a skill go back in
+  the pool, and points spent stay with him if he changes division.
 
 START CAREER builds a fresh world (the starting rosters and a new season)
 with him at the bottom of his division, at 20, 0-0-0, with **$5,000** in
@@ -432,10 +439,29 @@ a **week** at a time (NEXT WEEK), four weeks to a month:
   depends on the gym, and less as a skill gets higher. The training
   buttons are tinted blue so they stand apart from the menu.
 * **NEXT WEEK** pays the week's rent and lets him recover a little. In the
-  last week of the month it reads **FIGHT NIGHT** and opens the fixtures:
-  watch his fight (or any other), PLAY MONTH, then READ THE PAPER; the
-  month ends (purses banked, sponsor's months counted down, new offers)
-  and the paper's CONTINUE returns to the career page.
+  last week of the month it reads **FIGHT NIGHT** and opens the fixtures.
+  The month's fights can only be fought on fight night. If he is on the
+  card his fight comes first and is always fought in the ring (YOUR
+  FIGHT); then PLAY MONTH has the rest fought (any can be watched first).
+  The moment the last fight is done the month ends - purses banked,
+  sponsor's months counted down, new offers, the paper written - whether
+  or not he reads it (READ THE PAPER); the career moves on to week 1.
+* **In his corner**: in his own fights the player is his trainer.
+  Between rounds he gives the orders for the next round (the bell waits
+  for them): HANDS UP, STAY SAFE (cover up, avoid getting hit), STICK TO
+  THE PLAN, TURN UP THE HEAT (press forward, throw more) or TAKE HIM OUT
+  (go all out for the knockout). Once a round, for 15 seconds, he can
+  shout (buttons along the bottom of the ring, or A / D / K): ATTACK!
+  (about half as many punches again), DEFEND! (a third fewer, more
+  guarding and slipping, harder to catch) or KNOCK HIM OUT! (he throws as
+  much as ATTACK! and loads up the power punches: about three times as
+  many big punches - and about three times as many big counters come back
+  at him).
+
+![Orders between rounds](docs/screenshots/corner_orders.png)
+
+![Shouts during a round](docs/screenshots/corner_shouts.png)
+
 * **Health**: he comes out of a fight with the health he ended it with
   (FIT, BRUISED, HURT, INJURED) and gets it back week by week. A boxer who
   isn't fully fit starts his next fight with less health.
@@ -680,8 +706,9 @@ Command-line options read by the game (after `--`):
 | `--venue=<0-3>`            | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena                                                                                                                                             |
 | `--rounds=<n>`             | Fight length: 3, 6, 10 or 12 rounds (normally set by the level)                                                                                                                                        |
 | `--capture=<png>`          | Fast-forward, save a screenshot and quit                                                                                                                                                               |
-| `--show=<moment>`          | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch), `onetwo` (a one-two), `taunt` (showing off), `break`, `count`, `announce`, `result`, `stats`, `pause`, `fixtures`, `paper`, `career_menu`, `exhibition`, `new_boxer`, `career`, `facilities`, `schedule` |
+| `--show=<moment>`          | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch), `onetwo` (a one-two), `taunt` (showing off), `break`, `count`, `announce`, `result`, `stats`, `pause`, `orders` (the orders between rounds, with `--manage`), `fixtures`, `paper`, `career_menu`, `exhibition`, `new_boxer`, `career`, `facilities`, `schedule` |
 | `--offer`                  | With `--show=schedule`, open the purse offer for the first opponent                                                                                                                                   |
+| `--manage=<0\|1>`          | A fight scene: the player is in the red (0) or blue (1) corner - orders between rounds, shouts during them                                                                                            |
 | `--train=<0-4>`            | Career screens: the boxer trains that session this week (4 = RECOVERY)                                                                                                                                 |
 | `--offers=<n>`             | Career screens: the first n men he could fight are offering him a fight                                                                                                                                |
 | `--career=<path>`          | Load a saved career (e.g. `user://careers/career_1.tres`); a fight scene shows his next fight                                                                                                           |

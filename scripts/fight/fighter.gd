@@ -30,8 +30,16 @@ enum State {
 const FREE_STATES: Array[State] = [State.IDLE, State.MOVE, State.GUARD]
 
 ## Trainer instructions given between rounds.
+## The trainer's orders for a round (his corner's advice, or the player's
+## choice for his own boxer).
 enum Advice { NONE, ATTACK_MORE, DEFEND_MORE, KEEP_IT_UP, ALL_OUT }
-const ADVICE_TEXT: Array[String] = ["", "ATTACK MORE!", "DEFEND MORE!", "KEEP IT UP!", "GO ALL OUT!"]
+const ADVICE_TEXT: Array[String] = ["", "TURN UP THE HEAT!", "HANDS UP, STAY SAFE!", "STICK TO THE PLAN!", "TAKE HIM OUT!"]
+## A shout from the corner during a round (the player's, once a round): it
+## lasts SHOUT_SECONDS. ATTACK throws more, DEFEND covers up, KNOCKOUT goes
+## looking for the big one - and leaves him open to one coming back.
+enum Shout { NONE, ATTACK, DEFEND, KNOCKOUT }
+const SHOUT_TEXT: Array[String] = ["", "ATTACK!", "DEFEND!", "KNOCK HIM OUT!"]
+const SHOUT_SECONDS := 15.0
 
 const MAX_HEALTH := 100.0
 ## Share of his usual starting health a boxer has at 0% condition.
@@ -85,6 +93,9 @@ var corner_time := 0.0
 var one_two := false            ## The jab in the air is the first half of a one-two.
 var one_two_window := 0.0       ## Time left for the cross after a one-two jab landed.
 var advice: Advice = Advice.NONE
+var shout: Shout = Shout.NONE
+var shout_time := 0.0           ## Seconds the shout still holds.
+var shouted_this_round := false
 
 # --- Knockdowns -----------------------------------------------------------------
 var knockdowns_round := 0

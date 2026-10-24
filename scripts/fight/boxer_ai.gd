@@ -76,6 +76,19 @@ const ONE_TWO_COUNTER := 0.60
 ## badly hurt) takes his time as usual.
 const COME_OUT_SLACK := 0.10
 
+## A shout from the corner (Fighter.Shout): [aggression, favourite distance
+## (body heights), chance to defend an incoming punch, chance to cover up
+## when nothing is happening], added on top for NONE, ATTACK, DEFEND and
+## KNOCKOUT. KNOCKOUT also favours the power punches (SHOUT_KO_POWER) and
+## FightSim makes the big ones likelier both ways.
+const SHOUT_EFFECTS: Array = [
+	[ 0.00,  0.00,  0.00,  0.00],
+	[ 0.25, -0.04,  0.00,  0.00],
+	[-0.30,  0.06,  0.20,  0.30],
+	[ 0.35, -0.06, -0.10, -0.10],
+]
+const SHOUT_KO_POWER := 2.0
+
 ## Natural follow-ups when a boxer is quick-witted enough to combine punches.
 const COMBOS := {
 	P.JAB:      [P.JAB, P.CROSS],
@@ -127,6 +140,7 @@ func think(me: Fighter, opp: Fighter, round_number: int, dt: float) -> void:
 		var react := 0.10 + intel * 0.45 + me.skill("speed") / 99.0 * 0.15 + hurt * 0.15
 		if me.advice == Advice.DEFEND_MORE:
 			react += 0.10
+		react += SHOUT_EFFECTS[me.shout][2]
 		if me.data.style == Style.SHOWBOAT:
 			react += 0.10   # Quick reactions.
 		if rng.randf() < react:
@@ -255,6 +269,7 @@ func _aggression(me: Fighter, opp: Fighter, round_number: int) -> float:
 		Advice.ALL_OUT:
 			a += 0.25
 	# Smell blood when the opponent is hurt (clever boxers notice more).
+	a += SHOUT_EFFECTS[me.shout][0]
 	a += opp.hurt_level() * (0.15 + intel * 0.35)
 	# Hurt boxers ease off - a clever one much more than a reckless one.
 	a -= me.hurt_level() * (0.15 + intel * 0.40)
@@ -270,6 +285,7 @@ func _preferred_distance(me: Fighter, round_number: int) -> float:
 		d = maxf(d, 0.66)   # Hit and move.
 	if me.advice == Advice.ALL_OUT or me.advice == Advice.ATTACK_MORE:
 		d -= 0.04
+	d += SHOUT_EFFECTS[me.shout][1]
 	d -= clampf((me.idle_time - IDLE_BEFORE_CLOSING) * CLOSE_IN_RATE, 0.0, MAX_CLOSE_IN)
 	return d
 
@@ -344,6 +360,7 @@ func _settle(me: Fighter, opp: Fighter, hurt: float) -> void:
 	var guard_chance := 0.15 + hurt * 0.5
 	if me.data.style == Style.COUNTER or me.advice == Advice.DEFEND_MORE:
 		guard_chance += 0.15
+	guard_chance += SHOUT_EFFECTS[me.shout][3]
 	var showboat := me.data.style == Style.SHOWBOAT
 	if showboat:
 		guard_chance = maxf(guard_chance - 0.10, 0.05)
@@ -370,7 +387,11 @@ func _punches_in_range(me: Fighter, opp: Fighter) -> Array[int]:
 
 
 func _choose_punch(me: Fighter, options: Array[int]) -> int:
-	var weights: Array = PUNCH_WEIGHTS[me.data.style]
+	var weights: Array = (PUNCH_WEIGHTS[me.data.style] as Array).duplicate()
+	if me.shout == Fighter.Shout.KNOCKOUT:
+		for type in PunchTypes.COUNT:
+			if PunchTypes.is_power_punch(type):
+				weights[type] *= SHOUT_KO_POWER
 	var total := 0.0
 	for type in options:
 		total += weights[type]

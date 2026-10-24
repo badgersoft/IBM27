@@ -76,6 +76,9 @@ const STYLE_BLURBS: Array[String] = [
 @export var hair_style: int = 0          ## Index into Palette.HAIR_STYLES.
 @export var trunks_index: int = 0        ## Index into Palette.TRUNKS.
 @export var boots_index: int = 0         ## Index into Palette.BOOTS.
+## His own gloves (the player's choice), an index into Palette.TRUNKS for the
+## colour; -1 = the usual gloves in his corner's colour.
+@export var gloves_index: int = -1
 
 # --- Skills (1 - 99) ---------------------------------------------------------
 @export_range(1, 99) var power: int = 50         ## How hard he punches.
