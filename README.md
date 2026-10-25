@@ -342,6 +342,29 @@ Either way the champion keeps the top spot until he loses his title: a
 champion beaten in a non-title fight keeps his belt, and the man who beat
 him moves up as if he had beaten the number 1.
 
+### Pound for pound
+
+**P4P TOP 10** on the Boxers screen lists the ten best boxers in the IBC,
+whatever their weight. Each man's score (PoundForPound) has two parts:
+
+* **His record**: 40 x (wins + half his knockouts) / (fights + 3), scaled
+  by where he stands in his division now - from 40% at the bottom to 100%
+  for the champion, so a record built among the best counts for more than
+  one built among the amateurs.
+* **This season's fights**, each against an opponent of known quality
+  (1 for the champion down to 0 for the bottom man, where he was ranked
+  when they fought): a win is worth 4 + 12 x quality squared (x 1.3 by
+  knockout), a draw 4 x quality, and a loss costs 8 - 6 x quality - losing
+  to a top man costs little, losing to a nobody a lot.
+
+So wins and knockouts count, and the higher the man he beat was ranked,
+the more they count. The list shows each man's division and ranking, his
+record and knockouts, his best win this season (and where that man was
+ranked, and how he won) and his score; the player's boxer is in gold if he
+makes it.
+
+![Pound for pound](docs/screenshots/pound_for_pound.png)
+
 ### The season
 
 In a career, **FIXTURES** on the career page opens the season's fixtures.
@@ -570,6 +593,7 @@ data/
 assets/fonts/                 Press Start 2P pixel font (SIL Open Font License)
 scenes/
   main_menu.tscn              EXHIBITION, CAREER and BOXERS
+  p4p.tscn                    The pound-for-pound top ten
   new_boxer.tscn              Creating the career's boxer
   career_home.tscn            The career page: the boxer, training, menus
   facilities.tscn             Gyms, recovery and sponsors
@@ -603,6 +627,7 @@ scripts/
     player_career.gd          The player's boxer: money, weeks, fights, sponsors
     facilities.gd             Gyms and recovery centres, training sessions
     career_save.gd            A saved career (Resource, in user://careers)
+    pound_for_pound.gd        Rating the best boxers across the divisions
   fight/
     fight_sim.gd              Clock, bell, punches, knockdowns, count, result
     fighter.gd                One boxer's live state during a fight
@@ -706,7 +731,7 @@ Command-line options read by the game (after `--`):
 | `--venue=<0-3>`            | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena                                                                                                                                             |
 | `--rounds=<n>`             | Fight length: 3, 6, 10 or 12 rounds (normally set by the level)                                                                                                                                        |
 | `--capture=<png>`          | Fast-forward, save a screenshot and quit                                                                                                                                                               |
-| `--show=<moment>`          | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch), `onetwo` (a one-two), `taunt` (showing off), `break`, `count`, `announce`, `result`, `stats`, `pause`, `orders` (the orders between rounds, with `--manage`), `fixtures`, `paper`, `career_menu`, `exhibition`, `new_boxer`, `career`, `facilities`, `schedule` |
+| `--show=<moment>`          | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch), `onetwo` (a one-two), `taunt` (showing off), `break`, `count`, `announce`, `result`, `stats`, `pause`, `orders` (the orders between rounds, with `--manage`), `fixtures`, `paper`, `career_menu`, `p4p`, `exhibition`, `new_boxer`, `career`, `facilities`, `schedule` |
 | `--offer`                  | With `--show=schedule`, open the purse offer for the first opponent                                                                                                                                   |
 | `--manage=<0\|1>`          | A fight scene: the player is in the red (0) or blue (1) corner - orders between rounds, shouts during them                                                                                            |
 | `--train=<0-4>`            | Career screens: the boxer trains that session this week (4 = RECOVERY)                                                                                                                                 |

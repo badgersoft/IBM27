@@ -4,6 +4,17 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.28
+
+* Pound for pound: P4P TOP 10 on the Boxers screen lists the ten best
+  boxers in the IBC across all three divisions. Each is rated on his record
+  (wins and knockouts against losses, counting for more the higher he
+  stands in his division) and on this season's fights, where a win or a
+  knockout over a higher-ranked man is worth more and a loss to a
+  lower-ranked one costs more. The list shows division, ranking, record,
+  knockouts, best win this season (where that man was ranked, and how) and
+  the score.
+
 ## 0.1.27
 
 * New boxer screen: GLOVES and BOOTS colours to choose as well as TRUNKS.

@@ -13,7 +13,7 @@ extends Control
 ## computer pick, and FIGHT starts a three-round exhibition.
 ##
 ## Layout (1280 x 800 frame):
-##   y  16  THE BOXERS               size range  [ ORDER: OVR ]  [ BACK ]
+##   y  16  THE BOXERS       size range  [P4P TOP 10] [ ORDER: OVR ]  [ BACK ]
 ##   y  80  [ LIGHTWEIGHT ][ MIDDLEWEIGHT ][ HEAVYWEIGHT ]  [<] 1-10 OF 30 [>]
 ##   y 120  table panel (1248 x 664), joined to the selected tab
 ##
@@ -76,8 +76,10 @@ const BELT_PIXEL := 3
 const BELT_GAP := 16
 ## Each level's colour in the LEVEL column: Amateur, Semi-Pro, Professional.
 const LEVEL_COLOURS: Array[Color] = [Palette.UI_TEXT_DIM, Palette.UI_TEXT, Palette.UI_GOLD]
-## The ORDER button, between the captions and BACK.
+## The ORDER button, between the captions and BACK, and P4P TOP 10 (the
+## pound-for-pound list) before it.
 const ORDER_W := 224
+const P4P_W := 176
 ## Exhibition: where the corners are shown, and the RANDOM / FIGHT buttons.
 const PICK_X := 384
 const PICK_BUTTON_W := 176
@@ -144,10 +146,16 @@ func _ready() -> void:
 	UiTheme.place(_order, back.position.x - 16 - ORDER_W, 16, ORDER_W, 48)
 	_order.pressed.connect(_toggle_order)
 	_frame.add_child(_order)
-	# Size range and a hint, right-aligned against the ORDER button, level
+	var p4p := Button.new()
+	p4p.text = "P4P TOP 10"
+	p4p.focus_mode = Control.FOCUS_ALL
+	UiTheme.place(p4p, _order.position.x - 16 - P4P_W, 16, P4P_W, 48)
+	p4p.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/p4p.tscn"))
+	_frame.add_child(p4p)
+	# Size range and a hint, right-aligned against the P4P button, level
 	# with the title.
 	var caption_x := 384.0
-	var caption_w := _order.position.x - 16 - caption_x
+	var caption_w := p4p.position.x - 16 - caption_x
 	_caption = UiTheme.label("", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_RIGHT)
 	_frame.add_child(UiTheme.place(_caption, caption_x, 24, caption_w, UiTheme.CAPTION))
 	var hint := UiTheme.label("CHOOSE A BOXER FOR HIS PROFILE", UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_RIGHT)
@@ -156,6 +164,7 @@ func _ready() -> void:
 		_build_picking(back)
 		_caption.visible = false
 		hint.visible = false
+		p4p.visible = false
 
 	_prev = _pager_button("<", PAGER_X, _turn.bind(-1))
 	_page_label = UiTheme.label("", UiTheme.BODY, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
