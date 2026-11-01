@@ -1,10 +1,10 @@
 {
-	"_comment": "Made-up sponsors, smallest to largest. tier 0 local, 1 regional, 2 national, 3 global. pay = [low, high] dollars for three months.",
+	"_comment": "Made-up sponsors, smallest to largest. tier 0 local, 1 regional, 2 national, 3 global: who offers follows the boxer's level (PlayerCareer.sponsor_tier); what they pay follows his purses.",
 	"tiers": [
-		{"name": "Local",    "pay": [500, 3000]},
-		{"name": "Regional", "pay": [5000, 25000]},
-		{"name": "National", "pay": [100000, 1000000]},
-		{"name": "Global",   "pay": [2000000, 15000000]}
+		{"name": "Local"},
+		{"name": "Regional"},
+		{"name": "National"},
+		{"name": "Global"}
 	],
 	"sponsors": [
 		{"name": "Big Al's Diner", "tier": 0},

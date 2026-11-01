@@ -14,17 +14,17 @@ enum Session { WEIGHTS, SPEED, STAMINA, PUNCHING, RECOVERY }
 
 const TRAINING: Array = [
 	{"name": "Local Gym",           "cost": 0,     "boost": 1.0, "blurb": "A heavy bag, a rope and a mirror."},
-	{"name": "Boxing Club",         "cost": 400,   "boost": 1.3, "blurb": "Proper rings and sparring partners."},
-	{"name": "Fight Academy",       "cost": 2500,  "boost": 1.7, "blurb": "Specialist coaches for every skill."},
-	{"name": "Performance Centre",  "cost": 12000, "boost": 2.2, "blurb": "Sports science and video analysis."},
-	{"name": "Olympic Complex",     "cost": 50000, "boost": 3.0, "blurb": "Where the world's best prepare."},
+	{"name": "Boxing Club",         "cost": 100,   "boost": 1.25, "blurb": "Proper rings and sparring partners."},
+	{"name": "Fight Academy",       "cost": 600,   "boost": 1.5, "blurb": "Specialist coaches for every skill."},
+	{"name": "Performance Centre",  "cost": 4000,  "boost": 1.8, "blurb": "Sports science and video analysis."},
+	{"name": "Olympic Complex",     "cost": 20000, "boost": 2.2, "blurb": "Where the world's best prepare."},
 ]
 const RECOVERY: Array = [
 	{"name": "Local Day Spa",           "cost": 0,     "boost": 1.0, "blurb": "A sauna, a massage and a cup of tea."},
-	{"name": "Physio Clinic",           "cost": 300,   "boost": 1.3, "blurb": "Hands-on treatment for the knocks."},
-	{"name": "Sports Injury Clinic",    "cost": 2000,  "boost": 1.7, "blurb": "Scans, ice baths and specialists."},
-	{"name": "Private Hospital",        "cost": 9000,  "boost": 2.2, "blurb": "Round-the-clock medical care."},
-	{"name": "Elite Medical Institute", "cost": 40000, "boost": 3.0, "blurb": "The best doctors money can buy."},
+	{"name": "Physio Clinic",           "cost": 75,    "boost": 1.3, "blurb": "Hands-on treatment for the knocks."},
+	{"name": "Sports Injury Clinic",    "cost": 500,   "boost": 1.7, "blurb": "Scans, ice baths and specialists."},
+	{"name": "Private Hospital",        "cost": 3000,  "boost": 2.2, "blurb": "Round-the-clock medical care."},
+	{"name": "Elite Medical Institute", "cost": 15000, "boost": 3.0, "blurb": "The best doctors money can buy."},
 ]
 
 ## The kinds of session: [name, main skill, its share, second skill, its
@@ -37,11 +37,19 @@ const SESSIONS: Array = [
 	["PUNCHING", "power",    1.0, "intelligence", 0.4, "POWER AND TECHNIQUE"],
 	["RECOVERY", "",         0.0, "",             0.0, "HEALTH AND ENERGY"],
 ]
-## Skill points from one session at the Local Gym, for a skill of 50. Weak
-## skills improve faster (CATCH_UP more per point under 50), strong ones
-## slower, and a young man faster than an old one.
-const SESSION_GAIN := 1.0
-const CATCH_UP := 0.04
+## Skill points from one session at the Local Gym, for a 20-year-old's
+## skill of 50. The higher a skill, the harder it is to improve: the gain is
+## scaled by ((MAX_SKILL - skill) / (MAX_SKILL - 50)) ^ ROOM_POWER (at most
+## ROOM_CAP), so the last few points before world class come very slowly. A
+## raw skill catches up quickly, though: under CATCH_UP_BELOW each point
+## short adds CATCH_UP_RATE to the gain, so a beginner reaches the level of
+## the amateurs around him in a year or so. A young man learns faster than
+## an old one.
+const SESSION_GAIN := 0.40
+const ROOM_POWER := 1.6
+const ROOM_CAP := 1.8
+const CATCH_UP_BELOW := 62.0
+const CATCH_UP_RATE := 0.10
 const MAX_SKILL := 97
 ## Condition (percent) back each week at the Local Day Spa, plus a share of
 ## his recovery skill.
@@ -67,7 +75,8 @@ static func session_gains(b: BoxerData, session: int, gym: int) -> Dictionary:
 	for k in [[s[1], s[2]], [s[3], s[4]]]:
 		var skill: String = k[0]
 		var value := float(b.get(skill))
-		var room := clampf(1.0 + (50.0 - value) * CATCH_UP, 0.25, 2.5)
+		var room := minf(pow(maxf(MAX_SKILL - value, 0.0) / (MAX_SKILL - 50.0), ROOM_POWER), ROOM_CAP)
+		room *= 1.0 + maxf(CATCH_UP_BELOW - value, 0.0) * CATCH_UP_RATE
 		out[skill] = SESSION_GAIN * float(k[1]) * boost * youth * room
 	return out
 

@@ -4,7 +4,33 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
-## 0.1.28
+## 0.1.29
+
+* The purse is paid by the venue: the player puts up a stake of 5% (LOW
+  offer) to 10% (HIGH offer) of it, paid when the fight is agreed (was:
+  half the purse had to be in the bank). Calling a fight off loses the
+  stake (was: a quarter of the purse). The offer shows each stake.
+* Sponsors pay in step with purses: three months is worth about half the
+  usual purse for a fight at his ranking (six months 1.8 times, a year 3.2
+  times), instead of fixed bands that jumped from thousands to millions.
+  Local, regional, national and global sponsors now follow his level.
+* Ladder rankings: beating a higher-ranked man takes his place and one more
+  (two more by knockout), and any other win moves a boxer up one place
+  (was: only a win over a higher-ranked man counted, and only up to his
+  place). Applies to every boxer.
+* Training takes longer to make a boxer world class: the higher a skill,
+  the slower it improves, and the gyms' boosts are smaller (x1.25, x1.5,
+  x1.8, x2.2; were x1.3, x1.7, x2.2, x3.0). A raw beginner still catches up
+  quickly (about 64 overall after two years, level with the amateurs
+  around him), but moving up a gym every couple of years he is about 80 at
+  26 and 85 at 28 (was 93 at 26 and 96 at 28); at the Local Gym alone
+  about 82 at 28 (was 94).
+* Gyms and recovery centres cost less, roughly in line with each level's
+  purses now that sponsors pay less: Boxing Club $100 a week (was $400),
+  Fight Academy $600 ($2.5K), Performance Centre $4K ($12K), Olympic
+  Complex $20K ($50K); Physio Clinic $75 ($300), Sports Injury Clinic $500
+  ($2K), Private Hospital $3K ($9K), Elite Medical Institute $15K ($40K).
+
 
 * Pound for pound: P4P TOP 10 on the Boxers screen lists the ten best
   boxers in the IBC across all three divisions. Each is rated on his record

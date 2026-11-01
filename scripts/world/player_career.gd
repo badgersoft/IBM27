@@ -11,11 +11,13 @@ extends RefCounted
 ##
 ## Fights are his to arrange (Schedule): anyone in his division no more than
 ## Matchmaker.ABOVE places above him or BELOW below, who is free, offered a
-## purse at one of PURSE_OFFERS times the usual figure. He must have half the
-## purse in the bank to make an offer. A man who has asked to fight him
-## (requests, from the other managers) is keen and nearly always says yes;
-## anyone else may need a bigger purse to be tempted. One fight at a time;
-## calling one off costs FORFEIT of the purse.
+## purse at one of PURSE_OFFERS times the usual figure. The venue hosting
+## the fight puts up most of the purse; he puts up a STAKE of 5 - 10% (more
+## for a bigger offer), paid when the fight is agreed, so he needs that much
+## in the bank. A man who has asked to fight him (requests, from the other
+## managers) is keen and nearly always says yes; anyone else may need a
+## bigger purse to be tempted. One fight at a time; calling one off loses
+## the stake.
 
 const START_MONEY := 5000
 const START_POOL := 45
@@ -28,14 +30,23 @@ const PURSE_SWAY: Array[float] = [-0.35, -0.18, 0.0, 0.2, 0.35]
 ## anyone else (adjusted by his manager and the two men's standing).
 const KEEN_ACCEPT := 0.92
 const UNSURE_ACCEPT := 0.55
-const FORFEIT := 0.25
+## His share of the purse he offers, by offer (LOW to HIGH).
+const STAKE: Array[float] = [0.05, 0.06, 0.075, 0.09, 0.10]
 const MIN_PURSE := 50
 ## Sponsors: offers come in the first week of the month, at most
 ## MAX_SPONSOR_OFFERS at a time, for 3, 6 or 12 months (paying 1, 1.8 or
-## 3.2 times the three-month figure).
+## 3.2 times the three-month figure). The three-month figure is
+## SPONSOR_PURSE_SHARE of the usual purse for a fight at his ranking (give
+## or take SPONSOR_SPREAD), so sponsors pay in step with his purses. Who the
+## sponsors are follows his level: local firms for an amateur, regional for
+## a semi-pro, national for a professional, global names for the champion
+## and the top SPONSOR_GLOBAL_PLACES men.
 const SPONSOR_MONTHS: Array[int] = [3, 6, 12]
 const SPONSOR_SCALE: Array[float] = [1.0, 1.8, 3.2]
 const MAX_SPONSOR_OFFERS := 3
+const SPONSOR_PURSE_SHARE := 0.5
+const SPONSOR_SPREAD := 0.2
+const SPONSOR_GLOBAL_PLACES := 3
 const SPONSORS_PATH := "res://data/sponsors.json"
 
 var boxer: BoxerData
@@ -45,6 +56,7 @@ var trained := -1                   ## This week's session (Facilities.Session),
 var last_gains := {}                ## What this week's session added.
 var training_facility := 0
 var recovery_facility := 0
+var fight_stake := 0                ## What he put up for his arranged fight.
 ## The current sponsor, if any: {"name", "tier", "pay", "months_left"}.
 var sponsor := {}
 var sponsor_offers: Array[Dictionary] = []
@@ -133,6 +145,8 @@ func end_month(season: Season) -> void:
 	trained = -1
 	last_gains = {}
 	declined.clear()
+	if season.booking(boxer) == null:
+		fight_stake = 0   # His fight is over: the stake did its job.
 	requests = season.player_requests.duplicate()
 	season.player_requests.clear()
 	if not sponsor.is_empty():
@@ -193,24 +207,39 @@ func _new_sponsor_offers(season: Season) -> void:
 	for i in MAX_SPONSOR_OFFERS:
 		if _rng.randf() < 0.12 + value * 0.7:
 			count += 1
-	var top_tier := clampi(floori(value * 4.0), 0, 3)
+	var table := season.rankings_of(boxer)
+	var top_tier := sponsor_tier(table)
+	var purse := _purse_at_his_level(table)
 	var names: Array = data["sponsors"]
 	for i in count:
 		var tier := clampi(top_tier - (1 if _rng.randf() < 0.35 else 0), 0, 3)
 		var taken := sponsor_offers.map(func(o: Dictionary) -> String: return o["name"])
 		var choices := names.filter(func(s: Dictionary) -> bool: return int(s["tier"]) == tier and not s["name"] in taken)
 		var pick: Dictionary = choices[_rng.randi_range(0, choices.size() - 1)]
-		var pay_range: Array = data["tiers"][tier]["pay"]
-		# Where he sits in the tier, give or take a little for each firm.
-		var place := clampf(value * 4.0 - tier + _rng.randf_range(-0.1, 0.3), 0.0, 1.0)
-		var base := lerpf(pay_range[0], pay_range[1], place)
+		var base := purse * SPONSOR_PURSE_SHARE * _rng.randf_range(1.0 - SPONSOR_SPREAD, 1.0 + SPONSOR_SPREAD)
 		var length := _rng.randi_range(0, SPONSOR_MONTHS.size() - 1)
 		sponsor_offers.append({
 			"name": pick["name"], "tier": tier, "months": SPONSOR_MONTHS[length],
-			"pay": roundi(base * SPONSOR_SCALE[length] / 100.0) * 100,
+			"pay": maxi(roundi(base * SPONSOR_SCALE[length] / 100.0) * 100, 100),
 		})
 	if count > 0:
 		_log("%d SPONSOR OFFER%s IN - SEE FACILITIES." % [count, "S" if count > 1 else ""])
+
+
+## Which sponsors come calling (0 local - 3 global), by his level.
+func sponsor_tier(table: Rankings) -> int:
+	var place := table.index_of(boxer)
+	if table.is_champion(boxer) or place <= SPONSOR_GLOBAL_PLACES:
+		return 3
+	return int(Rankings.tier_for(place, table.size()))   # Amateur 0, semi-pro 1, pro 2.
+
+
+## The usual purse for a non-title fight at his ranking (against the man
+## just below him; the bottom man against the man above).
+func _purse_at_his_level(table: Rankings) -> float:
+	var place := table.index_of(boxer)
+	var other := place + 1 if place + 1 < table.size() else place - 1
+	return float(Purse.for_fight(place, other, table.size(), boxer.division, false))
 
 
 ## Takes sponsor offer [param i]: the money is paid at once.
@@ -295,9 +324,14 @@ func purse_offers(season: Season, other: BoxerData) -> Array[int]:
 	return out
 
 
-## He must be able to put up half the purse.
-func can_offer(purse: int) -> bool:
-	return money * 2 >= purse
+## His stake in a fight for [param purse] at offer [param offer] (0 - 4).
+static func stake(purse: int, offer: int) -> int:
+	return maxi(roundi(purse * STAKE[offer] / 10.0) * 10, 10)
+
+
+## He must be able to put up his stake.
+func can_offer(purse: int, offer: int) -> bool:
+	return money >= stake(purse, offer)
 
 
 ## Chance [param other] says yes to purse option [param offer] (0 - 4).
@@ -323,7 +357,7 @@ func accept_chance(season: Season, other: BoxerData, offer: int) -> float:
 ## new Fixture, or null if he turned it down.
 func challenge(season: Season, other: BoxerData, offer: int) -> Fixture:
 	var purse: int = purse_offers(season, other)[offer]
-	if not can_offer(purse) or not can_arrange(season) or declined.has(other.id):
+	if not can_offer(purse, offer) or not can_arrange(season) or declined.has(other.id):
 		return null
 	if _rng.randf() >= accept_chance(season, other, offer):
 		declined.append(other.id)
@@ -331,25 +365,26 @@ func challenge(season: Season, other: BoxerData, offer: int) -> Fixture:
 		return null
 	var f := season.book_player_fight(boxer, other, purse)
 	requests.erase(other.id)
-	_log("FIGHT ARRANGED: %s, END OF %s, FOR %s." % [other.display_name().to_upper(), Season.date_text(f.month), Purse.money_text(purse)])
+	fight_stake = stake(purse, offer)
+	money -= fight_stake
+	_log("FIGHT ARRANGED: %s, END OF %s, FOR %s (YOUR STAKE %s)." % [other.display_name().to_upper(), Season.date_text(f.month), Purse.money_text(purse), Purse.money_text(fight_stake)])
 	return f
 
 
-## What calling off the arranged fight would cost.
+## What calling off the arranged fight would cost: the stake he put up.
 func forfeit(season: Season) -> int:
-	var f := season.booking(boxer)
-	return roundi(f.purse * FORFEIT) if f != null else 0
+	return fight_stake if season.booking(boxer) != null else 0
 
 
-## Calls off the arranged fight, paying the forfeit.
+## Calls off the arranged fight; his stake is lost.
 func cancel_fight(season: Season) -> void:
 	var f := season.booking(boxer)
 	if f == null:
 		return
 	var cost := forfeit(season)
-	money -= cost
+	fight_stake = 0
 	season.cancel_fixture(f)
-	_log("FIGHT WITH %s CALLED OFF. FORFEIT PAID: %s." % [f.opponent_of(boxer).display_name().to_upper(), Purse.money_text(cost)])
+	_log("FIGHT WITH %s CALLED OFF. STAKE LOST: %s." % [f.opponent_of(boxer).display_name().to_upper(), Purse.money_text(cost)])
 
 
 # ----------------------------------------------------------------------------
@@ -361,7 +396,7 @@ func to_dict() -> Dictionary:
 		"boxer": boxer.id, "money": money, "week": week, "trained": trained, "last_gains": last_gains,
 		"training_facility": training_facility, "recovery_facility": recovery_facility,
 		"sponsor": sponsor, "sponsor_offers": sponsor_offers, "requests": requests,
-		"declined": declined, "news": news,
+		"declined": declined, "news": news, "fight_stake": fight_stake,
 	}
 
 
@@ -377,3 +412,4 @@ func load_dict(d: Dictionary) -> void:
 	requests.assign(d["requests"])
 	declined.assign(d["declined"])
 	news.assign(d["news"])
+	fight_stake = int(d.get("fight_stake", 0))

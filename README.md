@@ -325,9 +325,11 @@ going, a *Protective* manager looks for easier fights for his man, and an
 `--ranking=ladder` (the default) or `--ranking=points`:
 
 * **Ladder.** If the winner was ranked below the loser, he takes the loser's
-  place and the loser, and everyone between them, drops one place. A win
-  over a lower-ranked man, or a draw, changes nothing. Easy to follow: a big
-  win is a big jump, and a loss only ever costs one place.
+  place and climbs one more (two more by knockout); the men he passes drop
+  one place each. Any other win still moves him up one place. A draw
+  changes nothing, and nobody passes the champion without beating him for
+  the title. Easy to follow: a big win is a big jump, every win counts, and
+  a loss only ever costs a place or so.
 * **Points.** Every boxer has ranking points and the order is simply who has
   most (each place starts 20 points apart). A win earns up to 40 points,
   more the bigger the upset (Elo-style, where a 200-point gap makes the
@@ -491,18 +493,29 @@ a **week** at a time (NEXT WEEK), four weeks to a month:
 
 **FACILITIES** has three tabs:
 
-* **TRAINING** - Local Gym (free, x1.0), Boxing Club ($400 a week, x1.3),
-  Fight Academy ($2.5K, x1.7), Performance Centre ($12K, x2.2) and
-  Olympic Complex ($50K, x3.0). BOOST multiplies every training session.
-* **RECOVERY** - Local Day Spa (free), Physio Clinic ($300), Sports
-  Injury Clinic ($2K), Private Hospital ($9K) and Elite Medical Institute
-  ($40K): how quickly he gets his health back between fights.
+* **TRAINING** - Local Gym (free, x1.0), Boxing Club ($100 a week, x1.25),
+  Fight Academy ($600, x1.5), Performance Centre ($4K, x1.8) and Olympic
+  Complex ($20K, x2.2) - roughly one for each level's purses. BOOST
+  multiplies every training session. A raw beginner catches up quickly
+  (about 58 overall after a year, 64 after two - level with the amateurs
+  around him), but the better a skill already is, the harder it is to
+  improve, so becoming world class takes years: a boxer who moves to a
+  better gym every couple of years is about 75 overall at 24, 80 at 26 and
+  85 at 28; with the best gym from the start, about 83 at 24 and 87 at 26
+  (the champions are about 85). At the Local Gym alone he reaches the low
+  80s by 28.
+* **RECOVERY** - Local Day Spa (free), Physio Clinic ($75), Sports
+  Injury Clinic ($500), Private Hospital ($3K) and Elite Medical Institute
+  ($15K): how quickly he gets his health back between fights.
 * **SPONSORS** - each month a few firms may offer a one-off payment for 3,
-  6 or 12 months. An unknown amateur gets few offers, all from small local
-  firms; the higher he is ranked (and the better his record) the more
-  offers come, from regional, national and finally global names, and for
-  much more. There is no catch, but he can have only one sponsor at a
-  time.
+  6 or 12 months. An unknown amateur gets few offers; the higher he is
+  ranked (and the better his record) the more offers come. What they pay
+  follows his purses: three months is worth about half the usual purse for
+  a fight at his ranking (six months 1.8 times that, a year 3.2 times). Who
+  they are follows his level: local firms for an amateur, regional ones for
+  a semi-pro, national names for a professional, and global brands for the
+  champion and the top three. There is no catch, but he can have only one
+  sponsor at a time.
 
 Rent is paid at the end of each week; a facility can only be chosen if he
 can pay for its first week.
@@ -515,13 +528,15 @@ can pay for its first week.
   Only a few managers ask in a month, and only now and then do they pick
   an unknown like him.
 * Choose a man to offer him a purse: five choices from LOW (60% of the
-  usual purse) through USUAL to HIGH (150%). He must have half the purse
-  in the bank to offer it. A man who wants the fight nearly always says
+  usual purse) through USUAL to HIGH (150%). The venue hosting the fight
+  pays the purse; he puts up a stake of 5% (LOW) to 10% (HIGH) of it,
+  paid when the fight is agreed, so he needs that much in the bank. A man
+  who wants the fight nearly always says
   yes; an unsure one is swayed by money, and may turn down a low offer
   (then he is marked TURNED YOU DOWN for the rest of the week).
 * One fight at a time, two months on, like everyone else's. Once it is
-  arranged the list is greyed out and **CANCEL FIGHT** calls it off, for a
-  forfeit of a quarter of the purse.
+  arranged the list is greyed out and **CANCEL FIGHT** calls it off; he
+  loses his stake.
 * A fight between the top two men for a vacant title is for the title.
 * **Head to head**: the VS YOU column shows his record against each man
   (his wins first: 2-0, or 1-1-1 with a draw), "-" if they have never met;
@@ -663,8 +678,9 @@ body is then drawn from outlined, three-tone shaded shapes.
   wiry frame and visible ribs; heavyweights are broad and thick-limbed, and the
   heaviest carry a belly and love handles, with the waistband wrapping round.
   Taller boxers at the same weight look rangier.
-* Skin, hair (and hair style), trunks, boots are colours. Gloves are always
-  red or blue by corner, so the two boxers are easy to tell apart.
+* Skin, hair (and hair style), trunks, boots are colours. Gloves are red or
+  blue by corner, so the two boxers are easy to tell apart - except the
+  player's own boxer, who wears the gloves he chose.
 * Seen **face-on** (his profile portrait and the verdict) a boxer is drawn by
   `front_rig.gd` from the same proportions, build and colours, so he is
   recognisably the same man; the build is toned down a little because a big

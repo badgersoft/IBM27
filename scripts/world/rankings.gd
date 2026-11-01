@@ -14,10 +14,12 @@ extends RefCounted
 ## Results move boxers up and down in one of two ways (see Mode):
 ##
 ##   LADDER  The winner, if he was below the loser, takes the loser's place
-##           and the loser (and everyone between them) drops one place. A
-##           win over a lower-ranked man, or a draw, changes nothing. Easy to
-##           follow: a big win is a big jump, and a loss only ever costs one
-##           place.
+##           and climbs LADDER_BONUS more (LADDER_KO_BONUS by knockout); the
+##           men he passes drop one place each. Any other win still moves
+##           him up LADDER_WIN_STEP place. A draw changes nothing, and nobody
+##           passes the champion outside a title fight. Easy to follow: a
+##           big win is a big jump, every win counts, and a loss only ever
+##           costs a place or so.
 ##   POINTS  Every boxer has ranking points and the order is simply who has
 ##           most. A win earns points, more for beating a better-ranked man
 ##           (and a little more inside the distance or for a title); a loss
@@ -38,6 +40,11 @@ const TIER_SHORT: Array[String] = ["AM", "SEMI", "PRO"]
 ## Scheduled rounds for a fight at each level, and for a title fight.
 const TIER_ROUNDS: Array[int] = [6, 10, 12]
 const TITLE_ROUNDS := 12
+## LADDER: extra places for beating a higher-ranked man (on points, by
+## knockout), and the places any other win is worth.
+const LADDER_BONUS := 1
+const LADDER_KO_BONUS := 2
+const LADDER_WIN_STEP := 1
 ## Venues for a fight at each level (see Venues.Id); title fights are
 ## always at the Grand Arena.
 const TIER_VENUES: Array = [
@@ -176,7 +183,7 @@ func record(winner: BoxerData, loser: BoxerData, draw: bool, by_ko: bool, title_
 			change["new_champion"] = true
 	if mode == Mode.LADDER:
 		if not draw:
-			_ladder(winner, loser)
+			_ladder(winner, loser, by_ko)
 	else:
 		_points(winner, loser, draw, by_ko, title_fight)
 	_champion_first()
@@ -198,15 +205,14 @@ func replace(old: BoxerData, fresh: BoxerData) -> bool:
 
 # ----------------------------------------------------------------------------
 
-func _ladder(winner: BoxerData, loser: BoxerData) -> void:
+func _ladder(winner: BoxerData, loser: BoxerData, by_ko: bool) -> void:
 	var wi := index_of(winner)
 	var li := index_of(loser)
-	if wi < li:
-		return   # Already above him.
-	# A champion beaten without his title on the line keeps the top spot.
-	var target := li
-	if loser == champion and winner != champion:
-		target = li + 1
+	var target := wi - LADDER_WIN_STEP   # Already above him: a step up.
+	if wi > li:
+		target = li - (LADDER_KO_BONUS if by_ko else LADDER_BONUS)
+	# Nobody passes the champion without beating him for the title.
+	target = maxi(target, 1 if champion != null and winner != champion else 0)
 	if target >= wi:
 		return
 	boxers.remove_at(wi)

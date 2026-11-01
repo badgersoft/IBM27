@@ -40,14 +40,15 @@ const COLUMNS := [
 ]
 ## The purse offer pop-up (and the answer).
 const OFFER_W := 1120
-const OFFER_H := 360
+const OFFER_H := 368
 const OFFER_MOOD_Y := 80
 const OFFER_H2H_Y := 112
 const OFFER_BUTTON := Vector2(192, 56)
 const OFFER_BUTTON_Y := 152
 const OFFER_NAME_Y := 216
-const OFFER_RULE_Y := 256
-const OFFER_OK_Y := 296
+const OFFER_STAKE_Y := 240
+const OFFER_RULE_Y := 264
+const OFFER_OK_Y := 304
 const OFFER_NAMES: Array[String] = ["LOW", "LOWER", "USUAL", "HIGHER", "HIGH"]
 
 var _frame: Control
@@ -139,7 +140,7 @@ func _build_fight() -> void:
 		UiTheme.place(cancel, FIGHT.size.x - PAD - 288, 32, 288, 48)
 		cancel.pressed.connect(_cancel)
 		panel.add_child(cancel)
-		panel.add_child(UiTheme.place(UiTheme.label("FORFEIT %s" % Purse.money_text(_career.forfeit(_season)), UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), FIGHT.size.x - PAD - 288, 88, 288, UiTheme.CAPTION))
+		panel.add_child(UiTheme.place(UiTheme.label("YOU LOSE YOUR %s STAKE" % Purse.money_text(_career.forfeit(_season)), UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), FIGHT.size.x - PAD - 288, 88, 288, UiTheme.CAPTION))
 	elif not _career.can_arrange(_season):
 		main = "RECOVERING FROM YOUR LAST FIGHT"
 		sub = "YOU CAN ARRANGE A NEW FIGHT FROM %s" % Season.date_text(_career.free_from(_season))
@@ -227,14 +228,16 @@ func _offer(b: BoxerData) -> void:
 		button.focus_mode = Control.FOCUS_ALL
 		var x := x0 + i * (OFFER_BUTTON.x + PAD)
 		UiTheme.place(button, x, OFFER_BUTTON_Y, OFFER_BUTTON.x, OFFER_BUTTON.y)
-		button.disabled = not _career.can_offer(offers[i])
+		button.disabled = not _career.can_offer(offers[i], i)
 		button.pressed.connect(_make_offer.bind(b, i))
 		box.add_child(button)
 		var name_colour := Palette.UI_GOLD if i == 2 else Palette.UI_TEXT_DIM
 		box.add_child(UiTheme.place(UiTheme.label(OFFER_NAMES[i], UiTheme.BODY, name_colour, HORIZONTAL_ALIGNMENT_CENTER), x, OFFER_NAME_Y, OFFER_BUTTON.x, UiTheme.ROW_H))
+		var stake := "STAKE %s" % Purse.money_text(PlayerCareer.stake(offers[i], i))
+		box.add_child(UiTheme.place(UiTheme.label(stake, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), x, OFFER_STAKE_Y, OFFER_BUTTON.x, UiTheme.CAPTION))
 		if i == 2 and not button.disabled:
 			first = button
-	var rule := "YOU NEED HALF THE PURSE IN THE BANK TO MAKE AN OFFER."
+	var rule := "THE VENUE PAYS THE PURSE - YOU PUT UP A 5 - 10% STAKE."
 	box.add_child(UiTheme.place(UiTheme.label(rule, UiTheme.BODY, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), 0, OFFER_RULE_Y, OFFER_W, UiTheme.ROW_H))
 	var cancel := _popup_button("CANCEL", (OFFER_W - 256) / 2.0, OFFER_OK_Y, _close_popup)
 	(first if first != null else cancel).grab_focus()
