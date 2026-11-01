@@ -9,6 +9,13 @@ extends RefCounted
 ## skills start to fade, speed fastest. Whole points are applied as the
 ## fractions build up (BoxerData.skill_progress), so a skill moves a point
 ## at a time. Skills stay between MIN_SKILL and MAX_SKILL.
+##
+## For the computer's boxers the gains (training and youth) get smaller as
+## a skill climbs past NPC_ROOM_FROM - (MAX_SKILL - skill) / (MAX_SKILL -
+## NPC_ROOM_FROM) to the power NPC_ROOM_POWER - so a prospect improves
+## quickly while he is raw but levels off in the 70s unless he was gifted
+## to begin with, and the divisions don't all grow stronger year after year.
+## (The player's boxer has his own curve: Facilities.)
 
 const SKILLS: Array[String] = ["power", "speed", "stamina", "chin", "strength", "intelligence"]
 const TRAINING := 0.12
@@ -24,7 +31,16 @@ const AGE_CHANGE: Array = [
 ## Speed fades faster with age, intelligence (experience) slower.
 const FADE_SCALE := {"speed": 1.5, "intelligence": 0.4}
 const MIN_SKILL := 20
+const NPC_ROOM_FROM := 60.0
+const NPC_ROOM_POWER := 2.0
 const MAX_SKILL := 97
+
+
+## How much of a gain a computer boxer's skill of [param value] still takes.
+static func _npc_room(value: float) -> float:
+	if value <= NPC_ROOM_FROM:
+		return 1.0
+	return pow(maxf(MAX_SKILL - value, 0.0) / (MAX_SKILL - NPC_ROOM_FROM), NPC_ROOM_POWER)
 
 
 ## One month for [param b]; [param in_camp] if he has a fight within the
@@ -43,6 +59,8 @@ static func month(b: BoxerData, in_camp: bool, self_trained: bool = false) -> vo
 		if change < 0.0:
 			change *= FADE_SCALE.get(skill, 1.0)
 		change += training
+		if change > 0.0 and not self_trained:
+			change *= _npc_room(float(b.get(skill)))
 		var built: float = b.skill_progress.get(skill, 0.0) + change
 		var whole := int(built)   # Towards zero, so -0.4 waits and -1.2 applies -1.
 		if whole != 0:

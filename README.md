@@ -408,7 +408,9 @@ The season starts in January 2027 and runs a month at a time:
   previous results.
 * **Month end.** Everyone trains (harder in camp) and gets older. Young men
   still improve, men in their prime hold steady, and from 32 skills start
-  to fade, speed first. Men over 34 may retire (at 39 they always do), and
+  to fade, speed first. The better a skill already is, the less a month
+  adds to it, so most men level off in the 70s and only the naturally
+  gifted are world class. Men over 34 may retire (at 39 they always do), and
   a young prospect takes each one's place at the bottom of his division.
   Then **READ THE PAPER**.
 

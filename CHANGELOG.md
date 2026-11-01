@@ -4,6 +4,18 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.33
+
+* The computer's boxers no longer all become world class: their monthly
+  gains (training and youth) shrink as a skill climbs past 60, so a
+  prospect improves quickly while he is raw but levels off in the 70s
+  unless he was gifted to begin with. Before, every young prospect kept
+  climbing, and after five years each division's top ten averaged 88-90
+  overall (best 94-97) - far beyond what the player's boxer can reach.
+  Now they average about 77 (best 83-88), so a well-trained boxer can
+  rise above the pack.
+* Screenshots updated for the 0.1.32 monster changes.
+
 ## 0.1.32
 
 * Training: a skill that is still low improves faster (a catch-up bonus
