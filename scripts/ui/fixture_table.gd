@@ -4,7 +4,7 @@ extends Control
 ## screen and the newspaper's results page.
 ##
 ##   DIV  RANK RED CORNER         V   RANK BLUE CORNER     RDS   PURSE  RESULT  RATING
-##   HW      C A. PEREIRA      [belt]    1 D. WATANABE      12   $100M   KO 7    8.4
+##   HW      C A. PEREIRA      [belt]    1 D. WATANABE      12    $60M   KO 7    8.4
 ##              29-2-2                     22-2-0
 ##
 ## RESULT is short (KO 7, TKO 3, POINTS, DRAW) with the kind of result in

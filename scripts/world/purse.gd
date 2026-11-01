@@ -9,12 +9,12 @@ extends RefCounted
 ##   level          purse                          most fights
 ##   Amateur        $1.2K - $5K                    $1.5K - $3K
 ##   Semi-Pro       $5K - $50K                     $5K - $25K
-##   Professional   $5M - $100M (title fights)     tens of millions
+##   Professional   $2M - $60M (title fights)      $2M - $20M
 ##
 ## Then:  x 0.70 if no title is on the line, and by division
 ## (Heavyweight 100%, Middleweight 80%, Lightweight 60%), so only a
 ## heavyweight title fight between the champion and the number 1 reaches
-## $100M; a middleweight one tops out at $80M. The bottom amateur fight
+## $60M; a middleweight one tops out at $48M. The bottom amateur fight
 ## pays about $500 at lightweight and $850 at heavyweight, and the top
 ## amateur fight in each division pays what the bottom semi-pro one does.
 
@@ -28,7 +28,7 @@ const DIVISION_SHARE: Array[float] = [0.60, 0.80, 1.00]
 const LEVELS: Array = [
 	[1200.0,      5000.0,      1.5],    # Amateur
 	[5000.0,      50000.0,     1.3],    # Semi-Pro
-	[5000000.0,   100000000.0, 0.7],    # Professional
+	[2000000.0,   60000000.0,  1.0],    # Professional
 ]
 ## Random spread either side, so no two purses are quite the same.
 const SPREAD := 0.10

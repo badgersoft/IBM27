@@ -35,16 +35,18 @@ const STAKE: Array[float] = [0.05, 0.06, 0.075, 0.09, 0.10]
 const MIN_PURSE := 50
 ## Sponsors: offers come in the first week of the month, at most
 ## MAX_SPONSOR_OFFERS at a time, for 3, 6 or 12 months (paying 1, 1.8 or
-## 3.2 times the three-month figure). The three-month figure is
-## SPONSOR_PURSE_SHARE of the usual purse for a fight at his ranking (give
-## or take SPONSOR_SPREAD), so sponsors pay in step with his purses. Who the
+## 3.2 times the three-month figure). The three-month figure is a share of
+## the usual purse for a fight at his ranking (SPONSOR_PURSE_SHARE, by his
+## level: smaller for a professional, whose purses are huge; give or take
+## SPONSOR_SPREAD), so sponsors pay in step with his purses. Who the
 ## sponsors are follows his level: local firms for an amateur, regional for
 ## a semi-pro, national for a professional, global names for the champion
 ## and the top SPONSOR_GLOBAL_PLACES men.
 const SPONSOR_MONTHS: Array[int] = [3, 6, 12]
 const SPONSOR_SCALE: Array[float] = [1.0, 1.8, 3.2]
 const MAX_SPONSOR_OFFERS := 3
-const SPONSOR_PURSE_SHARE := 0.5
+## By level: Amateur, Semi-Pro, Professional.
+const SPONSOR_PURSE_SHARE: Array[float] = [0.5, 0.4, 0.25]
 const SPONSOR_SPREAD := 0.2
 const SPONSOR_GLOBAL_PLACES := 3
 const SPONSORS_PATH := "res://data/sponsors.json"
@@ -210,13 +212,14 @@ func _new_sponsor_offers(season: Season) -> void:
 	var table := season.rankings_of(boxer)
 	var top_tier := sponsor_tier(table)
 	var purse := _purse_at_his_level(table)
+	var share := SPONSOR_PURSE_SHARE[Rankings.tier_for(table.index_of(boxer), table.size())]
 	var names: Array = data["sponsors"]
 	for i in count:
 		var tier := clampi(top_tier - (1 if _rng.randf() < 0.35 else 0), 0, 3)
 		var taken := sponsor_offers.map(func(o: Dictionary) -> String: return o["name"])
 		var choices := names.filter(func(s: Dictionary) -> bool: return int(s["tier"]) == tier and not s["name"] in taken)
 		var pick: Dictionary = choices[_rng.randi_range(0, choices.size() - 1)]
-		var base := purse * SPONSOR_PURSE_SHARE * _rng.randf_range(1.0 - SPONSOR_SPREAD, 1.0 + SPONSOR_SPREAD)
+		var base := purse * share * _rng.randf_range(1.0 - SPONSOR_SPREAD, 1.0 + SPONSOR_SPREAD)
 		var length := _rng.randi_range(0, SPONSOR_MONTHS.size() - 1)
 		sponsor_offers.append({
 			"name": pick["name"], "tier": tier, "months": SPONSOR_MONTHS[length],

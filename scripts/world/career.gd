@@ -9,7 +9,7 @@ extends RefCounted
 ## each fight pays the purse for its level (see Purse) and his usual share
 ## of it (more for a man who wins most of his fights). A champion has also
 ## had a few title fights. A heavyweight who has had thirty fights and sits
-## in the top ten has banked a few hundred million dollars; a young amateur
+## in the top ten has banked a hundred million dollars or more; a young amateur
 ## has a few thousand.
 
 ## How far through his career a boxer reached his current place.

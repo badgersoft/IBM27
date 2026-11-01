@@ -59,7 +59,7 @@ const PLAYER_START_SKILL := 35
 ## ...except these, by division (Lightweight, Middleweight, Heavyweight):
 ## lighter men are quicker, heavier men hit harder.
 const PLAYER_DIVISION_START: Array[Dictionary] = [
-	{"speed": 45},
+	{"speed": 45, "stamina": 40},
 	{"speed": 40, "power": 40},
 	{"power": 45},
 ]

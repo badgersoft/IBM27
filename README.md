@@ -290,7 +290,7 @@ boxers' **levels**:
 
 | Level        | Who                       | Fight length | Purse                               |
 |--------------|---------------------------|--------------|-------------------------------------|
-| Professional | Top third (C and 1 - 9)   | 12 rounds    | $5M - $100M (tens of millions)      |
+| Professional | Top third (C and 1 - 9)   | 12 rounds    | $2M - $60M (mostly $2M - $20M)      |
 | Semi-Pro     | Middle third (10 - 19)    | 10 rounds    | $5K - $50K (mostly $5K - $25K)      |
 | Amateur      | Bottom third (20 - 29)    | 6 rounds     | $1.2K - $5K (mostly $1.5K - $3K)    |
 
@@ -300,10 +300,10 @@ then it is cut to 70% if no title is on the line and scaled by division
 (heavyweight 100%, middleweight 80%, lightweight 60%). So the most junior
 fight, two lightweights at the bottom, pays about $500, and only a
 heavyweight title fight between the champion and the number 1 reaches
-$100M. The winner takes 60% and the loser 40% (half each for a draw), and
+$60M. The winner takes 60% and the loser 40% (half each for a draw), and
 it goes on their **career earnings**. The starting boxers already have
 earnings that fit their ranking and career: a top-ten heavyweight with
-twenty or thirty fights has made a few hundred million dollars, a young
+twenty or thirty fights has made a hundred million dollars or more, a young
 amateur a few thousand.
 
 A title fight is announced with the winner as "...AND STILL IBC HEAVYWEIGHT
@@ -439,7 +439,7 @@ with a random look, name and hometown, all of which can be changed:
 * NICKNAME: ten made up for him, or NO NICKNAME.
 * FROM: a country, then one of its cities.
 * SKILLS: every skill starts at 35, except by division - a lightweight
-  starts with speed 45, a middleweight with speed 40 and power 40, a
+  starts with speed 45 and stamina 40, a middleweight with speed 40 and power 40, a
   heavyweight with power 45. There are **45 points** to spend between them
   using - and + (from 10 to 65 each); points taken off a skill go back in
   the pool, and points spent stay with him if he changes division.
@@ -510,8 +510,10 @@ a **week** at a time (NEXT WEEK), four weeks to a month:
 * **SPONSORS** - each month a few firms may offer a one-off payment for 3,
   6 or 12 months. An unknown amateur gets few offers; the higher he is
   ranked (and the better his record) the more offers come. What they pay
-  follows his purses: three months is worth about half the usual purse for
-  a fight at his ranking (six months 1.8 times that, a year 3.2 times). Who
+  follows his purses: three months is worth a share of the usual purse for
+  a fight at his ranking - half for an amateur, 40% for a semi-pro, a
+  quarter for a professional, whose purses are huge (six months 1.8 times
+  that, a year 3.2 times). Who
   they are follows his level: local firms for an amateur, regional ones for
   a semi-pro, national names for a professional, and global brands for the
   champion and the top three. There is no catch, but he can have only one

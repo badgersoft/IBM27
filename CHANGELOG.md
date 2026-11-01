@@ -4,6 +4,16 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.30
+
+* Professional purses are smaller: $2M - $60M (was $5M - $100M), most
+  between $2M and $20M; only a heavyweight title fight between the
+  champion and the number 1 reaches $60M.
+* Professional sponsors pay a quarter of a usual purse for three months
+  (was half); semi-pros 40%, amateurs still half.
+* A new lightweight also starts with stamina 40 (as well as speed 45): the
+  lighter men go the distance more often, so fitness counts for more.
+
 ## 0.1.29
 
 * The purse is paid by the venue: the player puts up a stake of 5% (LOW
