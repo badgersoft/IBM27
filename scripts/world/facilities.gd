@@ -16,7 +16,7 @@ const TRAINING: Array = [
 	{"name": "Local Gym",           "cost": 0,     "boost": 1.0, "blurb": "A heavy bag, a rope and a mirror."},
 	{"name": "Boxing Club",         "cost": 100,   "boost": 1.25, "blurb": "Proper rings and sparring partners."},
 	{"name": "Fight Academy",       "cost": 600,   "boost": 1.5, "blurb": "Specialist coaches for every skill."},
-	{"name": "Performance Centre",  "cost": 4000,  "boost": 1.8, "blurb": "Sports science and video analysis."},
+	{"name": "Performance Centre",  "cost": 2000,  "boost": 1.8, "blurb": "Sports science and video analysis."},
 	{"name": "Olympic Complex",     "cost": 20000, "boost": 2.2, "blurb": "Where the world's best prepare."},
 ]
 const RECOVERY: Array = [

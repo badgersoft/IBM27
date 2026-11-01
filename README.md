@@ -494,7 +494,7 @@ a **week** at a time (NEXT WEEK), four weeks to a month:
 **FACILITIES** has three tabs:
 
 * **TRAINING** - Local Gym (free, x1.0), Boxing Club ($100 a week, x1.25),
-  Fight Academy ($600, x1.5), Performance Centre ($4K, x1.8) and Olympic
+  Fight Academy ($600, x1.5), Performance Centre ($2K, x1.8) and Olympic
   Complex ($20K, x2.2) - roughly one for each level's purses. BOOST
   multiplies every training session. A raw beginner catches up quickly
   (about 58 overall after a year, 64 after two - level with the amateurs

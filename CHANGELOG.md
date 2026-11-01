@@ -4,6 +4,11 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.31
+
+* The Performance Centre costs $2,000 a week (was $4,000), so a successful
+  semi-pro can afford it for the last push into the professional ranks.
+
 ## 0.1.30
 
 * Professional purses are smaller: $2M - $60M (was $5M - $100M), most
