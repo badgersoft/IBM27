@@ -76,10 +76,15 @@ const EARLIER_KNOCKDOWN_COUNT := 1.4
 const SIGNIFICANT_DAMAGE := 1.05
 ## Monsters (BoxerData.Special) hit harder, land more big punches and their
 ## power shots knock men down more often. Glass jaws punch like monsters too:
-## only their chin gives them away.
+## only their chin gives them away. These are the heavyweights' figures; in
+## the lighter divisions only MONSTER_DIVISION of each bonus applies (as in
+## real boxing, the lighter the man the less a single punch does), so their
+## monsters are still the best in the division but can be beaten.
 const MONSTER_DAMAGE := 1.25
 const MONSTER_BIG := 1.5
 const MONSTER_KNOCKDOWN := 1.8
+## Share of the monster bonuses by division: Lightweight, Middleweight, Heavyweight.
+const MONSTER_DIVISION: Array[float] = [0.25, 0.25, 1.0]
 ## A glass jaw caught clean on the chin by a significant (or big) punch is
 ## GLASS_JAW_KNOCKDOWN times as likely to go down (up to GLASS_JAW_CAP), and
 ## takes GLASS_JAW_COUNT seconds longer to get up - if he does.
@@ -478,7 +483,7 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	if a.advice == Fighter.Advice.ALL_OUT:
 		dmg *= 1.1
 	if a.data.special != BoxerData.Special.NONE:
-		dmg *= MONSTER_DAMAGE
+		dmg *= _monster(a, MONSTER_DAMAGE)
 	if PunchTypes.is_power_punch(type):
 		dmg *= STYLE_POWER[a.data.style]
 	var caught_punching := d.state == State.PUNCH and not d.punch_resolved
@@ -513,7 +518,7 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	# A big one? Rare, but it does far more damage and can end things.
 	var big_chance := _big_punch_chance(a, d, caught_punching) + (ONE_TWO_BIG if two else 0.0)
 	if a.data.special != BoxerData.Special.NONE:
-		big_chance *= MONSTER_BIG
+		big_chance *= _monster(a, MONSTER_BIG)
 	var big := PunchTypes.is_power_punch(type) and rng.randf() < big_chance
 	if big:
 		dmg *= rng.randf_range(BIG_DAMAGE.x, BIG_DAMAGE.y)
@@ -560,7 +565,7 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 		if big:
 			chance *= BIG_KNOCKDOWN
 		if a.data.special != BoxerData.Special.NONE:
-			chance *= MONSTER_KNOCKDOWN
+			chance *= _monster(a, MONSTER_KNOCKDOWN)
 		if significant and d.data.special == BoxerData.Special.GLASS_JAW:
 			chance *= GLASS_JAW_KNOCKDOWN
 			cap = GLASS_JAW_CAP
@@ -571,6 +576,12 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	var reaction := "hurt" if to_head else "hurt_body"
 	d.set_state(State.HURT, reaction, 0.25 + dmg * (0.22 if big else 0.15))
 	_hit_ropes(d, true)
+
+
+## A monster bonus [param factor] as it applies in [param a]'s division
+## (see MONSTER_DIVISION).
+static func _monster(a: Fighter, factor: float) -> float:
+	return 1.0 + (factor - 1.0) * MONSTER_DIVISION[clampi(a.data.division, 0, MONSTER_DIVISION.size() - 1)]
 
 
 ## (6 / rounds) ^ [param power], capped at 1 (see LENGTH_KNOCKDOWN).

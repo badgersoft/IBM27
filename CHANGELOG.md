@@ -4,6 +4,23 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.32
+
+* Training: a skill that is still low improves faster (a catch-up bonus
+  for any skill under 70, was under 62) and a high one more slowly (the
+  last points before world class come harder), so a boxer gets going
+  sooner but gains less later in his career. Moving up a gym every couple
+  of years he is about 66 overall at 22 (was 64) and 85-86 from 30 (was
+  87-88).
+* Lightweight and middleweight monsters can be beaten: they have a little
+  less chin and strength (chin 70-82 / 72-84, was 78-92) and only a
+  quarter of the monster punch and aggression bonuses (heavyweights keep
+  them all). A world-class challenger (88 overall) now beats them about
+  one fight in three; before, never.
+* A new career's boxer starts with recovery 50 (was 35). Recovery, how
+  much his corner gets back between rounds, isn't on the setup screen, and
+  starting low left him fading late in fights.
+
 ## 0.1.31
 
 * The Performance Centre costs $2,000 a week (was $4,000), so a successful

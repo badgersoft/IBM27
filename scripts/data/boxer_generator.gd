@@ -48,6 +48,11 @@ const MONSTERS := 2
 const MONSTER_POOL := 6
 const GLASS_JAWS := 1
 const GLASS_JAW_POOL := 10
+## A monster's chin and strength by division (Lightweight, Middleweight,
+## Heavyweight): the lighter monsters are a little easier to hurt, so a
+## top-class lightweight or middleweight can beat them.
+const MONSTER_CHIN: Array[Vector2i] = [Vector2i(70, 82), Vector2i(72, 84), Vector2i(78, 92)]
+const MONSTER_STRENGTH: Array[Vector2i] = [Vector2i(74, 86), Vector2i(76, 88), Vector2i(82, 95)]
 ## Both have been around long enough for the record to tell the story.
 const SPECIAL_MIN_FIGHTS := 12
 ## Tries at a fresh surname before settling for a repeat.
@@ -56,7 +61,10 @@ const NAME_ATTEMPTS := 40
 const HOME_MANAGER := 0.7
 ## A new career's boxer starts with this in every skill...
 const PLAYER_START_SKILL := 35
-## ...except these, by division (Lightweight, Middleweight, Heavyweight):
+## His recovery (how much his corner gets back between rounds; not on the
+## setup screen) starts here, about an average boxer's.
+const PLAYER_START_RECOVERY := 50
+## ...and these skills start higher, by division (Lightweight, Middleweight, Heavyweight):
 ## lighter men are quicker, heavier men hit harder.
 const PLAYER_DIVISION_START: Array[Dictionary] = [
 	{"speed": 45, "stamina": 40},
@@ -178,7 +186,7 @@ func generate_player(division: Divisions.Id) -> BoxerData:
 	b.boots_index = _rng.randi_range(0, Palette.BOOTS.size() - 1)
 	for skill in ["power", "speed", "stamina", "chin", "strength", "intelligence"]:
 		b.set(skill, player_start_skill(division, skill))
-	b.recovery = PLAYER_START_SKILL
+	b.recovery = PLAYER_START_RECOVERY
 	b.age = 20
 	b.wins = 0
 	b.losses = 0
@@ -378,8 +386,9 @@ func _assign_specials(roster: Array[BoxerData]) -> void:
 		# A pressure fighter, good at everything and frightening at punching.
 		b.style = BoxerData.Style.BRAWLER if _rng.randf() < 0.5 else BoxerData.Style.SLUGGER
 		b.power = _rng.randi_range(90, 97)
-		b.strength = _rng.randi_range(82, 95)
-		b.chin = _rng.randi_range(78, 92)
+		var division := clampi(b.division, 0, MONSTER_CHIN.size() - 1)
+		b.strength = _rng.randi_range(MONSTER_STRENGTH[division].x, MONSTER_STRENGTH[division].y)
+		b.chin = _rng.randi_range(MONSTER_CHIN[division].x, MONSTER_CHIN[division].y)
 		b.speed = maxi(b.speed, _rng.randi_range(70, 82))
 		b.stamina = maxi(b.stamina, _rng.randi_range(72, 85))
 		b.intelligence = maxi(b.intelligence, _rng.randi_range(68, 80))

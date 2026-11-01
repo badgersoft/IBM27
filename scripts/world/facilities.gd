@@ -46,10 +46,10 @@ const SESSIONS: Array = [
 ## the amateurs around him in a year or so. A young man learns faster than
 ## an old one.
 const SESSION_GAIN := 0.40
-const ROOM_POWER := 1.6
+const ROOM_POWER := 2.0
 const ROOM_CAP := 1.8
-const CATCH_UP_BELOW := 62.0
-const CATCH_UP_RATE := 0.10
+const CATCH_UP_BELOW := 70.0
+const CATCH_UP_RATE := 0.08
 const MAX_SKILL := 97
 ## Condition (percent) back each week at the Local Day Spa, plus a share of
 ## his recovery skill.

@@ -258,7 +258,9 @@ func _aggression(me: Fighter, opp: Fighter, round_number: int) -> float:
 	var intel := me.skill("intelligence") / 99.0
 	var a: float = BASE_AGGRESSION[me.data.style]
 	if me.data.special != BoxerData.Special.NONE:
-		a += MONSTER_AGGRESSION   # Comes forward, looking for the knockout.
+		# Comes forward, looking for the knockout (less so in the lighter
+		# divisions: FightSim.MONSTER_DIVISION).
+		a += MONSTER_AGGRESSION * FightSim.MONSTER_DIVISION[clampi(me.data.division, 0, 2)]
 	if me.data.style == Style.EVASIVE and round_number >= rounds:
 		a += 0.28   # Evasive boxers save themselves for the last round.
 	match me.advice:

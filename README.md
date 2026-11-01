@@ -260,7 +260,12 @@ PREV and NEXT to step through the division in the same order.
 records with 90-100% of their wins inside the distance ("KNOCKOUT ARTIST"
 on the profile). They come forward looking for the finish, hit harder, land
 more big punches and knock men down more often, and when you watch them
-they dominate. One more is a **glass jaw**: he looks just like a monster on
+they dominate. The heavyweight monsters are the most fearsome. At
+lightweight and middleweight, where a single punch does less, the monsters
+have a little less chin and strength and only a quarter of the extra punch
+and aggression, so they are still the best men in the division but a
+world-class challenger can beat them (about one fight in three for a
+boxer of 88 overall). One more is a **glass jaw**: he looks just like a monster on
 paper and punches like one (power, record and all), but his chin is poor. A significant punch
 landing clean on his chin is more than twice as likely to put him down, and
 he is slower to get up, so the right shot COULD knock him out.
@@ -438,7 +443,8 @@ with a random look, name and hometown, all of which can be changed:
   standard types).
 * NICKNAME: ten made up for him, or NO NICKNAME.
 * FROM: a country, then one of its cities.
-* SKILLS: every skill starts at 35, except by division - a lightweight
+* SKILLS: every skill starts at 35 (his hidden recovery, how much his
+  corner gets back between rounds, at 50), except by division - a lightweight
   starts with speed 45 and stamina 40, a middleweight with speed 40 and power 40, a
   heavyweight with power 45. There are **45 points** to spend between them
   using - and + (from 10 to 65 each); points taken off a skill go back in
@@ -496,14 +502,15 @@ a **week** at a time (NEXT WEEK), four weeks to a month:
 * **TRAINING** - Local Gym (free, x1.0), Boxing Club ($100 a week, x1.25),
   Fight Academy ($600, x1.5), Performance Centre ($2K, x1.8) and Olympic
   Complex ($20K, x2.2) - roughly one for each level's purses. BOOST
-  multiplies every training session. A raw beginner catches up quickly
-  (about 58 overall after a year, 64 after two - level with the amateurs
-  around him), but the better a skill already is, the harder it is to
-  improve, so becoming world class takes years: a boxer who moves to a
-  better gym every couple of years is about 75 overall at 24, 80 at 26 and
-  85 at 28; with the best gym from the start, about 83 at 24 and 87 at 26
-  (the champions are about 85). At the Local Gym alone he reaches the low
-  80s by 28.
+  multiplies every training session. A skill that is still low improves
+  quickly (any skill under 70 gets a catch-up bonus), so a raw beginner is
+  about 59 overall after a year and 66 after two - level with the
+  amateurs around him. The better a skill already is, the harder it is to
+  improve, so becoming world class takes years and the last points come
+  slowly: a boxer who moves to a better gym every couple of years is about
+  76 overall at 24, 80 at 26, 84 at 28 and 85-86 from 30; with the best gym
+  from the start, about 82 at 24 and 86 at 26 (the champions are about
+  80-87). At the Local Gym alone he reaches the low 80s by 28.
 * **RECOVERY** - Local Day Spa (free), Physio Clinic ($75), Sports
   Injury Clinic ($500), Private Hospital ($3K) and Elite Medical Institute
   ($15K): how quickly he gets his health back between fights.

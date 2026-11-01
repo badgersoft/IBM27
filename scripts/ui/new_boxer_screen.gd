@@ -353,7 +353,7 @@ func _start_career() -> void:
 		return
 	_boxer.first_name = first
 	_boxer.last_name = last
-	_boxer.recovery = BoxerGenerator.PLAYER_START_SKILL
+	_boxer.recovery = BoxerGenerator.PLAYER_START_RECOVERY
 	GameState.start_career(_boxer)
 	get_tree().change_scene_to_file("res://scenes/career_home.tscn")
 
