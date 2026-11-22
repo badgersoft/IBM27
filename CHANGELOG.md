@@ -4,6 +4,11 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.34
+
+* Added `TODO.md`: the to-do list, each item ranked by effort (XS - XL) -
+  the requested changes, items left over from earlier, and ideas.
+
 ## 0.1.33
 
 * The computer's boxers no longer all become world class: their monthly
