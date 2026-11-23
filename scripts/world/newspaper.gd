@@ -10,6 +10,10 @@ extends RefCounted
 ##   * A professional fight rated 9 or more out of 10 for excitement, with a
 ##     man ranked in the top ten (or the champion) in it, gets a feature
 ##     shouting about how good it was.
+##   * The player's own fight gets a story of its own, marked "player": it
+##     leads the paper unless there is a title fight or a feature, and
+##     otherwise comes straight after the main story. If his fight was for
+##     a title, the title story is his.
 ##   * Side notes: anyone in the player's division (Season.player_division)
 ##     who moved up the rankings, then retirements and new faces.
 ##
@@ -22,9 +26,10 @@ extends RefCounted
 ## series only if it fits). A decision is just "(POINTS)"; the results page
 ## has the full verdict.
 ##
-## Returns {"month", "date", "headline", "standfirst", "stories": [{"title",
-## "text"}], "roundup": [String], "notes": [String], "results": [Fixture]}. Everything is upper
-## case, like the rest of the game's text.
+## Returns {"month", "date", "headline", "standfirst", "headline_player"
+## (true if the main story is the player's fight), "stories": [{"title",
+## "text", "player"}], "roundup": [String], "notes": [String], "results":
+## [Fixture]}. Everything is upper case, like the rest of the game's text.
 
 const NAME := "THE RINGSIDE GAZETTE"
 ## A feature needs this excitement rating, in a professional fight with a
@@ -79,7 +84,20 @@ const LEAD_HEADLINES: Array[String] = [
 	"{W} SHINES AT THE {VENUE}",
 ]
 const QUIET_HEADLINE := "A QUIET MONTH IN THE RING"
+## The player's fight, from his side: {P} is him, {O} his opponent, {N} the
+## round in words.
+const PLAYER_STOPPAGE_HEADLINES: Array[String] = ["{P} STOPS {O} IN {N}", "{O} NO MATCH FOR {P}", "{P} TOO STRONG FOR {O}"]
+const PLAYER_KO_HEADLINES: Array[String] = ["{P} KNOCKS OUT {O} IN {N}", "{P} FLATTENS {O} IN {N}"]
+const PLAYER_POINTS_HEADLINES: Array[String] = ["{P} OUTPOINTS {O}", "{P} TOO GOOD FOR {O}", "POINTS WIN FOR {P}"]
+const PLAYER_STOPPED_HEADLINES: Array[String] = ["{O} STOPS {P} IN {N}", "NIGHT TO FORGET FOR {P}"]
+const PLAYER_OUTPOINTED_HEADLINES: Array[String] = ["{O} OUTPOINTS {P}", "DEFEAT FOR {P} AGAINST {O}"]
+const PLAYER_FIRST_DEFEAT := "{O} HANDS {P} HIS FIRST DEFEAT"
+const PLAYER_DRAW_HEADLINES: Array[String] = ["{P} AND {O} FIGHT TO A DRAW", "HONOURS EVEN FOR {P}"]
+const ROUND_WORDS: Array[String] = ["", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT",
+		"NINE", "TEN", "ELEVEN", "TWELVE"]
 const ORDINALS: Array[String] = ["", "FIRST", "SECOND", "THIRD", "FOURTH", "FIFTH", "SIXTH"]
+const ORDINAL_ROUNDS: Array[String] = ["", "FIRST", "SECOND", "THIRD", "FOURTH", "FIFTH", "SIXTH",
+		"SEVENTH", "EIGHTH", "NINTH", "TENTH", "ELEVENTH", "TWELFTH"]
 
 
 static func write(season: Season, month: int, rng: RandomNumberGenerator) -> Dictionary:
@@ -88,6 +106,7 @@ static func write(season: Season, month: int, rng: RandomNumberGenerator) -> Dic
 		"month": month,
 		"date": Season.date_text(month),
 		"headline": QUIET_HEADLINE,
+		"headline_player": false,
 		"standfirst": "NO FIGHTS OF NOTE THIS MONTH. THE MANAGERS ARE BUSY ON THE PHONES.",
 		"stories": [],
 		"roundup": [],
@@ -123,6 +142,23 @@ static func write(season: Season, month: int, rng: RandomNumberGenerator) -> Dic
 		if _is_feature(titles[i]):
 			stories[i]["text"] += " " + _excitement_line(titles[i], rng)
 
+	# His own fight: his story (or the title story, if it was for a title).
+	var mine := _players_fight(results, season)
+	if mine != null:
+		var at := covered.find(mine)
+		if at >= 0:
+			stories[at]["player"] = true
+			stories[at]["text"] += " " + _record_line(mine, season.player)
+			if at > 1:
+				# Straight after the main story, so it is always shown.
+				stories.insert(1, stories.pop_at(at))
+				covered.insert(1, covered.pop_at(at))
+		else:
+			var story := _with_series(_player_story(mine, season.player, rng), mine, season)
+			var where := mini(1, stories.size())
+			stories.insert(where, story)
+			covered.insert(where, mine)
+
 	if stories.is_empty():
 		var lead := _lead_fight(results)
 		if lead != null:
@@ -131,11 +167,12 @@ static func write(season: Season, month: int, rng: RandomNumberGenerator) -> Dic
 	if not stories.is_empty():
 		paper["headline"] = stories[0]["title"]
 		paper["standfirst"] = stories[0]["text"]
+		paper["headline_player"] = stories[0].get("player", false)
 		paper["stories"] = stories.slice(1, 1 + MAX_STORIES)
 
 	covered.resize(mini(covered.size(), 1 + MAX_STORIES))
 	paper["roundup"] = _roundup(results, covered, season)
-	paper["notes"] = _movers(results, season.player_division) + season.notes
+	paper["notes"] = _movers(results, season.player_division, season.player if mine != null else null) + season.notes
 	return paper
 
 
@@ -252,6 +289,91 @@ static func _feature_story(f: Fixture, rng: RandomNumberGenerator) -> Dictionary
 	return {"title": title, "text": text}
 
 
+## The player's finished fight this month, or null.
+static func _players_fight(results: Array[Fixture], season: Season) -> Fixture:
+	if season.player == null:
+		return null
+	for f in results:
+		if f.is_done() and f.involves(season.player):
+			return f
+	return null
+
+
+## The player's fight, told from his side: what happened, his share of the
+## purse, what it did to his ranking, and his record now.
+static func _player_story(f: Fixture, me: BoxerData, rng: RandomNumberGenerator) -> Dictionary:
+	var other := f.opponent_of(me)
+	var winner := f.winner()
+	var method: String = f.result["method"]
+	var stoppage := method in ["KO", "TKO"]
+	var round_number: int = f.result["round"]
+	var templates := PLAYER_DRAW_HEADLINES
+	var text := ""
+	var when := "IN THE %s ROUND" % ORDINAL_ROUNDS[round_number] if stoppage else "OVER %d ROUNDS" % f.rounds
+	if winner == me:
+		templates = PLAYER_POINTS_HEADLINES
+		if stoppage:
+			templates = PLAYER_STOPPAGE_HEADLINES.duplicate()
+			if method == "KO":
+				templates.append_array(PLAYER_KO_HEADLINES)
+		text = "%s %s %s %s AT THE %s." % [_full(me), _how(f), _full(other), when, _venue(f)]
+	elif winner == other:
+		templates = PLAYER_STOPPED_HEADLINES if stoppage else PLAYER_OUTPOINTED_HEADLINES
+		if me.losses == 1:
+			templates = [PLAYER_FIRST_DEFEAT]
+		text = "%s WAS %s BY %s %s AT THE %s." % [_full(me), _how_beaten(f), _full(other), when, _venue(f)]
+	else:
+		text = "%s AND %s FOUGHT TO A %s %s AT THE %s." % [_full(me), _full(other), _draw_kind(f), when, _venue(f)]
+	var title := _pick(templates, rng).replace("{P}", me.last_name.to_upper()).replace(
+			"{O}", other.last_name.to_upper()).replace("{N}", ROUND_WORDS[mini(round_number, ROUND_WORDS.size() - 1)])
+	text += " " + _action_line(f)
+	var won: bool = winner == me
+	var share: int = f.summary.get("winner_purse", 0) if won or winner == null else f.summary.get("loser_purse", 0)
+	text += " HE TAKES HOME %s %s." % [Purse.money_text(share), _ranking_move(f, me)]
+	text += " " + _record_line(f, me)
+	return {"title": title, "text": text, "player": true}
+
+
+## "AND CLIMBS FROM NO. 25 TO NO. 21 IN THE LIGHTWEIGHT RANKINGS".
+static func _ranking_move(f: Fixture, me: BoxerData) -> String:
+	var red := f.red == me
+	var before: int = f.summary.get("red_rank" if red else "blue_rank", -1)
+	var after: int = f.summary.get("red_rank_after" if red else "blue_rank_after", -1)
+	var table := " IN THE %s RANKINGS" % _division(f)
+	if before < 0 or after < 0:
+		return ""
+	if after == 0:
+		return "AS THE NEW IBC %s CHAMPION" % _division(f)
+	if after < before:
+		return "AND CLIMBS FROM %s TO NO. %d%s" % [_place(before), after, table]
+	if after > before:
+		return "AND DROPS FROM %s TO NO. %d%s" % [_place(before), after, table]
+	return "AND STAYS AT %s%s" % [_place(after), table]
+
+
+static func _place(rank: int) -> String:
+	return "CHAMPION" if rank == 0 else "NO. %d" % rank
+
+
+## "HIS RECORD IS NOW 5-1-0 (3 KO)."
+static func _record_line(_f: Fixture, me: BoxerData) -> String:
+	return "HIS RECORD IS NOW %s." % me.record_with_kos()
+
+
+## "STOPPED", "OUTPOINTED"... from the loser's side.
+static func _how_beaten(f: Fixture) -> String:
+	match f.result["method"]:
+		"KO":
+			return "KNOCKED OUT"
+		"TKO":
+			return "STOPPED"
+		"MD":
+			return "EDGED OUT ON A MAJORITY DECISION"
+		"SD":
+			return "BEATEN ON A SPLIT DECISION"
+	return "OUTPOINTED"
+
+
 ## With no title fight or feature: the month's best fight, or its biggest upset.
 static func _lead_story(f: Fixture, rng: RandomNumberGenerator) -> Dictionary:
 	var winner := f.winner()
@@ -303,14 +425,17 @@ static func _is_feature(f: Fixture) -> bool:
 #  Notes
 # ----------------------------------------------------------------------------
 
-## Everyone in the player's division who moved up the rankings this month.
-static func _movers(results: Array[Fixture], division: int) -> Array[String]:
+## Everyone in the player's division who moved up the rankings this month
+## (but [param skip], whose own story says so).
+static func _movers(results: Array[Fixture], division: int, skip: BoxerData = null) -> Array[String]:
 	var out: Array[String] = []
 	for f in results:
 		if not f.is_done() or f.across_divisions() or f.red.division != division:
 			continue
 		for corner in 2:
 			var b := f.red if corner == 0 else f.blue
+			if b == skip:
+				continue
 			var before: int = f.summary["red_rank" if corner == 0 else "blue_rank"]
 			var after: int = f.summary["red_rank_after" if corner == 0 else "blue_rank_after"]
 			if after >= 0 and after < before:

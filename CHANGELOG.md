@@ -4,6 +4,19 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.41
+
+* The newspaper gives the player's own fight a story of its own, marked
+  YOUR FIGHT, with his name picked out in gold: a headline from his side
+  ("RICCI STOPS FONSECA IN FOUR", "HUANG HANDS RICCI HIS FIRST DEFEAT"),
+  how it went, his share of the purse, what it did to his ranking ("AND
+  CLIMBS FROM NO. 25 TO NO. 21 IN THE LIGHTWEIGHT RANKINGS") and his record
+  now, plus the head to head for a rematch. It leads the paper unless there
+  is a title fight or a feature, and otherwise comes straight after the
+  main story; a title fight of his is told as the title story, with his
+  record added. Before, his fight was just the first line of the round-up.
+  (TODO 9)
+
 ## 0.1.40
 
 * Saved careers can be renamed and deleted (CAREER > CONTINUE SAVED

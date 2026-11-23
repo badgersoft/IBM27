@@ -422,7 +422,12 @@ headline is a title fight, a new champion first and then a successful
 defence (any other title fights get stories underneath). A professional
 fight rated 9 or more out of 10, with a top-ten man (or the champion) in
 it, gets a feature raving about it. With neither, the month's biggest upset
-or best fight leads. A round-up of the other results follows, and IN BRIEF
+or best fight leads. In a career the player's own fight gets a story of
+its own, marked YOUR FIGHT, with his name in gold: "RICCI STOPS FONSECA IN
+FOUR", how it went, his share of the purse, what it did to his ranking and
+his record now. It leads the paper unless there is a title fight or a
+feature, and otherwise comes straight after the main story (if his fight
+was for a title, the title story is his). A round-up of the other results follows, and IN BRIEF
 notes everyone who climbed the rankings in the player's division (the
 middleweights, until there is a player's boxer), plus retirements and new
 faces. RESULTS lists every fight of the month with its rating, and keeps
@@ -574,8 +579,7 @@ man's wins (FIRST MEETING if they have never fought), and the **newspaper**
 says when a fight was a rematch ("IT WAS THEIR SECOND MEETING: MURRAY
 LEADS THEIR SERIES 2-0."). The round-up gives each fight one line, how it
 ended included ("COLON BEAT LYSENKO (KO R2), LEADS 2-0."; any decision is
-just "(POINTS)"), and the
-player's own fight always heads it.
+just "(POINTS)").
 
 ![A new boxer](docs/screenshots/new_boxer.png)
 

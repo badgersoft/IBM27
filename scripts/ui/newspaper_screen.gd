@@ -7,6 +7,9 @@ extends Control
 ##               player's division, retirements and new faces.
 ##   RESULTS     every fight of the month, with its excitement rating.
 ##
+## In a career the player's own fight has a story with YOUR FIGHT over it,
+## and his name is picked out in gold wherever the paper mentions him.
+##
 ## Layout (1280 x 800 frame):
 ##   y   8  THE RINGSIDE GAZETTE (48 px, centred)
 ##   y  56  dateline (about midway between the masthead and the tabs)
@@ -164,17 +167,21 @@ func _show(which: int) -> void:
 
 func _build_front_page() -> void:
 	var main := _column(PAD, PAD, MAIN_W, PAGE.size.y - PAD * 2)
+	if _paper.get("headline_player", false):
+		main.add_child(_your_fight())
 	main.add_child(_text(_paper.get("headline", ""), UiTheme.TITLE, Palette.UI_GOLD, MAIN_W))
-	main.add_child(_text(_paper.get("standfirst", ""), UiTheme.BODY, Palette.UI_TEXT, MAIN_W))
+	var extra := _add_body(main, _paper.get("standfirst", ""), _paper.get("headline_player", false), MAIN_W)
 	for story in _paper.get("stories", []):
-		main.add_child(_gap(STORY_GAP))
+		main.add_child(_gap(STORY_GAP - extra))
 		main.add_child(_rule(MAIN_W))
 		main.add_child(_gap(STORY_GAP - 8))
+		if story.get("player", false):
+			main.add_child(_your_fight())
 		main.add_child(_text(story["title"], UiTheme.LARGE, Palette.UI_GOLD, MAIN_W))
-		main.add_child(_text(story["text"], UiTheme.BODY, Palette.UI_TEXT, MAIN_W))
+		extra = _add_body(main, story["text"], story.get("player", false), MAIN_W)
 	var roundup: Array = _paper.get("roundup", [])
 	if not roundup.is_empty():
-		main.add_child(_gap(STORY_GAP))
+		main.add_child(_gap(STORY_GAP - extra))
 		main.add_child(_rule(MAIN_W))
 		main.add_child(_gap(STORY_GAP - 8))
 		main.add_child(_text("ROUND-UP", UiTheme.LARGE, Palette.UI_GOLD, MAIN_W))
@@ -188,10 +195,11 @@ func _build_front_page() -> void:
 	var notes: Array = _paper.get("notes", [])
 	if notes.is_empty():
 		notes = ["NOTHING ELSE TO REPORT THIS MONTH."]
+	var under := 0
 	for i in notes.size():
 		if i > 0:
-			brief.add_child(_gap(PAD))
-		brief.add_child(_text(notes[i], UiTheme.BODY, Palette.UI_TEXT, BRIEF_W))
+			brief.add_child(_gap(PAD - under))
+		under = _add_body(brief, notes[i], false, BRIEF_W)
 
 
 ## A scrolling column of text blocks inside the page.
@@ -215,6 +223,43 @@ static func _text(text: String, size: int, colour: Color, width: float) -> Label
 	l.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	l.add_theme_constant_override("line_spacing", LINE_SPACING)
 	return l
+
+
+## The tag over the player's own story.
+static func _your_fight() -> Label:
+	return UiTheme.label("YOUR FIGHT", UiTheme.CAPTION, Palette.UI_GOLD)
+
+
+## Adds a wrapping block of body text [param width] wide to [param column],
+## with the player's name in gold (in his own story, [param his], his
+## surname too). Returns the extra space a highlighted block leaves under
+## itself (a rich text block ends with a line gap a plain one doesn't), to
+## take off the next gap.
+func _add_body(column: Control, text: String, his: bool, width: float) -> int:
+	var player := GameState.season.player if GameState.season != null else null
+	var name := player.display_name().to_upper() if player != null else ""
+	var surname := player.last_name.to_upper() if player != null else ""
+	if player == null or not (text.contains(name) or (his and text.contains(surname))):
+		column.add_child(_text(text, UiTheme.BODY, Palette.UI_TEXT, width))
+		return 0
+	var l := RichTextLabel.new()
+	l.bbcode_enabled = true
+	l.fit_content = true
+	l.scroll_active = false
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.custom_minimum_size.x = width
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	l.add_theme_font_override("normal_font", UiTheme.FONT)
+	l.add_theme_font_size_override("normal_font_size", UiTheme.BODY)
+	l.add_theme_color_override("default_color", Palette.UI_TEXT)
+	l.add_theme_constant_override("line_separation", LINE_SPACING)
+	var gold := "[color=#%s]%%s[/color]" % Palette.UI_GOLD.to_html(false)
+	var shown := text.replace("[", "[lb]").replace(name, "\u0001")
+	if his:
+		shown = shown.replace(surname, gold % surname)
+	l.text = shown.replace("\u0001", gold % name)
+	column.add_child(l)
+	return LINE_SPACING
 
 
 ## A thin dividing line in a column.
