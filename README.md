@@ -458,9 +458,12 @@ the bank. The career is saved straight away, at the end of every month and
 when leaving for the main menu (SAVE saves it any time). Saves live in
 `user://careers/`; **CONTINUE SAVED CAREER** lists them, newest first.
 
-**The career page** shows the boxer and his overall rating, ranking,
-level, record, health, money, earnings, sponsor and the week's rent, his
-next fight, the men offering him a fight, and the latest news. Time moves
+**The career page** has the date across the top in large letters (WEEK 2
+OF JANUARY 2027, with the weeks to fight night on the right, or FIGHT
+NIGHT in the month's last week), then the boxer and his overall rating,
+ranking, level, record, health, money, earnings, sponsor and the week's
+rent, his next fight, the men offering him a fight, his six skills (with
+what this week's training added in green), and the latest news. Time moves
 a **week** at a time (NEXT WEEK), four weeks to a month:
 
 * **Training**: once a week choose WEIGHTS (toughness, some chin), SPEED
@@ -763,6 +766,8 @@ Command-line options read by the game (after `--`):
 | `--manage=<0\|1>`          | A fight scene: the player is in the red (0) or blue (1) corner - orders between rounds, shouts during them                                                                                            |
 | `--train=<0-4>`            | Career screens: the boxer trains that session this week (4 = RECOVERY)                                                                                                                                 |
 | `--offers=<n>`             | Career screens: the first n men he could fight are offering him a fight                                                                                                                                |
+| `--week=<0-3>`             | Career screens: the week of the month (3 = fight night)                                                                                                                                                |
+| `--booked`                 | Career screens: he has a fight booked with the first man he could fight                                                                                                                                |
 | `--career=<path>`          | Load a saved career (e.g. `user://careers/career_1.tres`); a fight scene shows his next fight                                                                                                           |
 | `--wait=<seconds>`         | Real seconds to wait before the shot (e.g. mid read-out)                                                                                                                                               |
 | `--at=<seconds>`           | Earliest real second of round 1 to capture (default 20)                                                                                                                                                |

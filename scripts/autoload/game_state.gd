@@ -337,8 +337,9 @@ func leave_career() -> void:
 ## A career screen opened straight from the command line (screenshots)
 ## needs a career: this makes one with a random boxer, a few points spent
 ## so he looks the part (--train=<0-4> has him train that session, and
-## --offers=<n> has the first n men he could fight offer him one). It isn't
-## saved.
+## --offers=<n> has the first n men he could fight offer him one;
+## --week=<0-3> sets the week of the month; --booked books him a fight
+## with the first man he could fight). It isn't saved.
 func ensure_career() -> void:
 	if career != null:
 		return
@@ -347,10 +348,13 @@ func ensure_career() -> void:
 		b.set(skill, b.get(skill) + 6)
 	b.nickname = "Kid Dynamite"
 	start_career(b, false)
+	career.week = clampi(int(options.get("week", 0)), 0, PlayerCareer.WEEKS_PER_MONTH - 1)
 	if options.has("train"):
 		career.train(int(options["train"]))
 	for other in career.opponents(season).slice(0, int(options.get("offers", 0))):
 		career.requests.append(other.id)
+	if options.has("booked") and not career.opponents(season).is_empty():
+		season.book_player_fight(career.boxer, career.opponents(season)[0], career.usual_purse(season, career.opponents(season)[0]))
 
 
 ## Saves the career to career_path. Returns true if it worked.

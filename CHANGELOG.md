@@ -4,6 +4,20 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.36
+
+* Career page: the date is now a large line across the top (WEEK 2 OF
+  JANUARY 2027), with the weeks to fight night on the right - and FIGHT
+  NIGHT itself in the last week of the month. (TODO 2)
+* Career page: his six skills are shown at the top of the training panel,
+  three to a row, with what this week's session added beside each one in
+  green. The caption under the chosen session now only shows what the
+  strip can't (RECOVERY +0.7, HEALTH +12%), so it no longer runs over.
+  (TODO 1)
+* Career page: the next fight's date line no longer shrinks to fit
+  ("MARCH 2027 - 6 ROUNDS - $593"; was "END OF MARCH 2027 ...").
+* The menu buttons are a little shorter (48 px) to make room.
+
 ## 0.1.35
 
 * The STRENGTH skill is now shown as TOUGHNESS everywhere on screen (new

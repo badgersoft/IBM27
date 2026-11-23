@@ -3,12 +3,16 @@ extends Control
 ## any fight offers, this week's training, and the way to everything else.
 ##
 ## Layout (1280 x 800 frame):
-##   y  16  +-- header (1248 x 232) ------------------------------------------+
+##   y  16  WEEK 1 OF JANUARY 2027                   FIGHT NIGHT IN 3 WEEKS
+##   y  64  +-- header (1248 x 200) ------------------------------------------+
 ##          | portrait | NAME "NICK"                  OVERALL  RANKING  ...   |
-##   y 264  +-- NEXT FIGHT (608 x 160) --+  +-- FIGHT OFFERS (624 x 160) -----+
-##   y 440  +-- TRAINING THIS WEEK (1248 x 168): five sessions -------------+
-##   y 624  [SCHEDULE] [FACILITIES] [FIXTURES] [NEWS]
-##   y 696  [BOXERS]   [SAVE]       [MAIN MENU] [NEXT WEEK]
+##   y 280  +-- NEXT FIGHT (608 x 144) --+  +-- FIGHT OFFERS (624 x 144) -----+
+##   y 440  +-- TRAINING THIS WEEK (1248 x 216) ----------------------------+
+##          | POWER   35 +1.2   SPEED   45        STAMINA       40           |
+##          | CHIN    35        TOUGHNESS 37 +2.5 INTELLIGENCE  35           |
+##          | [WEIGHTS] [SPEED] [STAMINA] [PUNCHING] [RECOVERY]               |
+##   y 672  [SCHEDULE] [FACILITIES] [FIXTURES] [NEWS]
+##   y 736  [BOXERS]   [SAVE]       [MAIN MENU] [NEXT WEEK]
 ##
 ## Training: one session a week (WEIGHTS, SPEED, STAMINA, PUNCHING, or
 ## RECOVERY to get his health back); once chosen, the others are greyed out
@@ -18,12 +22,15 @@ extends Control
 
 const FRAME_SIZE := Vector2(1280, 800)
 const PAD := 16
-const HEADER := Rect2(16, 16, 1248, 232)
-const NEXT_FIGHT := Rect2(16, 264, 608, 160)
-const OFFERS := Rect2(640, 264, 624, 160)
-const TRAINING := Rect2(16, 440, 1248, 168)
-const MENU_Y := [624, 696]
-const MENU_BUTTON := Vector2(288, 56)
+## The date line across the top: the week and month on the left, how long
+## to fight night on the right.
+const DATE_LINE := Rect2(24, 16, 1232, 32)
+const HEADER := Rect2(16, 64, 1248, 200)
+const NEXT_FIGHT := Rect2(16, 280, 608, 144)
+const OFFERS := Rect2(640, 280, 624, 144)
+const TRAINING := Rect2(16, 440, 1248, 216)
+const MENU_Y := [672, 736]
+const MENU_BUTTON := Vector2(288, 48)
 const MENU_GAP := 32
 const CAPTION_Y := 10
 ## Header details: two columns of label / value.
@@ -31,8 +38,16 @@ const DETAIL_X := [560, 912]
 const DETAIL_LABEL_W := [144, 144]
 const DETAIL_ROW_Y := 40
 const DETAIL_ROW_H := 32
-## Training: five session buttons across the panel.
-const SESSION_Y := 40
+## Training: his six skills at the top of the panel, three to a row:
+## label, value (right-aligned) and this week's gain (right-aligned)...
+const SKILL_Y := 32
+const SKILL_X := 16
+const SKILL_PITCH := 400
+const SKILL_VALUE_W := 288          ## Label start to the value's right edge.
+const SKILL_GAIN_W := 80            ## The gain column, after the value.
+const SKILLS_SHOWN: Array[String] = ["power", "speed", "stamina", "chin", "strength", "intelligence"]
+## ...and the five session buttons under them.
+const SESSION_Y := 88
 const SESSION_SIZE := Vector2(224, 72)
 ## Fight offers: up to three rows; columns at x for the rank (right-aligned
 ## in OFFER_RANK_W), the name, and OFFERING A FIGHT.
@@ -76,6 +91,7 @@ func _ready() -> void:
 func _build() -> void:
 	for child in _frame.get_children():
 		child.queue_free()
+	_build_date_line()
 	_build_header()
 	_build_next_fight()
 	_build_offers()
@@ -92,11 +108,27 @@ func _unhandled_input(event: InputEvent) -> void:
 #  Panels
 # ============================================================================
 
+## "WEEK 2 OF JANUARY 2027" on the left; on the right the weeks to fight
+## night, or FIGHT NIGHT itself in the last week of the month.
+func _build_date_line() -> void:
+	var date := UiTheme.label(_career.date_text(_season), UiTheme.TITLE, Palette.UI_GOLD)
+	_frame.add_child(UiTheme.place(date, DATE_LINE.position.x, DATE_LINE.position.y, DATE_LINE.size.x, DATE_LINE.size.y))
+	var to_go := PlayerCareer.WEEKS_PER_MONTH - 1 - _career.week
+	var right: Label
+	if to_go == 0:
+		right = UiTheme.label("FIGHT NIGHT", UiTheme.TITLE, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_RIGHT)
+	else:
+		var when := "FIGHT NIGHT NEXT WEEK" if to_go == 1 else "FIGHT NIGHT IN %d WEEKS" % to_go
+		right = UiTheme.label(when, UiTheme.BODY, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_RIGHT)
+		right.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	_frame.add_child(UiTheme.place(right, DATE_LINE.position.x, DATE_LINE.position.y, DATE_LINE.size.x, DATE_LINE.size.y))
+
+
 func _build_header() -> void:
 	var panel := _panel(HEADER, "")
 	var b := _career.boxer
 	var table := _season.rankings_of(b)
-	var portrait := BoxerPortrait.new(Vector2i(64, 104), 2, 0.9, 98.0)
+	var portrait := BoxerPortrait.new(Vector2i(64, 84), 2, 0.75, 80.0)
 	portrait.position = Vector2(PAD, PAD)
 	panel.add_child(portrait)
 	var x := PAD + portrait.size.x + 24
@@ -107,7 +139,6 @@ func _build_header() -> void:
 	panel.add_child(UiTheme.place(UiTheme.label(nick, UiTheme.BODY, Palette.UI_GOLD), x, 80, DETAIL_X[0] - x - PAD, UiTheme.ROW_H))
 	var line := "%s  -  %s" % [b.division_name().to_upper(), b.style_name().to_upper()]
 	panel.add_child(UiTheme.place(UiTheme.label(line, UiTheme.BODY, Palette.UI_TEXT_DIM), x, 112, DETAIL_X[0] - x - PAD, UiTheme.ROW_H))
-	panel.add_child(UiTheme.place(UiTheme.label(_career.date_text(_season), UiTheme.BODY, Palette.UI_TEXT), x, 176, DETAIL_X[0] - x - PAD, UiTheme.ROW_H))
 	portrait.show_boxer(b)
 
 	var health := Facilities.condition_text(b.condition)
@@ -146,22 +177,22 @@ func _build_next_fight() -> void:
 		var hint := "SEE SCHEDULE TO FIND AN OPPONENT"
 		if not _career.can_arrange(_season):
 			hint = "YOU CAN ARRANGE ONE FROM %s" % Season.date_text(_career.free_from(_season))
-		panel.add_child(UiTheme.place(UiTheme.label(why, UiTheme.LARGE, Palette.UI_TEXT), PAD, 48, NEXT_FIGHT.size.x - PAD * 2, UiTheme.LARGE))
-		panel.add_child(UiTheme.place(UiTheme.label(hint, UiTheme.BODY, Palette.UI_TEXT_DIM), PAD, 96, NEXT_FIGHT.size.x - PAD * 2, UiTheme.ROW_H))
+		panel.add_child(UiTheme.place(UiTheme.label(why, UiTheme.LARGE, Palette.UI_TEXT), PAD, 40, NEXT_FIGHT.size.x - PAD * 2, UiTheme.LARGE))
+		panel.add_child(UiTheme.place(UiTheme.label(hint, UiTheme.BODY, Palette.UI_TEXT_DIM), PAD, 88, NEXT_FIGHT.size.x - PAD * 2, UiTheme.ROW_H))
 		return
 	var other := f.opponent_of(_career.boxer)
 	var table := _season.rankings_of(other)
 	var lines := [
 		["V " + other.display_name().to_upper(), UiTheme.LARGE, Palette.UI_GOLD],
 		["%s  %s  %s" % [table.rank_text(other), other.record(), "OVR %d" % other.overall()], UiTheme.BODY, Palette.UI_TEXT],
-		["END OF %s  -  %d ROUNDS  -  %s" % [Season.date_text(f.month), f.rounds, Purse.money_text(f.purse)], UiTheme.BODY, Palette.UI_TEXT_DIM],
+		["%s  -  %d ROUNDS  -  %s" % [Season.date_text(f.month), f.rounds, Purse.money_text(f.purse)], UiTheme.BODY, Palette.UI_TEXT_DIM],
 	]
 	if f.title:
-		lines[2][0] = "END OF %s  -  IBC TITLE  -  %s" % [Season.date_text(f.month), Purse.money_text(f.purse)]
+		lines[2][0] = "%s  -  IBC TITLE  -  %s" % [Season.date_text(f.month), Purse.money_text(f.purse)]
 	for i in lines.size():
 		var l := UiTheme.label(lines[i][0], lines[i][1], lines[i][2])
 		UiTheme.fit(l, NEXT_FIGHT.size.x - PAD * 2)
-		panel.add_child(UiTheme.place(l, PAD, 40 + i * 36, NEXT_FIGHT.size.x - PAD * 2, maxi(lines[i][1], UiTheme.ROW_H)))
+		panel.add_child(UiTheme.place(l, PAD, [40, 72, 104][i], NEXT_FIGHT.size.x - PAD * 2, maxi(lines[i][1], UiTheme.ROW_H)))
 
 
 func _build_offers() -> void:
@@ -190,6 +221,7 @@ func _build_training() -> void:
 	var gym: Dictionary = Facilities.TRAINING[_career.training_facility]
 	var at := "AT THE %s" % str(gym["name"]).to_upper()
 	panel.add_child(UiTheme.place(UiTheme.label(at, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_RIGHT), 400, CAPTION_Y, TRAINING.size.x - PAD - 400, UiTheme.CAPTION))
+	_build_skills(panel)
 	var count := Facilities.SESSIONS.size()
 	var gap := (TRAINING.size.x - PAD * 2 - SESSION_SIZE.x * count) / float(count - 1)
 	for i in count:
@@ -216,7 +248,7 @@ func _build_training() -> void:
 		b.pressed.connect(_train.bind(i))
 		panel.add_child(b)
 		var note: String = "ALREADY FULLY FIT" if fit else s[5]
-		if _career.trained == i:
+		if _career.trained == i and not _gains_text().is_empty():
 			note = _gains_text()
 		var caption := UiTheme.label(note, UiTheme.CAPTION, Palette.UI_GOLD if _career.trained == i else Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER)
 		panel.add_child(UiTheme.place(caption, x, SESSION_Y + SESSION_SIZE.y - 12, SESSION_SIZE.x, UiTheme.CAPTION))
@@ -224,10 +256,30 @@ func _build_training() -> void:
 	panel.add_child(UiTheme.place(UiTheme.label(news, UiTheme.BODY, Palette.UI_TEXT), PAD, TRAINING.size.y - 40, TRAINING.size.x - PAD * 2, UiTheme.ROW_H))
 
 
-## "TOUGHNESS +2.6  CHIN +1.3"
+## His six skills in a strip across the training panel, with what this
+## week's session added under each one it trained.
+func _build_skills(panel: Control) -> void:
+	var b := _career.boxer
+	for i in SKILLS_SHOWN.size():
+		var skill := SKILLS_SHOWN[i]
+		var x := SKILL_X + (i % 3) * SKILL_PITCH
+		var y := SKILL_Y + int(i / 3.0) * UiTheme.ROW_H
+		panel.add_child(UiTheme.place(UiTheme.label(BoxerData.skill_label(skill), UiTheme.BODY, Palette.UI_TEXT_DIM), x, y, SKILL_VALUE_W, UiTheme.ROW_H))
+		var value := UiTheme.label(str(b.get(skill)), UiTheme.BODY, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_RIGHT)
+		panel.add_child(UiTheme.place(value, x, y, SKILL_VALUE_W, UiTheme.ROW_H))
+		var gain: float = _career.last_gains.get(skill, 0.0)
+		if gain > 0.0:
+			var up := UiTheme.label("+%.1f" % gain, UiTheme.BODY, Palette.UI_GOOD, HORIZONTAL_ALIGNMENT_RIGHT)
+			panel.add_child(UiTheme.place(up, x + SKILL_VALUE_W, y, SKILL_GAIN_W, UiTheme.ROW_H))
+
+
+## What this week's session did that the skills strip doesn't show:
+## "RECOVERY +0.6" or "HEALTH +12%" ("" if nothing).
 func _gains_text() -> String:
 	var parts: Array[String] = []
 	for skill in _career.last_gains:
+		if SKILLS_SHOWN.has(skill):
+			continue
 		if skill == "health":
 			parts.append("HEALTH +%d%%" % roundi(_career.last_gains[skill]))
 		else:
