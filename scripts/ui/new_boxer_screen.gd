@@ -76,7 +76,7 @@ const MAX_SKILL := 65
 
 const SKILLS_SHOWN := [
 	["POWER", "power"], ["SPEED", "speed"], ["STAMINA", "stamina"],
-	["CHIN", "chin"], ["STRENGTH", "strength"], ["INTELLIGENCE", "intelligence"],
+	["CHIN", "chin"], ["TOUGHNESS", "strength"], ["INTELLIGENCE", "intelligence"],
 ]
 const NICKNAME_CHOICES := 10
 const NO_NICKNAME := "NO NICKNAME"

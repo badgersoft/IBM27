@@ -67,7 +67,7 @@ func setup(red: BoxerData, blue: BoxerData, venue_id: int, rounds: int, title_fi
 	]
 	var skills := ["power", "speed", "stamina", "chin", "strength", "intelligence"]
 	for s in skills:
-		rows.append([s.to_upper(), red.get(s), blue.get(s)])
+		rows.append([BoxerData.skill_label(s), red.get(s), blue.get(s)])
 
 	for i in rows.size():
 		var y := TABLE_Y + i * UiTheme.ROW_H

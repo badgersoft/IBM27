@@ -224,14 +224,14 @@ func _build_training() -> void:
 	panel.add_child(UiTheme.place(UiTheme.label(news, UiTheme.BODY, Palette.UI_TEXT), PAD, TRAINING.size.y - 40, TRAINING.size.x - PAD * 2, UiTheme.ROW_H))
 
 
-## "STRENGTH +2.6  CHIN +1.3"
+## "TOUGHNESS +2.6  CHIN +1.3"
 func _gains_text() -> String:
 	var parts: Array[String] = []
 	for skill in _career.last_gains:
 		if skill == "health":
 			parts.append("HEALTH +%d%%" % roundi(_career.last_gains[skill]))
 		else:
-			parts.append("%s +%.1f" % [str(skill).to_upper(), _career.last_gains[skill]])
+			parts.append("%s +%.1f" % [BoxerData.skill_label(str(skill)), _career.last_gains[skill]])
 	return "  ".join(parts)
 
 

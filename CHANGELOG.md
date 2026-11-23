@@ -4,6 +4,12 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.35
+
+* The STRENGTH skill is now shown as TOUGHNESS everywhere on screen (new
+  boxer, profile, tale of the tape, the WEIGHTS session and its gains): it
+  is how well he takes punishment, not how hard he hits. (TODO 5)
+
 ## 0.1.34
 
 * Added `TODO.md`: the to-do list, each item ranked by effort (XS - XL) -

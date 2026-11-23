@@ -155,6 +155,13 @@ func add_result(result: String, by_ko: bool) -> void:
 			draws += 1
 
 
+## How a skill is named on screen: "POWER", "SPEED"... The strength skill
+## is shown as TOUGHNESS, since it is how well he takes punishment, not how
+## hard he hits.
+static func skill_label(skill: String) -> String:
+	return "TOUGHNESS" if skill == "strength" else skill.to_upper()
+
+
 ## Average of the six skills - a quick "overall" rating for menus.
 func overall() -> int:
 	return roundi((power + speed + stamina + chin + strength + intelligence) / 6.0)

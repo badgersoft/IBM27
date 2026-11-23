@@ -59,7 +59,7 @@ const VALUE_W := 96
 
 const SKILLS_SHOWN := [
 	["POWER", "power"], ["SPEED", "speed"], ["STAMINA", "stamina"],
-	["CHIN", "chin"], ["STRENGTH", "strength"], ["INTELLIGENCE", "intelligence"],
+	["CHIN", "chin"], ["TOUGHNESS", "strength"], ["INTELLIGENCE", "intelligence"],
 ]
 
 var _frame: Control

@@ -192,7 +192,7 @@ Every boxer has six skills from 1 to 99 and a fighting style.
 | Speed        | How fast punches land, footwork, blocking, how often he gets to act  |
 | Stamina      | How slowly energy drains, so how slowly the other skills drop        |
 | Chin         | How well big head shots are absorbed; how fast he beats the count    |
-| Strength     | How little being hit drains energy and wears down the other skills   |
+| Toughness    | How little being hit drains energy and wears down the other skills   |
 | Intelligence | Blocking, slipping, counter-punching, knowing when to back off       |
 
 | Style    | Behaviour                                                                            |
@@ -215,7 +215,7 @@ damage later in the fight (up to 12% more by the last round) and to tired
 boxers.
 
 Each boxer starts with health a little below 100, set by his fitness (stamina,
-strength and chin). In the corner between rounds he gets back some of his
+toughness and chin). In the corner between rounds he gets back some of his
 breath (more with good stamina) and shakes off 12-28% of the damage he has
 taken, depending on his **recovery** stat (shown on his profile); less as
 the fight goes on.
@@ -262,7 +262,7 @@ on the profile). They come forward looking for the finish, hit harder, land
 more big punches and knock men down more often, and when you watch them
 they dominate. The heavyweight monsters are the most fearsome. At
 lightweight and middleweight, where a single punch does less, the monsters
-have a little less chin and strength and only a quarter of the extra punch
+have a little less chin and toughness and only a quarter of the extra punch
 and aggression, so they are still the best men in the division but a
 world-class challenger can beat them (about one fight in three for a
 boxer of 88 overall). One more is a **glass jaw**: he looks just like a monster on
@@ -463,7 +463,7 @@ level, record, health, money, earnings, sponsor and the week's rent, his
 next fight, the men offering him a fight, and the latest news. Time moves
 a **week** at a time (NEXT WEEK), four weeks to a month:
 
-* **Training**: once a week choose WEIGHTS (strength, some chin), SPEED
+* **Training**: once a week choose WEIGHTS (toughness, some chin), SPEED
   (speed, some ring sense), STAMINA (stamina, some recovery), PUNCHING
   (power, some technique) or RECOVERY (no skills, but half as much again
   as a normal week's health comes back on top, more at a better recovery

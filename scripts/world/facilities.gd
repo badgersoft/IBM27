@@ -31,7 +31,7 @@ const RECOVERY: Array = [
 ## share, what it is shown as doing]. RECOVERY trains nothing: it is a week
 ## of rest and treatment that brings his health back (REST_RECOVERY).
 const SESSIONS: Array = [
-	["WEIGHTS",  "strength", 1.0, "chin",         0.5, "STRENGTH AND CHIN"],
+	["WEIGHTS",  "strength", 1.0, "chin",         0.5, "TOUGHNESS AND CHIN"],
 	["SPEED",    "speed",    1.0, "intelligence", 0.4, "SPEED AND RING SENSE"],
 	["STAMINA",  "stamina",  1.0, "recovery",     0.5, "STAMINA AND RECOVERY"],
 	["PUNCHING", "power",    1.0, "intelligence", 0.4, "POWER AND TECHNIQUE"],
