@@ -4,6 +4,16 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.40
+
+* Saved careers can be renamed and deleted (CAREER > CONTINUE SAVED
+  CAREER). RENAME gives a save a name of your own (up to 32 letters),
+  which later saves of that career keep; an empty name goes back to the
+  boxer's name. DELETE asks first. (TODO 8)
+* The list of saves is wider, with the name on the left and the month
+  right-aligned in its own column (long names used to push the month off
+  the end), and double-clicking a save loads it.
+
 ## 0.1.39
 
 * Knockout times read true: during a count the round clock now runs at

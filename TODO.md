@@ -19,7 +19,7 @@ Effort: **XS** under an hour, **S** a few hours, **M** about a day,
 | 5  | ~~Rename STRENGTH to TOUGHNESS on screen~~ | XS | **Done in 0.1.35.** It only affects how well he takes punishment, not how hard he hits, so "strength" misleads. Display only. |
 | 6  | Style balance: the Boxer style is noticeably weaker than Brawler and Slugger at the top level | M | Found in the balance tests (it throws about half as many punches). Tune its output or give it more reward for clean work and defence. |
 | 7  | ~~Pound for pound: choose a boxer to open his profile~~ | XS | **Done in 0.1.38.** Rows become buttons; BACK returns to the list. |
-| 8  | Save slots: delete and rename saved careers | S | From the CONTINUE SAVED CAREER list. |
+| 8  | ~~Save slots: delete and rename saved careers~~ | S | **Done in 0.1.40.** From the CONTINUE SAVED CAREER list. |
 | 9  | The player's own fight as a newspaper story (not just the first round-up line), with his name highlighted | S | "MURRAY STOPS FONSECA IN FOUR" with the purse and what it does to his ranking. |
 | 10 | End of a career: retirement for the player's boxer, with a career summary | M | Today he never retires; skills fade from 32. A RETIRE option (and a forced one at 39) with his record, titles, earnings and best wins. |
 | 11 | Technical decisions and no-contests (fights stopped early by cuts or clashes of heads) | L | Needs cuts first (see 13). |

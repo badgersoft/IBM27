@@ -463,7 +463,11 @@ START CAREER builds a fresh world (the starting rosters and a new season)
 with him at the bottom of his division, at 20, 0-0-0, with **$5,000** in
 the bank. The career is saved straight away, at the end of every month and
 when leaving for the main menu (SAVE saves it any time). Saves live in
-`user://careers/`; **CONTINUE SAVED CAREER** lists them, newest first.
+`user://careers/`; **CONTINUE SAVED CAREER** lists them, newest first,
+with the month each has reached. Choose one, then LOAD it (or double-click
+it), RENAME it (type a name of your own - up to 32 letters - which later
+saves of that career keep; leave it empty to go back to the boxer's name)
+or DELETE it (after an are-you-sure).
 
 **The career page** has the date across the top in large letters (WEEK 2
 OF JANUARY 2027, with the weeks to fight night on the right, or FIGHT

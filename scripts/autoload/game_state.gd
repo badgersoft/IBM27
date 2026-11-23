@@ -69,6 +69,8 @@ var back_scene := "res://scenes/main_menu.tscn"
 ## The player's career (null when not playing one), and where it is saved.
 var career: PlayerCareer = null
 var career_path := ""
+## The name the player gave this career's save ("" for none).
+var career_name := ""
 ## Which of the season's newspapers the newspaper screen shows.
 var paper_index := 0
 
@@ -322,6 +324,7 @@ func start_career(player: BoxerData, save := true) -> void:
 	career = PlayerCareer.new(player)
 	career.begin(season)
 	career_path = ""
+	career_name = ""
 	if save:
 		career_path = "%s/career_%d.tres" % [CareerSave.SAVE_DIR, Time.get_unix_time_from_system()]
 		save_career()
@@ -335,6 +338,7 @@ func leave_career() -> void:
 		return
 	career = null
 	career_path = ""
+	career_name = ""
 	_new_world()
 
 
@@ -367,6 +371,7 @@ func save_career() -> bool:
 		return false
 	var save := CareerSave.new()
 	save.title = "%s - %s" % [career.boxer.display_name().to_upper(), career.boxer.division_name().to_upper()]
+	save.custom_name = career_name
 	save.saved_at = Time.get_datetime_string_from_system(false, true)
 	save.date = Season.date_text(season.month)
 	save.ranking_mode = ranking_mode
@@ -382,7 +387,8 @@ func save_career() -> bool:
 	return ResourceSaver.save(save, career_path) == OK
 
 
-## Saved careers, newest first: [{"path", "title", "date", "saved_at"}].
+## Saved careers, newest first: [{"path", "name" (the player's name for
+## it, or the title), "title", "date", "saved_at"}].
 func list_saves() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var dir := DirAccess.open(CareerSave.SAVE_DIR)
@@ -394,9 +400,31 @@ func list_saves() -> Array[Dictionary]:
 		var path := "%s/%s" % [CareerSave.SAVE_DIR, file]
 		var save := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as CareerSave
 		if save != null:
-			out.append({"path": path, "title": save.title, "date": save.date, "saved_at": save.saved_at})
+			var shown := save.custom_name if not save.custom_name.is_empty() else save.title
+			out.append({"path": path, "name": shown, "title": save.title, "date": save.date, "saved_at": save.saved_at})
 	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["saved_at"] > b["saved_at"])
 	return out
+
+
+## Gives the save at [param path] a name of the player's choosing ("" puts
+## back the boxer's name). Returns true if it worked.
+func rename_save(path: String, new_name: String) -> bool:
+	var save := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as CareerSave
+	if save == null:
+		return false
+	save.custom_name = new_name.strip_edges().to_upper()
+	if path == career_path:
+		career_name = save.custom_name   # So later saves keep it.
+	return ResourceSaver.save(save, path) == OK
+
+
+## Deletes the save at [param path] for good. If it is the career being
+## played, that career is put away too. Returns true if it worked.
+func delete_save(path: String) -> bool:
+	if path == career_path:
+		career_path = ""
+		leave_career()
+	return DirAccess.remove_absolute(ProjectSettings.globalize_path(path)) == OK
 
 
 ## Loads the career saved at [param path]. Returns true if it worked.
@@ -428,6 +456,7 @@ func load_career(path: String) -> bool:
 	career = PlayerCareer.new(player)
 	career.load_dict(save.career)
 	career_path = path
+	career_name = save.custom_name
 	paper_index = season.papers.size() - 1
 	return true
 

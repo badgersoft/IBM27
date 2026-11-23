@@ -6,8 +6,10 @@ extends Resource
 
 const SAVE_DIR := "user://careers"
 
-## Shown in the list of saved careers.
+## Shown in the list of saved careers: the name the player gave it, or if
+## none the title ("STEFANO RICCI - LIGHTWEIGHT").
 @export var title := ""
+@export var custom_name := ""
 @export var saved_at := ""
 @export var date := ""
 @export var ranking_mode := 0
