@@ -4,6 +4,13 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.38
+
+* Pound for pound: each row is now a button (it lights up like the Boxers
+  list) that opens that boxer's profile. From there PREV and NEXT step
+  through the top ten ("HEAVYWEIGHT - POUND FOR POUND NO. 3") and BACK
+  returns to the list, on the row you came from. (TODO 7)
+
 ## 0.1.37
 
 * New boxer: HEIGHT and WEIGHT pickers under the portrait, with DIVISION

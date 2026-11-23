@@ -360,6 +360,8 @@ func _open_profile(index: int) -> void:
 		return
 	GameState.profile_division = _division
 	GameState.profile_index = index
+	GameState.profile_list.clear()
+	GameState.profile_back = ""
 	get_tree().change_scene_to_file("res://scenes/profile.tscn")
 
 

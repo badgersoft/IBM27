@@ -1,7 +1,8 @@
 extends Control
 ## The pound-for-pound top ten: the best boxers in the IBC whatever their
 ## weight (PoundForPound has how they are rated). Opened from the Boxers
-## screen; BACK returns there.
+## screen; BACK returns there. Choosing a row opens that boxer's profile,
+## where PREV and NEXT step through the list and BACK comes back to it.
 ##
 ## Layout (1280 x 800 frame):
 ##   y  16  POUND FOR POUND                                       [BACK]
@@ -33,6 +34,10 @@ const DIVISION_SHORT: Array[String] = ["LW", "MW", "HW"]
 const NOTE := "RATED ON THEIR RECORDS (WINS AND KNOCKOUTS COUNT, LOSSES COST) AND THIS SEASON'S FIGHTS:\nA WIN OR A KNOCKOUT OVER A HIGHER-RANKED MAN IS WORTH MORE, A LOSS TO A LOWER-RANKED ONE COSTS MORE."
 
 var _frame: Control
+var _list: Array[Dictionary] = []
+var _rows: Array[Button] = []
+## The row whose profile was last opened, focused again on the way back.
+static var _opened := -1
 
 
 func _ready() -> void:
@@ -59,6 +64,12 @@ func _ready() -> void:
 	_frame.add_child(back)
 	back.grab_focus()
 	_build_table()
+	if _opened >= 0 and _opened < _rows.size():
+		_rows[_opened].grab_focus()
+	_opened = -1
+	if GameState.options.has("open") and GameState.options.get("show", "") == "profile":
+		_open_profile.call_deferred(clampi(int(GameState.options["open"]), 0, _list.size() - 1))   # Screenshots.
+		return
 
 	if GameState.options.has("capture") and GameState.options.get("show", "") == "p4p":
 		_capture(GameState.options["capture"])
@@ -86,15 +97,16 @@ func _build_table() -> void:
 	panel.add_child(UiTheme.panel(0, 0, PANEL.size.x, PANEL.size.y))
 	for col in COLUMNS:
 		panel.add_child(UiTheme.place(UiTheme.label(col[0], UiTheme.CAPTION, Palette.UI_TEXT_DIM, col[3]), col[1], HEADER_Y, col[2], UiTheme.CAPTION))
-	var list := PoundForPound.top(GameState.rankings, GameState.season, COUNT)
+	_list = PoundForPound.top(GameState.rankings, GameState.season, COUNT)
 	var player := GameState.season.player
-	for i in list.size():
-		var entry: Dictionary = list[i]
+	for i in _list.size():
+		var entry: Dictionary = _list[i]
 		var b: BoxerData = entry["boxer"]
 		var table: Rankings = GameState.rankings[b.division]
 		var y := FIRST_ROW_Y + i * ROW_H
 		if i % 2 == 0:
 			panel.add_child(UiTheme.block(Color(1, 1, 1, 0.04), 8, y, PANEL.size.x - 16, ROW_H))
+		_rows.append(_row_button(panel, i, y))
 		var mine := player != null and b == player
 		var name_colour := Palette.UI_GOLD if mine or table.is_champion(b) else Palette.UI_TEXT
 		var values := [
@@ -114,6 +126,34 @@ func _build_table() -> void:
 	note.clip_text = false
 	note.add_theme_constant_override("line_spacing", 8)
 	panel.add_child(UiTheme.place(note, PAD, FIRST_ROW_Y + COUNT * ROW_H + 24, PANEL.size.x - PAD * 2, 32))
+
+
+## A see-through button over a whole row (as on the Boxers list): it
+## highlights on hover or focus and opens the boxer's profile.
+func _row_button(panel: Control, index: int, y: float) -> Button:
+	var row := Button.new()
+	row.focus_mode = Control.FOCUS_ALL
+	row.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	var lit := UiTheme.box(Color(1, 1, 1, 0.07), Palette.UI_BORDER, 2)
+	for state in ["hover", "focus", "pressed"]:
+		row.add_theme_stylebox_override(state, lit)
+	UiTheme.place(row, 8, y, PANEL.size.x - 16, ROW_H)
+	row.pressed.connect(_open_profile.bind(index))
+	panel.add_child(row)
+	return row
+
+
+## Opens row [param index]'s profile, stepping through this list.
+func _open_profile(index: int) -> void:
+	var b: BoxerData = _list[index]["boxer"]
+	GameState.profile_list.clear()
+	for entry in _list:
+		GameState.profile_list.append(entry["boxer"])
+	GameState.profile_division = b.division
+	GameState.profile_index = index
+	GameState.profile_back = "res://scenes/p4p.tscn"
+	_opened = index
+	get_tree().change_scene_to_file("res://scenes/profile.tscn")
 
 
 ## "COTE", or "-" if he has no win this season.

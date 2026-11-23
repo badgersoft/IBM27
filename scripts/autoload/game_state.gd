@@ -80,6 +80,10 @@ var roster_page := 0
 var roster_order: ListOrder = ListOrder.OVERALL
 var profile_division: int = Divisions.Id.MIDDLEWEIGHT
 var profile_index := 0
+## When set, the profile steps through these boxers instead of a division
+## (the pound-for-pound list), and BACK returns to profile_back.
+var profile_list: Array[BoxerData] = []
+var profile_back := ""
 
 ## Options parsed from the command line.
 var options := {}

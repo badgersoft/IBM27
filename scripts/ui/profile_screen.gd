@@ -1,7 +1,9 @@
 extends Control
 ## A boxer's profile, opened from the Boxers list: a portrait and everything
 ## about him, including all six skills. PREV and NEXT step through his
-## division; BACK returns to the list on the same tab.
+## division; BACK returns to the list on the same tab. Opened from the
+## pound-for-pound list (GameState.profile_list), PREV and NEXT step through
+## that list instead and BACK returns to it.
 ##
 ## Layout (1280 x 800 frame):
 ##   y  16  BOBBY WALKER [belt]            [< PREV] [NEXT >] [  BACK  ]
@@ -118,6 +120,12 @@ func _notification(what: int) -> void:
 
 
 func _go_back() -> void:
+	if not GameState.profile_back.is_empty():
+		var scene := GameState.profile_back
+		GameState.profile_back = ""
+		GameState.profile_list.clear()
+		get_tree().change_scene_to_file(scene)
+		return
 	GameState.roster_tab = _division
 	GameState.roster_page = floori(float(_index) / RosterScreen.PAGE_SIZE)   # The page he is on.
 	get_tree().change_scene_to_file("res://scenes/roster.tscn")
@@ -125,10 +133,18 @@ func _go_back() -> void:
 
 ## Moves to the previous (-1) or next (+1) boxer in the division, wrapping.
 func _step(dir: int) -> void:
-	var count := GameState.boxers_in(_division).size()
+	var count := _roster().size()
 	_index = posmod(_index + dir, count)
 	GameState.profile_index = _index
 	_show()
+
+
+## The boxers PREV and NEXT step through: the pound-for-pound list if he
+## was opened from it, else his division in the Boxers list's order.
+func _roster() -> Array[BoxerData]:
+	if not GameState.profile_list.is_empty():
+		return GameState.profile_list
+	return GameState.listed_boxers(_division)
 
 
 func _show() -> void:
@@ -138,7 +154,7 @@ func _show() -> void:
 	_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_frame.add_child(UiTheme.place(_content, 0, 0, FRAME_SIZE.x, FRAME_SIZE.y))
 
-	var roster := GameState.listed_boxers(_division)
+	var roster := _roster()
 	var b: BoxerData = roster[_index]
 
 	var title := UiTheme.label(b.display_name().to_upper(), UiTheme.TITLE, Palette.UI_GOLD)
@@ -153,6 +169,8 @@ func _show() -> void:
 		var nick := UiTheme.label("\"%s\"" % b.nickname.to_upper(), UiTheme.BODY, Palette.UI_GOLD)
 		_content.add_child(UiTheme.place(nick, 24, 72, 640, UiTheme.ROW_H))
 	var where := "%s  -  %d OF %d" % [b.division_name().to_upper(), _index + 1, roster.size()]
+	if not GameState.profile_list.is_empty():
+		where = "%s  -  POUND FOR POUND NO. %d" % [b.division_name().to_upper(), _index + 1]
 	var where_label := UiTheme.label(where, UiTheme.BODY, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_RIGHT)
 	_content.add_child(UiTheme.place(where_label, 664, 72, FRAME_SIZE.x - 16 - 664, UiTheme.ROW_H))
 

@@ -368,7 +368,8 @@ So wins and knockouts count, and the higher the man he beat was ranked,
 the more they count. The list shows each man's division and ranking, his
 record and knockouts, his best win this season (and where that man was
 ranked, and how he won) and his score; the player's boxer is in gold if he
-makes it.
+makes it. Choose a row to open that boxer's profile: PREV and NEXT then
+step through the top ten (NO. 1 to NO. 10) and BACK returns to the list.
 
 ![Pound for pound](docs/screenshots/pound_for_pound.png)
 
@@ -766,6 +767,7 @@ Command-line options read by the game (after `--`):
 | `--rounds=<n>`             | Fight length: 3, 6, 10 or 12 rounds (normally set by the level)                                                                                                                                        |
 | `--capture=<png>`          | Fast-forward, save a screenshot and quit                                                                                                                                                               |
 | `--show=<moment>`          | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch), `onetwo` (a one-two), `taunt` (showing off), `break`, `count`, `announce`, `result`, `stats`, `pause`, `orders` (the orders between rounds, with `--manage`), `fixtures`, `paper`, `career_menu`, `p4p`, `exhibition`, `new_boxer`, `career`, `facilities`, `schedule` |
+| `--open=<n>`               | With `p4p.tscn` and `--show=profile`, open the profile of pound-for-pound row n (0 = the best)                                                                                                         |
 | `--offer`                  | With `--show=schedule`, open the purse offer for the first opponent                                                                                                                                   |
 | `--manage=<0\|1>`          | A fight scene: the player is in the red (0) or blue (1) corner - orders between rounds, shouts during them                                                                                            |
 | `--train=<0-4>`            | Career screens: the boxer trains that session this week (4 = RECOVERY)                                                                                                                                 |
