@@ -6,7 +6,8 @@ extends Control
 ## quicker, a heavyweight hits harder). PlayerCareer.START_POOL more points
 ## go where the player likes: + takes a point from the pool, - gives it back
 ## (down to MIN_SKILL, up to MAX_SKILL). The points he has spent stay with
-## him if he changes division.
+## him if he changes division. His height and weight can be set too, within
+## his division's range (Divisions): a taller man has a longer reach.
 ##
 ## Layout (1280 x 800 frame):
 ##   y  16  NEW BOXER                          [START CAREER]  [BACK]
@@ -15,11 +16,13 @@ extends Control
 ##          |          |  | trunks, gloves, boots  |  | points left            |
 ##   y 464  |  OVERALL |  +-- NICKNAME (x 320) --+  +-- FROM (x 320) --------+
 ##          | DIVISION |  | ten to choose, or none |  | country list           |
-##          |  STYLE   |  |                        |  | city list              |
+##          |  HEIGHT  |  |                        |  | city list              |
+##          |  WEIGHT  |  |                        |  |                        |
+##          |  STYLE   |  |                        |  |                        |
 ##   y 784  +----------+  +------------------------+  +------------------------+
 ## The two columns share their rows: POINTS AVAILABLE sits level with NAME
 ## and SURNAME, and the six skills line up with the six pickers (SKIN to
-## BOOTS). DIVISION and STYLE sit under the portrait.
+## BOOTS). DIVISION, HEIGHT, WEIGHT and STYLE sit under the portrait.
 
 const FRAME_SIZE := Vector2(1280, 800)
 const PAD := 16
@@ -29,15 +32,17 @@ const NICKNAME := Rect2(368, 464, 448, 320)
 const SKILLS := Rect2(832, 80, 432, 368)
 const FROM := Rect2(832, 464, 432, 320)
 const CAPTION_Y := 10
-## The portrait panel: the picture, OVERALL and his size, then DIVISION and
-## STYLE (a caption over each < value > picker).
-const PICTURE_VIEW := Vector2i(104, 152)
+## The portrait panel: the picture and OVERALL, then DIVISION, HEIGHT,
+## WEIGHT and STYLE (a caption over each < value > picker).
+const PICTURE_VIEW := Vector2i(104, 136)
 const PICTURE_FIGURE := 1.22
-const PICTURE_FEET := 141.0
-const OVERALL_Y := 480
-const SIZE_Y := 512
-const SIDE_PICKERS_Y: Array[int] = [568, 632]
+const PICTURE_FEET := 125.0
+const OVERALL_Y := 432
+const SIDE_PICKERS_Y: Array[int] = [472, 528, 584, 640]
 const SIDE_CAPTION_GAP := 16
+## One click of the WEIGHT picker, in pounds, by division (a heavyweight's
+## range is 90 lb wide).
+const WEIGHT_STEP: Array[int] = [1, 1, 5]
 ## Scrolling lists: a frame LIST_INSET bigger all round than the list,
 ## which shows a whole number of LIST_ROW_H rows and clips the rest, so no
 ## row is ever cut in half.
@@ -88,7 +93,6 @@ var _pool := PlayerCareer.START_POOL
 var _spent := {}                   ## Skill -> points spent (+) or taken off (-).
 var _portrait: BoxerPortrait
 var _overall: Label
-var _size_label: Label
 var _values := {}                  ## Picker name -> its value Label.
 var _swatches := {}                ## Picker name -> its colour block.
 var _skill_labels := {}            ## Skill -> value Label.
@@ -130,6 +134,8 @@ func _ready() -> void:
 	_build_skills()
 	_build_from()
 	_refresh()
+	for i in int(GameState.options.get("division", 0)):   # Screenshots.
+		_cycle_division(1)
 	_first.grab_focus()
 
 	if GameState.options.has("capture") and GameState.options.get("show", "") == "new_boxer":
@@ -156,10 +162,10 @@ func _build_portrait() -> void:
 	panel.add_child(_portrait)
 	_overall = UiTheme.label("", UiTheme.LARGE, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
 	panel.add_child(UiTheme.place(_overall, 0, OVERALL_Y, PORTRAIT.size.x, UiTheme.LARGE))
-	_size_label = UiTheme.label("", UiTheme.BODY, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
-	panel.add_child(UiTheme.place(_size_label, 0, SIZE_Y, PORTRAIT.size.x, UiTheme.ROW_H))
 	_side_picker(panel, SIDE_PICKERS_Y[0], "DIVISION", _cycle_division)
-	_side_picker(panel, SIDE_PICKERS_Y[1], "STYLE", _cycle_style)
+	_side_picker(panel, SIDE_PICKERS_Y[1], "HEIGHT", _step_height)
+	_side_picker(panel, SIDE_PICKERS_Y[2], "WEIGHT", _step_weight)
+	_side_picker(panel, SIDE_PICKERS_Y[3], "STYLE", _cycle_style)
 
 
 func _build_boxer() -> void:
@@ -256,6 +262,21 @@ func _cycle_division(dir: int) -> void:
 	_refresh()
 
 
+## An inch taller or shorter, within his division's range.
+func _step_height(dir: int) -> void:
+	var range_cm: Array = Divisions.get_division(_boxer.division)["height_cm"]
+	var inches := roundi(_boxer.height_cm / 2.54) + dir
+	_boxer.height_cm = clampi(roundi(inches * 2.54), range_cm[0], range_cm[1])
+	_refresh()
+
+
+## WEIGHT_STEP pounds heavier or lighter, within his division's range.
+func _step_weight(dir: int) -> void:
+	var range_lb: Array = Divisions.get_division(_boxer.division)["weight_lb"]
+	_boxer.weight_lb = clampi(_boxer.weight_lb + dir * WEIGHT_STEP[_boxer.division], range_lb[0], range_lb[1])
+	_refresh()
+
+
 func _cycle_style(dir: int) -> void:
 	_boxer.style = posmod(_boxer.style + dir, BoxerData.STYLE_NAMES.size()) as BoxerData.Style
 	_new_nicknames()
@@ -341,7 +362,8 @@ func _refresh() -> void:
 		_skill_labels[skill].text = str(_boxer.get(skill))
 	_pool_label.text = str(_pool)
 	_overall.text = "OVERALL %d" % _boxer.overall()
-	_size_label.text = "%s  -  %d LB" % [_boxer.height_imperial(), _boxer.weight_lb]
+	_values["HEIGHT"].text = _boxer.height_imperial()
+	_values["WEIGHT"].text = "%d LB" % _boxer.weight_lb
 	_portrait.show_boxer(_boxer)
 
 

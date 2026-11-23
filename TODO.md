@@ -9,7 +9,7 @@ Effort: **XS** under an hour, **S** a few hours, **M** about a day,
 |----|------|--------|-------|
 | 1  | ~~Show the boxer's skills (power, speed, stamina, chin, strength, intelligence) on the career page~~ | S | **Done in 0.1.36.** The header is full: either a compact skills strip under it or a SKILLS panel, with this week's training gains shown against them. |
 | 2  | ~~Make the current week and month clearer on the career page~~ | XS | **Done in 0.1.36.** Move "WEEK 1 OF JANUARY 2027" to a large line at the top of the page (and show "FIGHT NIGHT" there in the last week). |
-| 3  | Choose height and weight on the new boxer screen | S | < > pickers kept inside his division's range. Height changes reach (longer jab, harder to get inside); weight could nudge power against speed. |
+| 3  | ~~Choose height and weight on the new boxer screen~~ | S | **Done in 0.1.37.** < > pickers kept inside his division's range. Height changes reach (longer jab, harder to get inside); weight could nudge power against speed. |
 
 ## Left over from earlier
 

@@ -441,8 +441,12 @@ with a random look, name and hometown, all of which can be changed:
   BOOTS, each with < and >. His gloves are his own: in the ring he wears
   them whichever corner he is in (the computer's boxers wear their
   corner's red or blue).
-* Under his portrait: DIVISION (Lightweight to start with) and STYLE (the
-  standard types).
+* Under his portrait: DIVISION (Lightweight to start with), HEIGHT and
+  WEIGHT (an inch or a pound at a time - 5 lb at heavyweight - kept inside
+  his division's range: lightweight 5' 5" - 5' 10" and 130 - 136 lb,
+  middleweight 5' 7" - 6' 6" and 154 - 160 lb, heavyweight 6' 1" - 6' 8"
+  and 200 - 290 lb; a taller man has a longer reach, a heavier one is
+  drawn bigger), and STYLE (the standard types).
 * NICKNAME: ten made up for him, or NO NICKNAME.
 * FROM: a country, then one of its cities.
 * SKILLS: every skill starts at 35 (his hidden recovery, how much his

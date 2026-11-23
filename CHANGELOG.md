@@ -4,6 +4,16 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.37
+
+* New boxer: HEIGHT and WEIGHT pickers under the portrait, with DIVISION
+  and STYLE. Height moves an inch at a time and weight a pound (5 lb at
+  heavyweight), always inside his division's range; changing division
+  picks a new size inside the new range. A taller boxer has a longer
+  reach in the ring. The picture loses some empty spotlight at the top to
+  make room (the boxer is drawn the same size), and the size line under
+  OVERALL has gone, since the pickers show it. (TODO 3)
+
 ## 0.1.36
 
 * Career page: the date is now a large line across the top (WEEK 2 OF
