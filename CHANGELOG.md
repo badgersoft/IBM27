@@ -4,6 +4,25 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.44
+
+* Style balance: the Boxer style is no longer the weakest at the top. Like
+  the Brawler's toughness and the Slugger's power, it now has strengths of
+  its own: a snapping jab (15% more damage, and so more points with the
+  judges), slicker defence (4% more chance to slip a punch), a shorter
+  pause after punching (0.4 - 0.8 s, was 0.6 - 1.2), a little more distance
+  (he works from the end of his range, 0.60 body heights, was 0.52) and a
+  better chance to counter after blocking or slipping a punch. In
+  `tools/style_matrix.gd` (two copies of one boxer, only the style
+  different), at world class (skill 85) a Boxer now wins 57% of his fights
+  at middleweight and 52% at lightweight (was 35% and 31%), and every style
+  is between 42% and 59%. Other styles' pairings are unchanged. (TODO 6)
+* Found on the way: below world class (skill 60) Sluggers (88%) and
+  Brawlers (71%) still beat every careful style; a Boxer is up from 36% to
+  44%. Added to the to-do list as item 16.
+* `tools/style_matrix.gd`: `--only=<style>` fights just that style's
+  pairings, and a KO LOST column.
+
 ## 0.1.43
 
 * Added `tools/style_matrix.gd`: every fighting style against every other

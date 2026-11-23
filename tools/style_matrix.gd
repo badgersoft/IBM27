@@ -4,7 +4,9 @@ extends SceneTree
 ## recovery), only the style changes. Each pairing is fought --fights times,
 ## half of them with the corners swapped.
 ##
-##   godot --headless --path . -s tools/style_matrix.gd -- [--level=85] [--fights=40] [--division=1] [--rounds=10]
+##   godot --headless --path . -s tools/style_matrix.gd -- [--level=85] [--fights=40] [--division=1] [--rounds=10] [--only=boxer]
+##
+## --only fights just that style's pairings (quicker when tuning one style).
 ##
 ## Prints each style's win share against each other style and overall, and
 ## what it does in a fight (punches thrown and landed, big punches, clean
@@ -21,6 +23,7 @@ func _initialize() -> void:
 	var division := 1
 	var rounds := 10
 	var seed_value := 1
+	var only := -1
 	for arg in OS.get_cmdline_user_args():
 		var kv := arg.trim_prefix("--").split("=")
 		match kv[0]:
@@ -29,6 +32,7 @@ func _initialize() -> void:
 			"division": division = int(kv[1])
 			"rounds": rounds = int(kv[1])
 			"seed": seed_value = int(kv[1])
+			"only": only = BoxerData.STYLE_NAMES.map(func(n: String) -> String: return n.to_lower()).find(kv[1].to_lower())
 	var base: BoxerData = BoxerGenerator.new(seed_value).generate_boxer([], division as Divisions.Id)
 	base.special = BoxerData.Special.NONE
 	for s in SKILLS:
@@ -41,14 +45,16 @@ func _initialize() -> void:
 
 	var wins := []      # wins[a][b]: a's wins over b
 	var played := []
-	var stats := []     # per style: thrown, landed, big, landed on him, fights, stoppages won
+	var stats := []     # per style: thrown, landed, big, landed on him, fights, stoppages won, stoppages lost
 	for a in STYLES:
 		wins.append([0, 0, 0, 0, 0, 0])
 		played.append([0, 0, 0, 0, 0, 0])
-		stats.append([0.0, 0.0, 0.0, 0.0, 0, 0])
+		stats.append([0.0, 0.0, 0.0, 0.0, 0, 0, 0])
 	var n := 0
 	for a in STYLES:
 		for b in range(a + 1, STYLES):
+			if only >= 0 and a != only and b != only:
+				continue
 			for i in fights:
 				var red := _copy(base, a if i % 2 == 0 else b, 1)
 				var blue := _copy(base, b if i % 2 == 0 else a, 2)
@@ -73,13 +79,15 @@ func _initialize() -> void:
 						wins[me][them] += 1
 						if r["method"] in ["KO", "TKO"]:
 							stats[me][5] += 1
+					elif r["winner"] >= 0 and r["method"] in ["KO", "TKO"]:
+						stats[me][6] += 1
 	print("")
 	print("STYLE MATRIX: skills %d, %s, %d rounds, %d fights a pairing (draws count as half)" % [level,
 			Divisions.division_name(division).to_upper(), rounds, fights])
 	var header := "            "
 	for b in STYLES:
 		header += "%9s" % BoxerData.STYLE_NAMES[b].substr(0, 8)
-	print(header + "    ALL   THROWN LANDED  BIG  TAKEN  KO WINS")
+	print(header + "    ALL   THROWN LANDED  BIG  TAKEN  KO WON KO LOST")
 	for a in STYLES:
 		var line := "  %-9s " % BoxerData.STYLE_NAMES[a]
 		var all_w := 0.0
@@ -94,8 +102,8 @@ func _initialize() -> void:
 			all_p += played[a][b]
 			line += "%8.0f%%" % (100.0 * share)
 		var k: float = maxf(stats[a][4], 1.0)
-		line += "  %4.0f%%  %6.0f %6.0f %4.1f %6.0f %5d" % [100.0 * all_w / maxf(all_p, 1), stats[a][0] / k,
-				stats[a][1] / k, stats[a][2] / k, stats[a][3] / k, stats[a][5]]
+		line += "  %4.0f%%  %6.0f %6.0f %4.1f %6.0f %6d %7d" % [100.0 * all_w / maxf(all_p, 1), stats[a][0] / k,
+				stats[a][1] / k, stats[a][2] / k, stats[a][3] / k, stats[a][5], stats[a][6]]
 		print(line)
 	print("")
 	quit()

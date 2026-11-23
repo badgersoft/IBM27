@@ -52,6 +52,11 @@ const MIN_GAP := 0.34                 ## Closest the boxers' centres get, in bod
 ## Showboat.
 const STYLE_TOUGHNESS: Array[float] = [0.82, 0.85, 1.00, 1.00, 1.00, 1.00]
 const STYLE_POWER:     Array[float] = [1.08, 1.12, 1.00, 1.00, 1.00, 1.00]
+## A Boxer's own strengths: a snapping jab (damage, and so points, x
+## STYLE_JAB) and slick defence (STYLE_SLIP more chance to slip a punch;
+## a Showboat's quick reactions too).
+const STYLE_JAB:       Array[float] = [1.00, 1.00, 1.15, 1.00, 1.00, 1.00]
+const STYLE_SLIP:      Array[float] = [0.00, 0.00, 0.04, 0.00, 0.00, 0.08]
 ## Punches land harder as a fight wears on: this much extra by the last round
 ## (spread evenly over the rounds, however many there are).
 const LATE_ROUND_DAMAGE := 0.12
@@ -103,8 +108,6 @@ const ONE_TWO_DAMAGE := 1.25
 const ONE_TWO_BIG := 0.02
 ## Chance a showboat throws his arms up over an opponent he has knocked down.
 const SHOWBOAT_KNOCKDOWN_SHOW := 0.5
-## Showboats have quick reactions: a little extra chance to slip a punch.
-const SHOWBOAT_SLIP := 0.08
 
 ## Big punches: an occasional power punch that lands with much more on it.
 ## Chances add up from what led to it (see _big_punch_chance).
@@ -468,8 +471,7 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	slip -= d.hurt_level() * 0.10
 	if d.state == State.MOVE and d.move_dir < 0:
 		slip += 0.20
-	if d.data.style == BoxerData.Style.SHOWBOAT:
-		slip += SHOWBOAT_SLIP
+	slip += STYLE_SLIP[d.data.style]
 	if d.state in [State.PUNCH, State.TAUNT, State.CLINCH]:
 		slip = 0.0          # Caught square.
 	elif d.state in [State.HURT, State.ROPES]:
@@ -490,6 +492,8 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 		dmg *= _monster(a, MONSTER_DAMAGE)
 	if PunchTypes.is_power_punch(type):
 		dmg *= STYLE_POWER[a.data.style]
+	elif type == PunchTypes.Type.JAB:
+		dmg *= STYLE_JAB[a.data.style]
 	var caught_punching := d.state == State.PUNCH and not d.punch_resolved
 	if caught_punching:
 		dmg *= 1.3   # Walked onto it.

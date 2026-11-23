@@ -197,14 +197,14 @@ Every boxer has six skills from 1 to 99 and a fighting style.
 | Toughness    | How little being hit drains energy and wears down the other skills   |
 | Intelligence | Blocking, slipping, counter-punching, knowing when to back off       |
 
-| Style    | Behaviour                                                                            |
-|----------|--------------------------------------------------------------------------------------|
-| Brawler  | Plants himself at mid range and trades; rarely steps back                            |
-| Slugger  | Walks forward to close range; hooks and uppercuts                                    |
-| Boxer    | Jab-led; throws, steps out, comes back in when it suits him                          |
-| Counter  | Waits outside range and punishes misses; trades when he is on top                    |
-| Evasive  | Stays away and jabs, saving himself, then comes forward in the last round            |
-| Showboat | Quick reactions and slips punches, but drops his guard and taunts; can be caught out |
+| Style    | Behaviour                                                                                |
+|----------|------------------------------------------------------------------------------------------|
+| Brawler  | Plants himself at mid range and trades; rarely steps back                                |
+| Slugger  | Walks forward to close range; hooks and uppercuts                                        |
+| Boxer    | Jab-led from the end of his range; a snapping jab, slips punches, counters after a block |
+| Counter  | Waits outside range and punishes misses; trades when he is on top                        |
+| Evasive  | Stays away and jabs, saving himself, then comes forward in the last round                |
+| Showboat | Quick reactions and slips punches, but drops his guard and taunts; can be caught out     |
 
 Nobody can win by hiding: a boxer who has not thrown for a couple of seconds
 edges closer, so two cautious styles (a counter-puncher and an evasive boxer,

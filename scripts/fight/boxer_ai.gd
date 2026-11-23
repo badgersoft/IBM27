@@ -24,7 +24,7 @@ const P := PunchTypes.Type
 const BASE_AGGRESSION: Array[float] = [0.62, 0.72, 0.52, 0.34, 0.30, 0.50]
 
 ## Favourite distance from the opponent, in body heights.
-const PREFERRED_RANGE: Array[float] = [0.48, 0.40, 0.52, 0.62, 0.68, 0.56]
+const PREFERRED_RANGE: Array[float] = [0.48, 0.40, 0.60, 0.62, 0.68, 0.56]
 
 ## Punch preferences per style: JAB, CROSS, HOOK, UPPERCUT, BODY.
 const PUNCH_WEIGHTS: Array = [
@@ -69,6 +69,16 @@ const MAX_CLOSE_IN := 0.22
 const ONE_TWO_LEAD := 0.22
 const ONE_TWO_STYLE: Array[float] = [0.00, 0.00, 0.10, 0.06, 0.04, 0.04]
 const ONE_TWO_COUNTER := 0.60
+
+## Hit and move: after a punch a Boxer or an Evasive boxer moves back to
+## at least HIT_AND_MOVE_RANGE body heights for HIT_AND_MOVE_SECONDS. A
+## Boxer stays at the end of his own punches (a jab reaches about 0.56, a
+## cross 0.64), ready to throw again; an Evasive boxer goes right out of
+## range. A Boxer who blocks or slips a punch is set to counter with
+## BOXER_COUNTER (plus his ring sense).
+const HIT_AND_MOVE_RANGE: Array[float] = [0.0, 0.0, 0.66, 0.0, 0.66, 0.0]
+const HIT_AND_MOVE_SECONDS: Array[Vector2] = [Vector2.ZERO, Vector2.ZERO, Vector2(0.4, 0.8), Vector2.ZERO, Vector2(0.6, 1.2), Vector2.ZERO]
+const BOXER_COUNTER := 0.25
 
 ## At the bell both boxers walk briskly to the middle (Fighter.COME_OUT_SPEED)
 ## until they are COME_OUT_SLACK body heights outside their favourite
@@ -175,14 +185,12 @@ func think(me: Fighter, opp: Fighter, round_number: int, dt: float) -> void:
 				me.start_punch(P.JAB)
 				me.combo.assign([P.CROSS])
 				me.one_two = true
-				if me.data.style == Style.BOXER or me.data.style == Style.EVASIVE:
-					me.reset_timer = rng.randf_range(0.6, 1.2)
+				_hit_and_move(me)
 				return
 			var type := _choose_punch(me, options)
 			me.start_punch(type)
 			_maybe_queue_combo(me, type)
-			if me.data.style == Style.BOXER or me.data.style == Style.EVASIVE:
-				me.reset_timer = rng.randf_range(0.6, 1.2)
+			_hit_and_move(me)
 			return
 
 	# 4. Footwork ---------------------------------------------------------------------
@@ -279,12 +287,19 @@ func _aggression(me: Fighter, opp: Fighter, round_number: int) -> float:
 	return clampf(a, 0.05, 0.95)
 
 
+## A Boxer or Evasive boxer moves back after punching (HIT_AND_MOVE_*).
+func _hit_and_move(me: Fighter) -> void:
+	var t: Vector2 = HIT_AND_MOVE_SECONDS[me.data.style]
+	if t.y > 0.0:
+		me.reset_timer = rng.randf_range(t.x, t.y)
+
+
 func _preferred_distance(me: Fighter, round_number: int) -> float:
 	var d: float = PREFERRED_RANGE[me.data.style]
 	if me.data.style == Style.EVASIVE and round_number >= rounds:
 		d = 0.52
 	if me.reset_timer > 0.0:
-		d = maxf(d, 0.66)   # Hit and move.
+		d = maxf(d, HIT_AND_MOVE_RANGE[me.data.style])   # Hit and move.
 	if me.advice == Advice.ALL_OUT or me.advice == Advice.ATTACK_MORE:
 		d -= 0.04
 	d += SHOUT_EFFECTS[me.shout][1]
@@ -329,7 +344,8 @@ func _defend(me: Fighter, opp: Fighter) -> void:
 		_move(me, -1, rng.randf_range(0.25, 0.4))
 	else:
 		me.set_state(State.GUARD, "guard", rng.randf_range(0.35, 0.6))
-	if style == Style.COUNTER or rng.randf() < me.skill("intelligence") / 99.0 * 0.4:
+	var counter := me.skill("intelligence") / 99.0 * 0.4 + (BOXER_COUNTER if style == Style.BOXER else 0.0)
+	if style == Style.COUNTER or rng.randf() < counter:
 		me.counter_window = 0.7
 
 
