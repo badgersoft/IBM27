@@ -15,7 +15,7 @@ Effort: **XS** under an hour, **S** a few hours, **M** about a day,
 
 | #  | Item | Effort | Notes |
 |----|------|--------|-------|
-| 4  | Knockout times: the round clock runs at 3x speed during the count, so about 40% of knockouts are recorded at 3:00 | S | Run the clock at real speed during the count; the time of the stoppage then reads true everywhere (results band, fight stats, archive). |
+| 4  | ~~Knockout times: the round clock runs at 3x speed during the count, so about 40% of knockouts are recorded at 3:00~~ | S | **Done in 0.1.39.** Run the clock at real speed during the count; the time of the stoppage then reads true everywhere (results band, fight stats, archive). |
 | 5  | ~~Rename STRENGTH to TOUGHNESS on screen~~ | XS | **Done in 0.1.35.** It only affects how well he takes punishment, not how hard he hits, so "strength" misleads. Display only. |
 | 6  | Style balance: the Boxer style is noticeably weaker than Brawler and Slugger at the top level | M | Found in the balance tests (it throws about half as many punches). Tune its output or give it more reward for clean work and defence. |
 | 7  | ~~Pound for pound: choose a boxer to open his profile~~ | XS | **Done in 0.1.38.** Rows become buttons; BACK returns to the list. |

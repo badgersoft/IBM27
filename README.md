@@ -70,7 +70,9 @@ preset under *Project > Export*.
   boxers' level decides it; `--rounds=<n>` picks another length for
   testing. Each round is
   **1 minute of real time**, but the clock shows
-  **3:00** and counts down at three times real speed.
+  **3:00** and counts down at three times real speed - except during a
+  count, when it runs at real speed (a count of ten takes ten seconds off
+  the clock), so the time of a knockout reads true.
 * The **bell** rings once (a short, soft ring) to start each round, and
   three times to end it. At the bell both boxers walk briskly out of their
   corners and meet in the middle in about 3 seconds; only a really

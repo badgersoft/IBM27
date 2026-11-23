@@ -711,7 +711,7 @@ func _run_capture() -> void:
 	await get_tree().create_timer(float(GameState.options.get("wait", "0.5"))).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(path)
-	print("Captured ", path, "  (", sim.result.get("method", "fight on"), " ", sim.result.get("winner", ""), ")")
+	print("Captured ", path, "  (", sim.result.get("method", "fight on"), " ", sim.result.get("winner", ""), " ", sim.result.get("time", ""), ")")
 	get_tree().quit()
 
 

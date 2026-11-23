@@ -8,7 +8,10 @@ extends RefCounted
 ## script calls step() in a tight loop to test balance over hundreds of fights.
 ##
 ## Time: a round lasts REAL_ROUND_SECONDS of real time but the on-screen clock
-## counts down GAME_ROUND_SECONDS, so one real second = three "fight" seconds.
+## counts down GAME_ROUND_SECONDS, so one real second = three "fight" seconds -
+## except during a count, when the clock runs at real speed (COUNT_CLOCK_SPEED):
+## a count of ten takes ten seconds off it, as it would in a real fight, so
+## the time of a knockout reads true.
 
 signal bell(strikes: int)
 signal round_started(round_number: int)
@@ -38,6 +41,7 @@ const CLOCK_SPEED := GAME_ROUND_SECONDS / REAL_ROUND_SECONDS
 const BREAK_SECONDS := 10.0           ## Real seconds in the corner between rounds.
 const ADVICE_AT := 3.5                ## Seconds into the break when trainers speak.
 const COUNT_SECONDS := 1.0            ## Real seconds per number of the count.
+const COUNT_CLOCK_SPEED := 1.0        ## Clock seconds per real second during a count.
 const KNOCKDOWNS_FOR_TKO := 3         ## Knockdowns in one round that stop the fight.
 const WALK_SPEED := 56.0              ## Pixels per second walking to the corner.
 const MIN_GAP := 0.34                 ## Closest the boxers' centres get, in body heights.
@@ -195,7 +199,7 @@ func step(dt: float) -> void:
 			if clock <= 0.0 and phase == Phase.ROUND:
 				_end_round()
 		Phase.COUNT:
-			clock = maxf(clock - dt * CLOCK_SPEED, 0.0)
+			clock = maxf(clock - dt * COUNT_CLOCK_SPEED, 0.0)
 			_update_count(dt)
 		Phase.BREAK:
 			_update_break(dt)

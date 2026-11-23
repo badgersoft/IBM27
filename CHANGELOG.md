@@ -4,6 +4,17 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.39
+
+* Knockout times read true: during a count the round clock now runs at
+  real speed (a count of ten takes ten seconds off it), not three times
+  as fast as in the rest of the round. Before, any man knocked down in a
+  round's last 30 seconds was recorded as stopped at 3:00 - over a third
+  of all knockouts (36% in a test of 180 ten-round fights). Now it is
+  only those counted out as the bell goes (14%), and the rest show the
+  real time on the results band, the fight stats and the fixtures archive.
+  Knockouts are no more or less common (69 and 71 of the 180). (TODO 4)
+
 ## 0.1.38
 
 * Pound for pound: each row is now a button (it lights up like the Boxers
