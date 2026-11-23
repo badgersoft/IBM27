@@ -4,6 +4,14 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.43
+
+* Added `tools/style_matrix.gd`: every fighting style against every other
+  with nothing else different (two copies of one boxer, same skills and
+  size), each pairing fought both ways round, with each style's win share
+  and output (punches thrown and landed, big punches, clean punches taken).
+  For checking the Boxer style's weakness (TODO 6).
+
 ## 0.1.42
 
 * Added `tools/trial_career.gd`: plays whole careers for the player's boxer

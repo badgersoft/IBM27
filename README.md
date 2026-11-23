@@ -693,6 +693,7 @@ scripts/
 tools/
   simulate_fights.gd          Headless balance checker
   trial_career.gd             Plays whole careers to check the career balance
+  style_matrix.gd             Every style against every other, all else equal
 ```
 
 ### How the boxers are drawn
@@ -748,6 +749,10 @@ All of these run from the project folder. `godot` is your Godot 4.7 executable.
 ```sh
 # Run 200 fights with no graphics and print the balance summary
 godot --headless --path . -s tools/simulate_fights.gd -- --fights=200 --division=1 --rounds=6
+
+# Style balance: two copies of one boxer (same skills and size), only the
+# style different, every pairing fought both ways round
+godot --headless --path . -s tools/style_matrix.gd -- --level=85 --fights=40 --rounds=12
 
 # Play whole careers for the player's boxer (an ambitious or casual manager)
 # and report how many months he takes to become a contender and champion.
