@@ -23,7 +23,7 @@ Effort: **XS** under an hour, **S** a few hours, **M** about a day,
 | 9  | ~~The player's own fight as a newspaper story (not just the first round-up line), with his name highlighted~~ | S | **Done in 0.1.41.** "MURRAY STOPS FONSECA IN FOUR" with the purse and what it does to his ranking. |
 | 10 | End of a career: retirement for the player's boxer, with a career summary | M | Today he never retires; skills fade from 32. A RETIRE option (and a forced one at 39) with his record, titles, earnings and best wins. |
 | 11 | Technical decisions and no-contests (fights stopped early by cuts or clashes of heads) | L | Needs cuts first (see 13). |
-| 12 | Add the trial-career simulator to `tools/` | XS | The balance checks used in 0.1.29 - 0.1.33 (`trial.gd`, `train_curve.gd`), so balance can be re-checked after any change. |
+| 12 | ~~Add the trial-career simulator to `tools/`~~ | XS | **Done in 0.1.42.** The balance checks used in 0.1.29 - 0.1.33 (`trial.gd`, `train_curve.gd`), so balance can be re-checked after any change. |
 
 ## Ideas to make it more fun and realistic
 

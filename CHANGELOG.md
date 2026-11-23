@@ -4,6 +4,20 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.42
+
+* Added `tools/trial_career.gd`: plays whole careers for the player's boxer
+  with no graphics - an ambitious manager (the highest-ranked man he may
+  fight, the best gym he can afford) or a casual one - and reports the
+  month he becomes a contender and the champion, so the career balance can
+  be re-checked after any change (--division, --style, --careers, --seed,
+  --months, --yearly for his overall and ranking each year). The other two
+  divisions' fights are called off by default (--whole-world keeps them),
+  which makes it three times as fast. (TODO 12)
+* A first check with it: three ambitious middleweight Boxers became
+  contenders in months 62, 65 and 72, and one became champion in month 71 -
+  in line with the 0.1.33 checks.
+
 ## 0.1.41
 
 * The newspaper gives the player's own fight a story of its own, marked

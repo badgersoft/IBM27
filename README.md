@@ -692,6 +692,7 @@ scripts/
   ui/                         Theme, menus, name plates, belt icon, scorecard...
 tools/
   simulate_fights.gd          Headless balance checker
+  trial_career.gd             Plays whole careers to check the career balance
 ```
 
 ### How the boxers are drawn
@@ -747,6 +748,11 @@ All of these run from the project folder. `godot` is your Godot 4.7 executable.
 ```sh
 # Run 200 fights with no graphics and print the balance summary
 godot --headless --path . -s tools/simulate_fights.gd -- --fights=200 --division=1 --rounds=6
+
+# Play whole careers for the player's boxer (an ambitious or casual manager)
+# and report how many months he takes to become a contender and champion.
+# About 4 s a month, so run several at once (one per core) with --seed.
+godot --headless --path . -s tools/trial_career.gd -- --careers=4 --division=0 --style=boxer --manager=ambitious --yearly
 
 # The IBC belt designs side by side (current and candidates)
 godot --path . scenes/debug/belt_sheet.tscn -- --capture=belts.png
