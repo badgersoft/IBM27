@@ -4,6 +4,17 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.45
+
+* To-do list: four new items (17 - 20: the fight offer reply's text size,
+  special punches, easier bottoms and harder tops to the divisions, fewer
+  repeated first names), and the list is now one table of open items,
+  quickest first, with the finished ones listed under it.
+* A check of 0.1.44 with `tools/trial_career.gd`: three ambitious
+  middleweight Boxers became contenders in months 63, 76 and 80 and all
+  three became champion (months 71, 88 and 101); before the change one of
+  three did (month 71).
+
 ## 0.1.44
 
 * Style balance: the Boxer style is no longer the weakest at the top. Like
