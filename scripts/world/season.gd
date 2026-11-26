@@ -381,12 +381,15 @@ func _retire(b: BoxerData, table: Rankings) -> void:
 	var was_champion := table.is_champion(b)
 	var names: Array[String] = []
 	var nicknames: Array[String] = []
+	var first_names: Array[String] = []
 	for t in _rankings:
 		for other in t.boxers:
 			names.append(other.last_name)
 			if not other.nickname.is_empty():
 				nicknames.append(other.nickname)
-	var fresh := _generator.generate_prospect(table.division as Divisions.Id, names, nicknames)
+			if t == table and other != b:
+				first_names.append(other.first_name)
+	var fresh := _generator.generate_prospect(table.division as Divisions.Id, names, nicknames, first_names)
 	_next_id += 1
 	fresh.id = _next_id
 	fresh.manager = _generator.generate_manager(fresh)

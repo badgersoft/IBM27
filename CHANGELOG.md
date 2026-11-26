@@ -4,6 +4,18 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.47
+
+* Names: every country has many more first names and surnames (24 - 56
+  each, was 6 - 15), and a boxer's first name is never one already used in
+  his division where his country's list allows (new prospects too). Over
+  five different worlds there are now 82 - 85 different first names among
+  the 90 boxers (was 69 - 74), no repeats inside a division (was 3 - 8) and
+  no name more than three times (was up to five). Well-known boxers'
+  surnames were left out so the mix can't make up a real champion's name,
+  and no full name is longer than before (22 letters). The world's boxers
+  have new names as a result. (TODO 20)
+
 ## 0.1.46
 
 * Arranging a fight: the reply to an offer (HE SAYS YES! / HE SAYS NO) is

@@ -7,7 +7,6 @@ Effort: **XS** under an hour, **S** a few hours, **M** about a day,
 
 | #  | Item | Effort | From | Notes |
 |----|------|--------|------|-------|
-| 20 | Fewer repeated first names | S | Requested | Each country has only 6 - 15 first names (China 12, for about one boxer in ten; the USA 15, for one in four), so the same names keep coming round ("too many Qiangs"). Give every country 25 - 40 first names (and more surnames), and have the generator avoid a first name already used in the same division where it can. Duplicates stay possible, just rarer. |
 | 10 | End of a career: retirement for the player's boxer, with a career summary | M | Left over | Today he never retires; skills fade from 32. A RETIRE option (and a forced one at 39) with his record, titles, earnings and best wins. |
 | 14 | Rivalries and hype | M | Idea | Beat a man (or lose to him) and a rivalry builds: press-conference trash talk, a bigger crowd and purse for the rematch, newspaper build-up, and the crowd booing the villain. |
 | 16 | Style balance below world class: Sluggers and Brawlers beat every careful style at skill 60 or lower | M | Found | Found with `tools/style_matrix.gd` in 0.1.44: at skill 60 a Slugger wins 88% of its fights and a Brawler 71%, a Boxer 44%, Counter and Evasive 24 - 28% (at skill 85 every style is 42 - 59%). Their toughness and power bonuses count for more when defence is poor. Matters early in a career, when the player's boxer (a Boxer by default) is at that level. Best done with 19. |
@@ -32,3 +31,4 @@ Effort: **XS** under an hour, **S** a few hours, **M** about a day,
 | 12 | Add the trial-career simulator to `tools/` | XS | 0.1.42 |
 | 6  | Style balance: the Boxer style was weakest at the top level | M | 0.1.44 |
 | 17 | Fight offer reply: both answers at full size, the details on their own lines | XS | 0.1.46 |
+| 20 | Fewer repeated first names (24 - 56 per country, none repeated in a division) | S | 0.1.47 |

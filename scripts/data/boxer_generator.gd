@@ -57,6 +57,9 @@ const MONSTER_STRENGTH: Array[Vector2i] = [Vector2i(74, 86), Vector2i(76, 88), V
 const SPECIAL_MIN_FIGHTS := 12
 ## Tries at a fresh surname before settling for a repeat.
 const NAME_ATTEMPTS := 40
+## Tries at a first name nobody else in the division has (from his own
+## country's list) before a repeat is allowed.
+const FIRST_NAME_ATTEMPTS := 12
 ## Share of managers from their boxer's own country.
 const HOME_MANAGER := 0.7
 ## A new career's boxer starts with this in every skill...
@@ -95,6 +98,7 @@ func generate_roster(count: int, division: Divisions.Id = Divisions.Id.MIDDLEWEI
 	var roster: Array[BoxerData] = []
 	var used_trunks: Array[int] = []
 	var used_names: Array[String] = avoid_names.duplicate()
+	var used_first: Array[String] = []
 
 	for i in count:
 		var boxer := generate_boxer(used_trunks, division)
@@ -103,8 +107,10 @@ func generate_roster(count: int, division: Divisions.Id = Divisions.Id.MIDDLEWEI
 		while used_names.has(boxer.last_name) and attempts < NAME_ATTEMPTS:
 			boxer = generate_boxer(used_trunks, division)
 			attempts += 1
+		_fresh_first_name(boxer, used_first)
 		used_trunks.append(boxer.trunks_index)
 		used_names.append(boxer.last_name)
+		used_first.append(boxer.first_name)
 		roster.append(boxer)
 
 	_assign_showboats(roster)
@@ -155,14 +161,16 @@ func generate_boxer(avoid_trunks: Array[int] = [], division: Divisions.Id = Divi
 
 ## A young prospect turning up to replace a retired boxer: 19 - 22, with
 ## no more than three fights (all wins), in [param division]. Surnames in
-## [param avoid_names] and nicknames in [param avoid_nicknames] are skipped.
+## [param avoid_names], first names in [param avoid_first] (his division's)
+## and nicknames in [param avoid_nicknames] are skipped where possible.
 func generate_prospect(division: Divisions.Id, avoid_names: Array[String],
-		avoid_nicknames: Array[String]) -> BoxerData:
+		avoid_nicknames: Array[String], avoid_first: Array[String] = []) -> BoxerData:
 	var b := generate_boxer([], division)
 	for attempt in NAME_ATTEMPTS:
 		if not avoid_names.has(b.last_name):
 			break
 		b = generate_boxer([], division)
+	_fresh_first_name(b, avoid_first)
 	b.age = _rng.randi_range(19, 22)
 	b.wins = _rng.randi_range(0, 3)
 	b.losses = 0
@@ -172,6 +180,16 @@ func generate_prospect(division: Divisions.Id, avoid_names: Array[String],
 	if _rng.randf() < PROSPECT_NICKNAME:
 		b.nickname = _pick_nickname(b, avoid_nicknames)
 	return b
+
+
+## Gives [param b] another first name from his country if his is already
+## in [param used], up to FIRST_NAME_ATTEMPTS tries (then a repeat stands).
+func _fresh_first_name(b: BoxerData, used: Array[String]) -> void:
+	var names: Array = _world["countries"][b.country_code]["first"]
+	for attempt in FIRST_NAME_ATTEMPTS:
+		if not used.has(b.first_name):
+			return
+		b.first_name = _pick(names)
 
 
 ## A new career's boxer: a random look (his own gloves and boots too), name
