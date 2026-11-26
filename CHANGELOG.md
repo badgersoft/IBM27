@@ -4,6 +4,17 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.50
+
+* Screenshots updated for the 0.1.49 style changes.
+* A check of 0.1.49 with `tools/trial_career.gd` (three ambitious
+  middleweight Boxers): all three became champion, in months 69, 104 and
+  147 (contender in months 50, 76 and 141). In 0.1.44 they took 71, 88 and
+  101 - but 0.1.47's new names also made a new world, so the two are not a
+  like-for-like comparison. One of the three had a much harder climb
+  (25-17-1); TODO 19 (easier at the bottom, harder at the top) is the next
+  step for the career's difficulty.
+
 ## 0.1.49
 
 * Style balance below world class. At skill 60 Sluggers won 88% of their
