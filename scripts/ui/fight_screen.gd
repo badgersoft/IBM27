@@ -94,6 +94,7 @@ var _big_landing := false        # A big punch's punch_landed is on its way.
 var _villain := -1
 var _big_this_step := false     # The screenshot tool waits for a big punch...
 var _one_two_this_step := false # ...or a one-two.
+var _special_this_step := false # ...or a special punch.
 
 
 func _ready() -> void:
@@ -104,6 +105,10 @@ func _ready() -> void:
 	var red := GameState.red
 	var blue := GameState.blue
 
+	if GameState.options.has("specials"):
+		# Screenshots: red throws the overhand right, blue the windmill.
+		red.special_punch = PunchTypes.Type.OVERHAND
+		blue.special_punch = PunchTypes.Type.WINDMILL
 	sim = FightSim.new(red, blue, GameState.fight_seed(), GameState.rounds)
 	if not GameState.exhibition:
 		var bad := Rivalries.villain(GameState.season, red, blue)
@@ -345,6 +350,7 @@ func _connect_sim() -> void:
 	sim.punch_landed.connect(_on_punch_landed)
 	sim.big_punch.connect(_on_big_punch)
 	sim.one_two_landed.connect(_on_one_two)
+	sim.special_landed.connect(_on_special)
 	sim.significant_strike.connect(func(_c: int) -> void: Sfx.excite(CHEER_SIGNIFICANT.x, CHEER_SIGNIFICANT.y))
 	sim.knocked_down.connect(_on_knocked_down)
 	sim.count_changed.connect(func(_c: int, n: int) -> void: _show_banner(str(n), 0.9, Palette.UI_TEXT))
@@ -424,6 +430,19 @@ func _on_one_two(corner: int) -> void:
 	view.arena.excitement = minf(view.arena.excitement + 0.4, 1.0)
 	Sfx.roar(0.6)
 	Sfx.excite(CHEER_ONE_TWO.x, CHEER_ONE_TWO.y)
+
+
+## A special punch landed: its name over the man who threw it, and the
+## crowd up on its feet (unless he is the villain: they boo).
+func _on_special(corner: int, type: int) -> void:
+	_special_this_step = true
+	var a: Fighter = sim.fighters[corner]
+	view.arena.callout(PunchTypes.SHORT[type] + "!", Vector2(a.x, ArenaRenderer.FIGHT_Y - a.height_px - 10.0))
+	view.arena.excitement = 1.0
+	if corner == _villain:
+		return
+	Sfx.roar(0.8)
+	Sfx.excite(CHEER_BIG.x, CHEER_BIG.y)
 
 
 func _on_knocked_down(corner: int) -> void:
@@ -700,6 +719,7 @@ func _run_capture() -> void:
 		while t < limit:
 			_big_this_step = false
 			_one_two_this_step = false
+			_special_this_step = false
 			sim.step(dt)
 			_sync_rigs()
 			for rig in view.rigs:
@@ -714,7 +734,7 @@ func _run_capture() -> void:
 		if show == "big":
 			for i in 14:
 				view.arena.advance(dt)      # Let the blood fly a little.
-		if show == "big" or show == "onetwo":
+		if show in ["big", "onetwo", "special"]:
 			view.arena.set_process(false)   # Hold the blood or call-out for the shot.
 		_refresh_hud()
 		_update_shout_bar()
@@ -750,6 +770,8 @@ func _is_capture_moment(show: String) -> bool:
 			return _big_this_step
 		"onetwo":
 			return _one_two_this_step
+		"special":
+			return _special_this_step
 		"taunt":
 			for f in sim.fighters:
 				if f.state == Fighter.State.TAUNT and f.state_time > 0.35:

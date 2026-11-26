@@ -76,6 +76,14 @@ const PLAYER_DIVISION_START: Array[Dictionary] = [
 ]
 ## Chance a new prospect already has a nickname.
 const PROSPECT_NICKNAME := 0.3
+## Special punches (PunchTypes.SPECIALS): in a full division OVERHANDS men
+## get the overhand right (the hardest punchers more likely) and WINDMILLS
+## the windmill (Showboats and Brawlers more likely); a prospect has one now
+## and then (PROSPECT_OVERHAND, PROSPECT_WINDMILL).
+const OVERHANDS := 3
+const WINDMILLS := 1
+const PROSPECT_OVERHAND := 0.08
+const PROSPECT_WINDMILL := 0.03
 ## A full division (SPREAD_FROM men or more) is spread out by ability: its
 ## best man is made about SPREAD_TOP overall and its worst about
 ## SPREAD_BOTTOM (give or take SPREAD_NOISE), keeping each man's strengths
@@ -130,8 +138,37 @@ func generate_roster(count: int, division: Divisions.Id = Divisions.Id.MIDDLEWEI
 	_assign_showboats(roster)
 	_spread(roster)
 	_assign_specials(roster)
+	_assign_special_punches(roster)
 	_assign_nicknames(roster, avoid_nicknames)
 	return roster
+
+
+## Gives a few men in a full division a special punch (OVERHANDS,
+## WINDMILLS), picked at random but weighted: the overhand by power, the
+## windmill towards Showboats and Brawlers.
+func _assign_special_punches(roster: Array[BoxerData]) -> void:
+	if roster.size() < SPREAD_FROM:
+		return
+	var plan: Array = [[PunchTypes.Type.OVERHAND, OVERHANDS], [PunchTypes.Type.WINDMILL, WINDMILLS]]
+	for item in plan:
+		for n in int(item[1]):
+			var weights: Array[float] = []
+			var total := 0.0
+			for b in roster:
+				var w := 0.0
+				if b.special_punch < 0:
+					if item[0] == PunchTypes.Type.OVERHAND:
+						w = pow(b.power / 60.0, 3.0)
+					else:
+						w = 3.0 if b.style in [BoxerData.Style.SHOWBOAT, BoxerData.Style.BRAWLER] else 1.0
+				weights.append(w)
+				total += w
+			var roll := _rng.randf() * total
+			for i in roster.size():
+				roll -= weights[i]
+				if roll <= 0.0 and weights[i] > 0.0:
+					roster[i].special_punch = item[0]
+					break
 
 
 ## Spreads a full division out by ability (see SPREAD_TOP): the man with
@@ -210,6 +247,11 @@ func generate_prospect(division: Divisions.Id, avoid_names: Array[String],
 		b = generate_boxer([], division)
 	_fresh_first_name(b, avoid_first)
 	_set_overall(b, PROSPECT_OVERALL + _rng.randf_range(-PROSPECT_NOISE, PROSPECT_NOISE))
+	var roll := _rng.randf()
+	if roll < PROSPECT_WINDMILL:
+		b.special_punch = PunchTypes.Type.WINDMILL
+	elif roll < PROSPECT_WINDMILL + PROSPECT_OVERHAND:
+		b.special_punch = PunchTypes.Type.OVERHAND
 	b.age = _rng.randi_range(19, 22)
 	b.wins = _rng.randi_range(0, 3)
 	b.losses = 0

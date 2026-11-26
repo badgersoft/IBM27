@@ -50,6 +50,11 @@ const SPONSOR_PURSE_SHARE: Array[float] = [0.5, 0.4, 0.25]
 const SPONSOR_SPREAD := 0.2
 const SPONSOR_GLOBAL_PLACES := 3
 const SPONSORS_PATH := "res://data/sponsors.json"
+## His trainer teaches him a special punch once his power reaches
+## SPECIAL_POWER and he has SPECIAL_KOS knockout wins: the windmill for a
+## Brawler or Showboat, the overhand right for anyone else.
+const SPECIAL_POWER := 65
+const SPECIAL_KOS := 3
 
 var boxer: BoxerData
 var money := START_MONEY
@@ -157,6 +162,16 @@ func end_month(season: Season) -> void:
 			_log("YOUR DEAL WITH %s HAS ENDED." % str(sponsor["name"]).to_upper())
 			sponsor = {}
 	_new_sponsor_offers(season)
+	_learn_special_punch()
+
+
+## The special punch (see SPECIAL_POWER), once he is ready for it.
+func _learn_special_punch() -> void:
+	if boxer.special_punch >= 0 or boxer.power < SPECIAL_POWER or boxer.kos < SPECIAL_KOS:
+		return
+	var wild := boxer.style in [BoxerData.Style.BRAWLER, BoxerData.Style.SHOWBOAT]
+	boxer.special_punch = PunchTypes.Type.WINDMILL if wild else PunchTypes.Type.OVERHAND
+	_log("YOUR TRAINER HAS TAUGHT YOU THE %s." % PunchTypes.NAMES[boxer.special_punch])
 
 
 func _pay_rent() -> void:

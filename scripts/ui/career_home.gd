@@ -139,6 +139,9 @@ func _build_header() -> void:
 	panel.add_child(UiTheme.place(UiTheme.label(nick, UiTheme.BODY, Palette.UI_GOLD), x, 80, DETAIL_X[0] - x - PAD, UiTheme.ROW_H))
 	var line := "%s  -  %s" % [b.division_name().to_upper(), b.style_name().to_upper()]
 	panel.add_child(UiTheme.place(UiTheme.label(line, UiTheme.BODY, Palette.UI_TEXT_DIM), x, 112, DETAIL_X[0] - x - PAD, UiTheme.ROW_H))
+	if b.special_punch >= 0:
+		var special := "SPECIAL: %s" % PunchTypes.SHORT[b.special_punch]
+		panel.add_child(UiTheme.place(UiTheme.label(special, UiTheme.BODY, Palette.UI_GOLD), x, 144, DETAIL_X[0] - x - PAD, UiTheme.ROW_H))
 	portrait.show_boxer(b)
 
 	var health := Facilities.condition_text(b.condition)

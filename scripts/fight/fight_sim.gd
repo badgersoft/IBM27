@@ -21,6 +21,8 @@ signal punch_landed(corner: int, type: int, damage: float, blocked: bool)
 ## before its punch_landed) - the crowd roars.
 signal big_punch(corner: int, type: int)
 signal one_two_landed(corner: int)
+## A special punch (PunchTypes.SPECIALS) from [param corner] landed clean.
+signal special_landed(corner: int, type: int)
 signal significant_strike(corner: int)
 signal punch_missed(corner: int, type: int)
 signal knocked_down(corner: int)
@@ -496,6 +498,7 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	if d.state == State.MOVE and d.move_dir < 0:
 		slip += 0.20
 	slip += STYLE_SLIP[d.data.style] + NOVICE_SLIP[d.data.style] * (1.0 - style_growth(d.data))
+	slip += PunchTypes.TELEGRAPH[type]   # Saw it coming.
 	if d.state in [State.PUNCH, State.TAUNT, State.CLINCH]:
 		slip = 0.0          # Caught square.
 	elif d.state in [State.HURT, State.ROPES]:
@@ -548,7 +551,7 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 		return
 
 	# A big one? Rare, but it does far more damage and can end things.
-	var big_chance := _big_punch_chance(a, d, caught_punching) + (ONE_TWO_BIG if two else 0.0)
+	var big_chance := _big_punch_chance(a, d, caught_punching) + (ONE_TWO_BIG if two else 0.0) + PunchTypes.BIG_BONUS[type]
 	if a.data.special != BoxerData.Special.NONE:
 		big_chance *= _monster(a, MONSTER_BIG)
 	var big := PunchTypes.is_power_punch(type) and rng.randf() < big_chance
@@ -578,6 +581,8 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 		d.stun += dmg * 12.0 * (1.5 - d.data.chin / 99.0) * PunchTypes.STUN[type] * _style_bonus(d.data, STYLE_TOUGHNESS)
 	d.combo.clear()
 	d.x -= d.facing * (1.0 + dmg * 2.5)
+	if PunchTypes.is_special(type):
+		special_landed.emit(a.corner, type)
 	if one:
 		a.one_two_window = ONE_TWO_WINDOW
 	elif two:

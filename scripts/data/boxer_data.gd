@@ -90,6 +90,9 @@ const STYLE_BLURBS: Array[String] = [
 
 @export var style: Style = Style.BOXER
 @export var special: Special = Special.NONE
+## His special punch (PunchTypes.Type.OVERHAND or WINDMILL), or -1 for none.
+## Only a few boxers have one.
+@export var special_punch: int = -1
 
 # --- Condition ---------------------------------------------------------------
 ## Health going into the fight (percent). Linked to fitness and pain tolerance.
@@ -126,6 +129,14 @@ func style_name() -> String:
 
 func style_short() -> String:
 	return STYLE_SHORT[style]
+
+
+## "SLUGGER", or "SLUGGER + OVERHAND" if he has a special punch.
+func style_line() -> String:
+	var line := style_name().to_upper()
+	if special_punch >= 0:
+		line += " + " + PunchTypes.SHORT[special_punch]
+	return line
 
 
 ## "22-3-1"  (wins - losses - draws, the usual boxing order).

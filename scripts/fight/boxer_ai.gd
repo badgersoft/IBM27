@@ -81,6 +81,14 @@ const ONE_TWO_LEAD := 0.22
 const ONE_TWO_STYLE: Array[float] = [0.00, 0.00, 0.10, 0.06, 0.04, 0.04]
 const ONE_TWO_COUNTER := 0.60
 
+## A boxer with a special punch (BoxerData.special_punch) throws it instead
+## of a standard one SPECIAL_CHANCE of the time it is in range (by punch:
+## OVERHAND, WINDMILL), more when the other man is hurt (SPECIAL_HURT) or
+## when told to knock him out (SPECIAL_KO), less when tired.
+const SPECIAL_CHANCE: Array[float] = [0.10, 0.07]
+const SPECIAL_HURT := 0.25
+const SPECIAL_KO := 0.10
+
 ## Hit and move: after a punch a Boxer or an Evasive boxer moves back to
 ## at least HIT_AND_MOVE_RANGE body heights for HIT_AND_MOVE_SECONDS. A
 ## Boxer stays at the end of his own punches (a jab reaches about 0.56, a
@@ -162,6 +170,7 @@ func think(me: Fighter, opp: Fighter, round_number: int, dt: float) -> void:
 		if me.advice == Advice.DEFEND_MORE:
 			react += 0.10
 		react += SHOUT_EFFECTS[me.shout][2]
+		react += PunchTypes.TELEGRAPH[opp.punch_type]   # He saw that one coming.
 		if me.data.style == Style.SHOWBOAT:
 			react += 0.10   # Quick reactions.
 		if rng.randf() < react:
@@ -196,6 +205,10 @@ func think(me: Fighter, opp: Fighter, round_number: int, dt: float) -> void:
 				me.start_punch(P.JAB)
 				me.combo.assign([P.CROSS])
 				me.one_two = true
+				_hit_and_move(me)
+				return
+			if _wants_special(me, opp):
+				me.start_punch(me.data.special_punch)
 				_hit_and_move(me)
 				return
 			var type := _choose_punch(me, options)
@@ -438,6 +451,19 @@ func _choose_punch(me: Fighter, options: Array[int]) -> int:
 		if roll <= 0.0:
 			return type
 	return options[-1]
+
+
+## Whether [param me] throws his special punch now (see SPECIAL_CHANCE).
+func _wants_special(me: Fighter, opp: Fighter) -> bool:
+	var special := me.data.special_punch
+	if special < 0 or not _in_range(me, opp, special, 1.0):
+		return false
+	var chance: float = SPECIAL_CHANCE[special - PunchTypes.COUNT]
+	chance += opp.hurt_level() * SPECIAL_HURT
+	if me.shout == Fighter.Shout.KNOCKOUT:
+		chance += SPECIAL_KO
+	chance *= 1.0 - me.fatigue() * 0.5
+	return rng.randf() < chance
 
 
 ## How likely [param me] is to open with a one-two right now.

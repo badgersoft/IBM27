@@ -9,7 +9,7 @@ extends Control
 
 const COLUMNS := 7
 const CELL := Vector2(88, 120)
-const SHEET_SIZE := Vector2i(616, 600)   # 7 x 88 wide, 5 x 120 tall.
+const SHEET_SIZE := Vector2i(616, 720)   # 7 x 88 wide, 6 x 120 tall.
 ## Labels under the bottom row read "height cm / weight lb".
 const SCALE := 2
 const FONT := preload("res://assets/fonts/PressStart2P.woff2")
@@ -28,9 +28,11 @@ const POSES := [
 	["KNEE", "to_knee", 0], ["FLOORED", "knockdown", -1], ["TAUNT 1", "taunt_skip", 0],
 	["TAUNT 2", "taunt_one", 0], ["VICTORY", "victory", 0], ["DEJECTED", "dejected", 0],
 	["POINT", "taunt_point", 1], ["CHIN OUT", "taunt_chin", 1], ["ARMS UP", "taunt_arms", 1],
+	["OVERHAND 1", "overhand", 0], ["OVERHAND 2", "overhand", 1], ["WINDMILL 1", "windmill", 0],
+	["WINDMILL 2", "windmill", 1], ["WINDMILL 3", "windmill", 2],
 ]
 ## Rows of poses above the body row.
-const POSE_ROWS := 4
+const POSE_ROWS := 5
 
 var _viewport: SubViewport
 

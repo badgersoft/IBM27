@@ -70,7 +70,7 @@ func setup(red: BoxerData, blue: BoxerData, venue_id: int, rounds: int, title_fi
 		_head_to_head(red, blue),
 		["HEIGHT", _height(red), _height(blue)],
 		["WEIGHT", "%d LB" % red.weight_lb, "%d LB" % blue.weight_lb],
-		["STYLE", red.style_name().to_upper(), blue.style_name().to_upper()],
+		["STYLE", red.style_line(), blue.style_line()],
 	]
 	var skills := ["power", "speed", "stamina", "chin", "strength", "intelligence"]
 	for s in skills:

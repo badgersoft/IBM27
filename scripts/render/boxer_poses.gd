@@ -73,6 +73,23 @@ const POSE_DEFS := {
 	"body_wind":    {"hip": Vector2(0.00, 0.420), "lean": 16.0, "rear_hand": Vector2(0.07, 0.02)},
 	"body_hit":     {"hip": Vector2(0.04, 0.395), "lean": 28.0, "head": 6.0, "twist": 0.8,
 					 "rear_hand": Vector2(0.38, -0.10), "lead_hand": Vector2(0.09, 0.16)},
+	# Special punches (only a few boxers have one: BoxerData.special_punch).
+	# The overhand right: the rear glove cocked high by the ear, then looping
+	# over the top and down onto the head, elbow up.
+	"overhand_wind": {"hip": Vector2(-0.02, 0.440), "lean": -2.0, "head": 6.0, "twist": 0.1,
+					 "rear_hand": Vector2(-0.02, 0.25), "rear_bend": -1.0, "lead_hand": Vector2(0.14, 0.14)},
+	"overhand_hit": {"hip": Vector2(0.06, 0.440), "lean": 26.0, "head": 10.0, "twist": 1.0,
+					 "rear_hand": Vector2(0.40, 0.10), "rear_bend": -1.0, "lead_hand": Vector2(0.06, 0.12),
+					 "rear_foot": Vector2(-0.07, 0.060)},
+	# The windmill: the rear arm swung right round - down and back, up over
+	# the head, then crashing in.
+	"windmill_low": {"hip": Vector2(-0.03, 0.450), "lean": -6.0, "head": -4.0,
+					 "rear_hand": Vector2(-0.20, -0.18), "lead_hand": Vector2(0.12, 0.06)},
+	"windmill_up":  {"hip": Vector2(-0.02, 0.460), "lean": -10.0, "head": -8.0, "twist": 0.2,
+					 "rear_hand": Vector2(-0.06, 0.33), "rear_bend": -1.0, "lead_hand": Vector2(0.10, 0.02)},
+	"windmill_hit": {"hip": Vector2(0.07, 0.440), "lean": 30.0, "head": 10.0, "twist": 1.0,
+					 "rear_hand": Vector2(0.41, 0.08), "rear_bend": -1.0, "lead_hand": Vector2(0.04, 0.04),
+					 "rear_foot": Vector2(-0.06, 0.065)},
 
 	# --- Taking punches ---------------------------------------------------------
 	"hurt":         {"hip": Vector2(-0.03, 0.455), "lean": -14.0, "head": -24.0,
@@ -142,6 +159,8 @@ const ANIMS := {
 	"hook":         {"loop": false, "impact": 1, "hand": "lead", "steps": [["hook_wind", 0.10], ["hook_hit", 0.10], ["hook_hit", 0.06], ["stance", 0.20]]},
 	"uppercut":     {"loop": false, "impact": 1, "hand": "rear", "steps": [["upper_wind", 0.12], ["upper_hit", 0.10], ["upper_hit", 0.07], ["stance", 0.20]]},
 	"body":         {"loop": false, "impact": 1, "hand": "rear", "steps": [["body_wind", 0.10], ["body_hit", 0.10], ["body_hit", 0.06], ["stance", 0.18]]},
+	"overhand":     {"loop": false, "impact": 1, "hand": "rear", "steps": [["overhand_wind", 0.17], ["overhand_hit", 0.11], ["overhand_hit", 0.07], ["stance", 0.24]]},
+	"windmill":     {"loop": false, "impact": 2, "hand": "rear", "steps": [["windmill_low", 0.14], ["windmill_up", 0.15], ["windmill_hit", 0.11], ["windmill_hit", 0.07], ["stance", 0.28]]},
 
 	# Reactions -----------------------------------------------------------------------
 	"hurt":         {"loop": false, "steps": [["hurt", 0.07], ["hurt", 0.12], ["stance", 0.18]]},

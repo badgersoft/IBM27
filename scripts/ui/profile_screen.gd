@@ -225,7 +225,6 @@ func _build_portrait(b: BoxerData) -> void:
 
 func _build_details(b: BoxerData) -> void:
 	var panel := _panel(DETAILS, "DETAILS")
-	var fights := b.total_fights()
 	var ko_share := roundi(100.0 * b.kos / maxf(b.wins, 1.0))
 	_detail(panel, PAD, DETAIL_ROW_Y, FROM_LABEL_W, DETAILS.size.x - PAD * 2 - FROM_LABEL_W,
 			"FROM", "%s, %s" % [b.city.to_upper(), b.country_code])
@@ -233,7 +232,7 @@ func _build_details(b: BoxerData) -> void:
 		[["AGE", str(b.age)],
 		 ["HEIGHT", "%s  (%d CM)" % [b.height_imperial(), b.height_cm]],
 		 ["WEIGHT", "%d LB" % b.weight_lb],
-		 ["FIGHTS", str(fights)]],
+		 ["SPECIAL", PunchTypes.NAMES[b.special_punch] if b.special_punch >= 0 else "-"]],
 		[["STYLE", b.style_name().to_upper()],
 		 ["RECORD", b.record()],
 		 ["KNOCKOUTS", "%d  (%d%%)" % [b.kos, ko_share]],

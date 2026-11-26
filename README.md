@@ -106,6 +106,29 @@ preset under *Project > Export*.
 
   ![A one-two](docs/screenshots/one_two.png)
 
+* Every boxer has the same five punches - jab, cross, hook, uppercut and
+  body shot - and a few have one **special punch** as well (at most one
+  each; three or four men in a division, a few new prospects too):
+
+  | Special        | What it is                                       | Next to a cross                                                   |
+  |----------------|--------------------------------------------------|-------------------------------------------------------------------|
+  | OVERHAND RIGHT | The rear glove looped over the top of the guard  | Harder (1.6x the damage), harder to block; slower, more tiring     |
+  | WINDMILL       | The rear arm swung right round, a wild haymaker  | The hardest punch in the game; slow, very tiring, easy to see coming |
+
+  Both are likelier than any other punch to land big. He throws it now and
+  then from range, more when the other man is hurt or his corner shouts
+  KNOCK HIM OUT, and a landed one shows "OVERHAND!" or "WINDMILL!" over him.
+  The overhand mostly goes to the hard punchers, the windmill to showboats
+  and brawlers. All else equal a special is worth a little (a man with one
+  wins 51 - 59% of the time against his double without), the windmill
+  more by knockout. The player's boxer is taught one by his trainer once his
+  power reaches 65 and he has three knockout wins: the windmill for a
+  Brawler or Showboat, the overhand right for anyone else. It shows on his
+  profile (SPECIAL), on the tale of the tape (SLUGGER + OVERHAND) and on
+  the career page.
+
+  ![A special punch](docs/screenshots/special_punch.png)
+
 * Now and then a **big punch** lands: far more damage, twice the chance of a
   knockdown, blood spraying off where it lands (it leaves spots on the
   canvas for the rest of the fight), a heavy thud and the crowd roaring in
@@ -771,7 +794,9 @@ Guard (gloves up), ready stance (arms at the stomach), relaxed stance, victory,
 move forward, move back, jab, cross, uppercut, hook, body shot, drop to a knee,
 knocked down (then up to a knee and back to the feet), bouncing off the ropes,
 taunt with hands in the air while skipping, taunt with one hand raised, and
-the showboat's point, chin out and arms up. There
+the showboat's point, chin out and arms up, and the special punches (the
+overhand right's wind-up and landing, the windmill's swing down, up and
+over). There
 are also two hit reactions (head and body), a clinch and a dejected loser.
 
 ---
@@ -821,8 +846,9 @@ Command-line options read by the game (after `--`):
 | `--venue=<0-3>`            | 0 Small Town Gym, 1 City Gym, 2 Boxing Hall, 3 Grand Arena                                                                                                                                             |
 | `--rounds=<n>`             | Fight length: 3, 6, 10 or 12 rounds (normally set by the level)                                                                                                                                        |
 | `--capture=<png>`          | Fast-forward, save a screenshot and quit                                                                                                                                                               |
-| `--show=<moment>`          | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch), `onetwo` (a one-two), `taunt` (showing off), `break`, `count`, `announce`, `result`, `stats`, `pause`, `orders` (the orders between rounds, with `--manage`), `fixtures`, `paper`, `career_menu`, `p4p`, `exhibition`, `new_boxer`, `career`, `facilities`, `schedule` |
+| `--show=<moment>`          | What to capture: `menu`, `roster`, `profile`, `intro`, `fight`, `big` (a big punch), `onetwo` (a one-two), `special` (a special punch, with `--specials`), `taunt` (showing off), `break`, `count`, `announce`, `result`, `stats`, `pause`, `orders` (the orders between rounds, with `--manage`), `fixtures`, `paper`, `career_menu`, `p4p`, `exhibition`, `new_boxer`, `career`, `facilities`, `schedule` |
 | `--open=<n>`               | With `p4p.tscn` and `--show=profile`, open the profile of pound-for-pound row n (0 = the best)                                                                                                         |
+| `--specials`               | A fight scene: red has the overhand right, blue the windmill                                                                                                                                            |
 | `--offer`                  | With `--show=schedule`, open the purse offer for the first opponent                                                                                                                                   |
 | `--manage=<0\|1>`          | A fight scene: the player is in the red (0) or blue (1) corner - orders between rounds, shouts during them                                                                                            |
 | `--train=<0-4>`            | Career screens: the boxer trains that session this week (4 = RECOVERY)                                                                                                                                 |

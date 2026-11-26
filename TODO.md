@@ -12,7 +12,6 @@ earlier builds use the old numbers.
 |----|------|--------|------|-------|
 | 1  | End of a career: retirement for the player's boxer, with a career summary | M | Left over | Today he never retires; skills fade from 32. A RETIRE option (and a forced one at 39) with his record, titles, earnings and best wins. |
 | 2  | Moving between divisions | L | Idea | Move up or down a weight class mid-career: a weight cut that drains stamina, or carrying power up against bigger men. Titles in two divisions are a legacy goal. Mostly builds on what is there (rankings, purses, the schedule). |
-| 3  | Special punches: an overhand right or a windmill for a few boxers | L | Requested | Today every boxer has the same five punches: jab, cross, hook, uppercut and body shot (the uppercut is already in). Add one or two special punches (an overhand right, a windmill haymaker) that only a few boxers have, at most one each: new poses and animation, its damage, reach and risk (slow, easy to see coming, big if it lands), when the AI throws it, and showing it on his profile and the tale of the tape. Could be a perk the player's boxer earns or picks. |
 | 4  | Cuts and injuries | L | Idea | Cuts that open and bleed during a fight, a cutman between rounds, and a doctor who can stop it (a TKO). Bad nights can leave an injury that keeps him out for weeks or months, so a hard fight has a real cost. |
 | 5  | Technical decisions and no-contests (fights stopped early by cuts or clashes of heads) | L | Left over | Needs cuts first (4). |
 
@@ -35,3 +34,4 @@ earlier builds use the old numbers.
 | Rivalries and hype: grudge matches, bigger purses and venues, build-up, trash talk, boos | M | 0.1.48 |
 | Style balance below world class: every style 44 - 58% at skill 45 and 60 | M | 0.1.49 |
 | Rebalance the divisions: easier at the bottom, harder at the top | M | 0.1.51 |
+| Special punches: the overhand right and the windmill, for a few boxers | L | 0.1.53 |

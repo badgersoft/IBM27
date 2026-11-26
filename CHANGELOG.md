@@ -4,6 +4,27 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.53
+
+* Special punches (TODO 3): the OVERHAND RIGHT (looped over the top of the
+  guard) and the WINDMILL (a wild, swinging haymaker), each with its own
+  animation. Three or four men in each division have one (at most one
+  each: the overhand mostly the hard punchers, the windmill showboats and
+  brawlers), and now and then a new prospect. Both hit hard and are likely
+  to land big, but are slow and tiring, and the other man sees them coming
+  (he reacts to them and slips them more often). A boxer throws his now
+  and then from range, more when the other man is hurt or on KNOCK HIM
+  OUT; a landed one shows "OVERHAND!" or "WINDMILL!" over him and lifts
+  the crowd. Against his double without one, a man with a special wins 51 -
+  59% of the time. The player's boxer learns one from his trainer once his
+  power reaches 65 with three knockout wins (the windmill for a Brawler or
+  Showboat, the overhand for anyone else). Shown on the profile (SPECIAL,
+  in place of FIGHTS, which the record already gives), on the tale of the
+  tape (SLUGGER + OVERHAND) and on the career page. The pose sheet has a
+  new row for them.
+* `--show=special` (with `--specials`: red has the overhand, blue the
+  windmill) captures a special punch landing.
+
 ## 0.1.52
 
 * To-do list renumbered: the five open items are now 1 - 5, easiest first
