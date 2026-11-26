@@ -210,6 +210,16 @@ Nobody can win by hiding: a boxer who has not thrown for a couple of seconds
 edges closer, so two cautious styles (a counter-puncher and an evasive boxer,
 say) still end up exchanging.
 
+A style grows into its full character as the boxer improves. Below world
+class (an overall rating of 85) every style is a little more like the
+others - keener to throw, at a more ordinary distance, with a more ordinary
+mix of punches - the Brawler's toughness and the Slugger's power count for
+less, and the Counter and Evasive styles slip a few more punches (their
+footwork keeps them out of trouble before they have the ring sense to
+defend well). So no style runs away with it at any level: in
+`tools/style_matrix.gd` every style wins 42 - 58% of its fights at skill 85,
+60 and 45 alike.
+
 As a boxer is hurt (low health or rocked by a head shot) he throws less, covers
 up and backs off. When he is badly hurt and close, he holds on in a clinch.
 Clever boxers do this sooner; reckless ones keep swinging. Punches do more

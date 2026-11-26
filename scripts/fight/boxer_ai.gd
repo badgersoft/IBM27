@@ -22,6 +22,17 @@ const P := PunchTypes.Type
 
 ## How keen each style is to attack (0 - 1). Order matches BoxerData.Style.
 const BASE_AGGRESSION: Array[float] = [0.62, 0.72, 0.52, 0.34, 0.30, 0.50]
+## Novices all brawl a little: below world class every style's keenness (and
+## favourite distance and punch mix) is drawn towards AGGRESSION_MEAN - by
+## NOVICE_PULL for a boxer rated 50 or less, not at all for a world-class
+## one (FightSim.style_growth) - so the careful styles, whose defence needs
+## ring sense they don't have yet, still throw enough.
+const AGGRESSION_MEAN := 0.50
+const NOVICE_PULL := 0.6
+## The same pull on each style's favourite distance (towards RANGE_MEAN)
+## and punch mix (towards MIX_MEAN: JAB, CROSS, HOOK, UPPERCUT, BODY).
+const RANGE_MEAN := 0.55
+const MIX_MEAN: Array[float] = [0.32, 0.29, 0.18, 0.10, 0.11]
 
 ## Favourite distance from the opponent, in body heights.
 const PREFERRED_RANGE: Array[float] = [0.48, 0.40, 0.60, 0.62, 0.68, 0.56]
@@ -261,10 +272,15 @@ func _think_interval(me: Fighter) -> float:
 	return lerpf(0.36, 0.15, me.skill("speed") / 99.0) * rng.randf_range(0.8, 1.25)
 
 
+## How much of his style's full character he shows (see NOVICE_PULL).
+static func _grown(me: Fighter) -> float:
+	return FightSim.style_growth(me.data)
+
+
 ## How keen the boxer is to throw right now (0 - 1).
 func _aggression(me: Fighter, opp: Fighter, round_number: int) -> float:
 	var intel := me.skill("intelligence") / 99.0
-	var a: float = BASE_AGGRESSION[me.data.style]
+	var a: float = lerpf(BASE_AGGRESSION[me.data.style], AGGRESSION_MEAN, NOVICE_PULL * (1.0 - _grown(me)))
 	if me.data.special != BoxerData.Special.NONE:
 		# Comes forward, looking for the knockout (less so in the lighter
 		# divisions: FightSim.MONSTER_DIVISION).
@@ -295,7 +311,7 @@ func _hit_and_move(me: Fighter) -> void:
 
 
 func _preferred_distance(me: Fighter, round_number: int) -> float:
-	var d: float = PREFERRED_RANGE[me.data.style]
+	var d: float = lerpf(PREFERRED_RANGE[me.data.style], RANGE_MEAN, NOVICE_PULL * (1.0 - _grown(me)))
 	if me.data.style == Style.EVASIVE and round_number >= rounds:
 		d = 0.52
 	if me.reset_timer > 0.0:
@@ -406,6 +422,9 @@ func _punches_in_range(me: Fighter, opp: Fighter) -> Array[int]:
 
 func _choose_punch(me: Fighter, options: Array[int]) -> int:
 	var weights: Array = (PUNCH_WEIGHTS[me.data.style] as Array).duplicate()
+	var pull := NOVICE_PULL * (1.0 - _grown(me))
+	for type in weights.size():
+		weights[type] = lerpf(weights[type], MIX_MEAN[type], pull)
 	if me.shout == Fighter.Shout.KNOCKOUT:
 		for type in PunchTypes.COUNT:
 			if PunchTypes.is_power_punch(type):

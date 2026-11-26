@@ -50,6 +50,10 @@ const MIN_GAP := 0.34                 ## Closest the boxers' centres get, in bod
 ## shot, and a little extra on their own power punches.
 ## Order matches BoxerData.Style: Brawler, Slugger, Boxer, Counter, Evasive,
 ## Showboat.
+## The toughness and power bonuses count in full for a world-class boxer and
+## less lower down (STYLE_BONUS_FROM / STYLE_BONUS_FULL, by his overall
+## rating; see _style_bonus): when nobody defends well, being hard to hurt
+## and hitting harder would make the Brawler and Slugger unbeatable.
 const STYLE_TOUGHNESS: Array[float] = [0.82, 0.85, 1.00, 1.00, 1.00, 1.00]
 const STYLE_POWER:     Array[float] = [1.08, 1.12, 1.00, 1.00, 1.00, 1.00]
 ## A Boxer's own strengths: a snapping jab (damage, and so points, x
@@ -57,9 +61,16 @@ const STYLE_POWER:     Array[float] = [1.08, 1.12, 1.00, 1.00, 1.00, 1.00]
 ## a Showboat's quick reactions too).
 const STYLE_JAB:       Array[float] = [1.00, 1.00, 1.15, 1.00, 1.00, 1.00]
 const STYLE_SLIP:      Array[float] = [0.00, 0.00, 0.04, 0.00, 0.00, 0.08]
+## Below world class the Counter and Evasive styles, whose game is not
+## getting hit, slip more (this much more for a novice, fading to nothing at
+## STYLE_BONUS_FULL): their footwork keeps them out of trouble before they
+## have the ring sense to defend well.
+const NOVICE_SLIP:     Array[float] = [0.00, 0.00, 0.00, 0.06, 0.08, 0.00]
 ## Punches land harder as a fight wears on: this much extra by the last round
 ## (spread evenly over the rounds, however many there are).
 const LATE_ROUND_DAMAGE := 0.12
+const STYLE_BONUS_FROM := 50.0
+const STYLE_BONUS_FULL := 85.0
 ## Share of lost health a boxer recovers in the corner (by his recovery stat).
 const CORNER_HEAL_MIN := 0.12
 const CORNER_HEAL_MAX := 0.28
@@ -447,6 +458,19 @@ func _keep_apart() -> void:
 #  Punches
 # ============================================================================
 
+## 0 for a boxer rated STYLE_BONUS_FROM overall or less, 1 from
+## STYLE_BONUS_FULL (world class): how far his style has grown into its
+## full character (its bonuses here, and its ways in BoxerAI).
+static func style_growth(b: BoxerData) -> float:
+	return clampf((b.overall() - STYLE_BONUS_FROM) / (STYLE_BONUS_FULL - STYLE_BONUS_FROM), 0.0, 1.0)
+
+
+## [param b]'s value in a STYLE_TOUGHNESS / STYLE_POWER table, eased towards
+## 1 (no bonus) the further his overall rating is below STYLE_BONUS_FULL.
+static func _style_bonus(b: BoxerData, table: Array[float]) -> float:
+	return lerpf(1.0, table[b.style], style_growth(b))
+
+
 func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	a.punch_resolved = true
 	var type := a.punch_type
@@ -471,7 +495,7 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	slip -= d.hurt_level() * 0.10
 	if d.state == State.MOVE and d.move_dir < 0:
 		slip += 0.20
-	slip += STYLE_SLIP[d.data.style]
+	slip += STYLE_SLIP[d.data.style] + NOVICE_SLIP[d.data.style] * (1.0 - style_growth(d.data))
 	if d.state in [State.PUNCH, State.TAUNT, State.CLINCH]:
 		slip = 0.0          # Caught square.
 	elif d.state in [State.HURT, State.ROPES]:
@@ -491,7 +515,7 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	if a.data.special != BoxerData.Special.NONE:
 		dmg *= _monster(a, MONSTER_DAMAGE)
 	if PunchTypes.is_power_punch(type):
-		dmg *= STYLE_POWER[a.data.style]
+		dmg *= _style_bonus(a.data, STYLE_POWER)
 	elif type == PunchTypes.Type.JAB:
 		dmg *= STYLE_JAB[a.data.style]
 	var caught_punching := d.state == State.PUNCH and not d.punch_resolved
@@ -547,11 +571,11 @@ func _resolve_punch(a: Fighter, d: Fighter) -> void:
 	a.add_stat("score", PunchTypes.SCORE[type] * (0.6 + dmg))
 	if PunchTypes.is_power_punch(type):
 		a.add_stat("power_landed", 1)
-	var toughness := (1.4 - d.data.strength / 99.0) * STYLE_TOUGHNESS[d.data.style]
+	var toughness := (1.4 - d.data.strength / 99.0) * _style_bonus(d.data, STYLE_TOUGHNESS)
 	d.wear = minf(d.wear + dmg * 0.010 * toughness, 1.0)
 	d.spend_energy(dmg * (2.5 if not to_head else 0.8) * toughness)
 	if to_head:
-		d.stun += dmg * 12.0 * (1.5 - d.data.chin / 99.0) * PunchTypes.STUN[type] * STYLE_TOUGHNESS[d.data.style]
+		d.stun += dmg * 12.0 * (1.5 - d.data.chin / 99.0) * PunchTypes.STUN[type] * _style_bonus(d.data, STYLE_TOUGHNESS)
 	d.combo.clear()
 	d.x -= d.facing * (1.0 + dmg * 2.5)
 	if one:

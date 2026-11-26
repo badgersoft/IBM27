@@ -4,6 +4,22 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.49
+
+* Style balance below world class. At skill 60 Sluggers won 88% of their
+  fights and Brawlers 71%, while Counter and Evasive boxers won 24 - 28%:
+  the careful styles' defence needs ring sense a novice hasn't got, and
+  the Brawler's toughness and Slugger's power bonuses made trading pay.
+  Now a style grows into its full character with the boxer's overall
+  rating (in full from 85, world class; FightSim.style_growth): below that
+  every style is a little nearer the others in how keen it is to throw,
+  its favourite distance and its punch mix (BoxerAI.NOVICE_PULL), the
+  toughness and power bonuses count for less, and Counter and Evasive
+  boxers slip more punches (FightSim.NOVICE_SLIP, fading out by world
+  class). In `tools/style_matrix.gd` every style now wins 44 - 58% of its
+  fights at skill 60 and 44 - 56% at skill 45; world class is unchanged
+  (42 - 57%). (TODO 16)
+
 ## 0.1.48
 
 * Rivalries and hype (`scripts/world/rivalries.gd`). Two men who have
