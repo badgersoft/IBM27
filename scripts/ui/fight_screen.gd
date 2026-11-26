@@ -90,6 +90,8 @@ var _card_clock := 0.0
 var _result_clock := -1.0
 var _capturing := false
 var _big_landing := false        # A big punch's punch_landed is on its way.
+## In a grudge match (Rivalries), the corner the crowd boos (-1 if none).
+var _villain := -1
 var _big_this_step := false     # The screenshot tool waits for a big punch...
 var _one_two_this_step := false # ...or a one-two.
 
@@ -103,6 +105,9 @@ func _ready() -> void:
 	var blue := GameState.blue
 
 	sim = FightSim.new(red, blue, GameState.fight_seed(), GameState.rounds)
+	if not GameState.exhibition:
+		var bad := Rivalries.villain(GameState.season, red, blue)
+		_villain = -1 if bad == null else (0 if bad == red else 1)
 	sim.title_fight = GameState.title_fight
 	_human = _players_corner(red, blue)
 	sim.human_corner = _human
@@ -363,6 +368,15 @@ func _begin_fight() -> void:
 func _on_round_started(r: int) -> void:
 	view.arena.hide_corner_advice()
 	_show_banner("ROUND %d" % r, 1.6)
+	if r == 1 and _villain >= 0:
+		_boo()   # The villain walks out.
+
+
+## The crowd boos the villain, and says so over his head.
+func _boo() -> void:
+	var v: Fighter = sim.fighters[_villain]
+	view.arena.callout("BOOO!", Vector2(v.x, ArenaRenderer.FIGHT_Y - v.height_px - 10.0))
+	Sfx.boo()
 
 
 func _on_round_ended(r: int) -> void:
@@ -393,6 +407,10 @@ func _on_big_punch(corner: int, type: int) -> void:
 	var at := Vector2(d.x + d.facing * d.height_px * 0.10, ArenaRenderer.FIGHT_Y - d.height_px * height_share)
 	view.arena.blood_splatter(at.round(), -d.facing)
 	view.arena.excitement = 1.0
+	if corner == _villain:
+		Sfx.punch(1.0)
+		_boo()
+		return
 	Sfx.big_hit()
 	Sfx.excite(CHEER_BIG.x, CHEER_BIG.y)
 
@@ -408,9 +426,12 @@ func _on_one_two(corner: int) -> void:
 	Sfx.excite(CHEER_ONE_TWO.x, CHEER_ONE_TWO.y)
 
 
-func _on_knocked_down(_corner: int) -> void:
+func _on_knocked_down(corner: int) -> void:
 	_show_banner("DOWN!", 1.0, Palette.UI_RED)
 	view.arena.excitement = 1.0
+	if _villain >= 0 and corner != _villain:
+		_boo()   # The villain put him down.
+		return
 	Sfx.roar(1.0)
 	Sfx.excite(CHEER_KNOCKDOWN.x, CHEER_KNOCKDOWN.y)
 

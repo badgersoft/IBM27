@@ -221,6 +221,12 @@ func has_vacant_title_fight(division: int) -> bool:
 
 
 func add_fixture(f: Fixture) -> void:
+	# A grudge match (Rivalries) is hyped: a bigger venue and, unless the
+	# player arranged it (his offer already allowed for it), a bigger purse.
+	if Rivalries.is_rivalry(self, f.red, f.blue):
+		f.venue = mini(f.venue + 1, Venues.Id.GRAND_ARENA)
+		if player == null or not f.involves(player):
+			f.purse = roundi(f.purse * Rivalries.purse_factor(self, f.red, f.blue))
 	# Kept in order of month, then title fights first, then heaviest
 	# division first and the best-ranked fights first within it.
 	fixtures.append(f)

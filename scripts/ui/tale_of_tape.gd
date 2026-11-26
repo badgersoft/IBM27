@@ -6,7 +6,9 @@ extends Control
 ##
 ## Classic layout: red corner values right-aligned against the centre labels,
 ## blue corner values left-aligned, so the eye can run straight across a row.
-## For each skill the better number is shown in gold.
+## For each skill the better number is shown in gold. A grudge match
+## (Rivalries) says so in gold over the table and has a TRASH TALK row: what
+## each man said at the press conference.
 
 signal dismissed
 signal back_pressed
@@ -17,6 +19,8 @@ const PAD := 16
 const VALUE_W := 384
 const LABEL_W := 240
 const TABLE_Y := 64
+## A grudge match's extra row: the table starts this much higher.
+const GRUDGE_LIFT := 8
 ## BACK (top left) and FIGHT! (top right), either side of the title.
 const BUTTON_SIZE := Vector2(160, 40)
 
@@ -35,11 +39,14 @@ func setup(red: BoxerData, blue: BoxerData, venue_id: int, rounds: int, title_fi
 	if title_fight:
 		billing = "%s %s TITLE" % [Rankings.TITLE_NAME, red.division_name().to_upper()]
 	var bill := "%d ROUNDS  -  %s  -  %s" % [rounds, billing, Venues.venue_name(venue_id).to_upper()]
+	var grudge := purse > 0 and Rivalries.is_rivalry(GameState.season, red, blue)
 	if purse > 0:
 		bill += "  -  PURSE %s" % Purse.money_text(purse)
 	else:
 		bill = "%d ROUNDS  -  EXHIBITION  -  %s" % [rounds, Venues.venue_name(venue_id).to_upper()]
-	add_child(UiTheme.place(UiTheme.label(bill, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), 0, 44, W, UiTheme.CAPTION))
+	if grudge:
+		bill = "GRUDGE MATCH  -  " + bill
+	add_child(UiTheme.place(UiTheme.label(bill, UiTheme.CAPTION, Palette.UI_GOLD if grudge else Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER), 0, 40 if grudge else 44, W, UiTheme.CAPTION))
 	var back := Button.new()
 	back.text = "BACK"
 	UiTheme.place(back, PAD, 8, BUTTON_SIZE.x, BUTTON_SIZE.y)
@@ -68,9 +75,16 @@ func setup(red: BoxerData, blue: BoxerData, venue_id: int, rounds: int, title_fi
 	var skills := ["power", "speed", "stamina", "chin", "strength", "intelligence"]
 	for s in skills:
 		rows.append([BoxerData.skill_label(s), red.get(s), blue.get(s)])
+	if grudge:
+		# The same words every time this tape is shown for this fight.
+		var rng := RandomNumberGenerator.new()
+		rng.seed = hash([red.id, blue.id, GameState.season.month])
+		rows.append(["TRASH TALK", "\"%s\"" % Rivalries.trash_talk(GameState.season, red, blue, rng),
+				"\"%s\"" % Rivalries.trash_talk(GameState.season, blue, red, rng)])
 
+	var table_y := TABLE_Y - (GRUDGE_LIFT if grudge else 0)
 	for i in rows.size():
-		var y := TABLE_Y + i * UiTheme.ROW_H
+		var y := table_y + i * UiTheme.ROW_H
 		if i % 2 == 1:
 			add_child(UiTheme.block(Color(1, 1, 1, 0.04), PAD, y, W - PAD * 2, UiTheme.ROW_H))
 		var row: Array = rows[i]
@@ -83,6 +97,9 @@ func setup(red: BoxerData, blue: BoxerData, venue_id: int, rounds: int, title_fi
 			var h := GameState.season.head_to_head(red, blue)
 			red_colour = Palette.UI_GOLD if h[0] > h[1] else Palette.UI_TEXT
 			blue_colour = Palette.UI_GOLD if h[1] > h[0] else Palette.UI_TEXT
+		elif row[0] == "TRASH TALK":
+			red_colour = Palette.UI_GOLD
+			blue_colour = Palette.UI_GOLD
 		elif row[0] == "RANKING":
 			# The champion's line is in gold.
 			red_colour = Palette.UI_GOLD if GameState.is_champion(red) else Palette.UI_TEXT
@@ -102,7 +119,9 @@ func setup(red: BoxerData, blue: BoxerData, venue_id: int, rounds: int, title_fi
 		add_child(UiTheme.place(blue_label, PAD + VALUE_W + LABEL_W + PAD, y, VALUE_W - PAD, UiTheme.ROW_H))
 
 	_prompt = UiTheme.label("TAP OR PRESS SPACE TO FIGHT", UiTheme.CAPTION, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
-	add_child(UiTheme.place(_prompt, 0, H - 24, W, UiTheme.CAPTION))
+	# Under the last row (a grudge match's TRASH TALK row takes the gap).
+	var prompt_y := maxi(H - 24, table_y + rows.size() * UiTheme.ROW_H + 4)
+	add_child(UiTheme.place(_prompt, 0, prompt_y, W, UiTheme.CAPTION))
 
 
 func _process(delta: float) -> void:

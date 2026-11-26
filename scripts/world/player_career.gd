@@ -312,10 +312,12 @@ func live_requests(season: Season) -> Array[BoxerData]:
 	return out
 
 
-## The usual purse for a fight with [param other] (title if he is champion).
+## The usual purse for a fight with [param other] (title if he is champion),
+## more for a grudge match (Rivalries.purse_factor).
 func usual_purse(season: Season, other: BoxerData) -> int:
 	var table := season.rankings_of(boxer)
-	return Purse.for_fight(table.index_of(boxer), table.index_of(other), table.size(), boxer.division, table.is_champion(other))
+	var purse := Purse.for_fight(table.index_of(boxer), table.index_of(other), table.size(), boxer.division, table.is_champion(other))
+	return roundi(purse * Rivalries.purse_factor(season, boxer, other))
 
 
 ## The five purses he can offer [param other].

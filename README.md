@@ -581,6 +581,21 @@ LEADS THEIR SERIES 2-0."). The round-up gives each fight one line, how it
 ended included ("COLON BEAT LYSENKO (KO R2), LEADS 2-0."; any decision is
 just "(POINTS)").
 
+**Rivalries.** Two men who have fought build up bad blood: every meeting
+adds some, a split or majority decision or a draw more, each knockdown
+more, a title fight more, and every rematch more again; it fades by half
+over 18 months. With enough of it a fight between them is a **grudge
+match**:
+
+* the purse is up to 50% bigger (the schedule's offer says "GRUDGE MATCH,
+  PURSES UP 29%") and it moves up to a bigger venue;
+* the newspaper builds it up the month before ("BAD BLOOD: DAVIES V
+  ESPOSITO III", their series, what each man said and the purse);
+* the tale of the tape says GRUDGE MATCH and has a TRASH TALK row;
+* the crowd boos the villain - the man who leads their series, or the
+  better-ranked if it is level - when he walks out, lands a big punch or
+  puts the other man down ("BOOO!" over his head).
+
 ![A new boxer](docs/screenshots/new_boxer.png)
 
 ![The career page](docs/screenshots/career_home.png)

@@ -43,6 +43,7 @@ var _block: AudioStreamWAV
 var _crowd: AudioStreamWAV
 var _roar: AudioStreamWAV
 var _hype: AudioStreamWAV
+var _boo: AudioStreamWAV
 
 var _players: Array[AudioStreamPlayer] = []
 var _next_player := 0
@@ -68,6 +69,7 @@ func _ready() -> void:
 	_crowd = _make_wav(_synth_crowd(), true)
 	_roar = _make_wav(_synth_roar())
 	_hype = _make_wav(_synth_hype(), true)
+	_boo = _make_wav(_synth_boo())
 
 	for i in 6:
 		var p := AudioStreamPlayer.new()
@@ -119,6 +121,11 @@ func cheer() -> void:
 ## The crowd is not so sure about a judge's score.
 func oooh() -> void:
 	_play(_oooh, -17.0 + _venue_db, _rng.randf_range(0.97, 1.03))
+
+
+## The crowd boos the villain of a grudge match (Rivalries).
+func boo() -> void:
+	_later(func() -> void: _play(_boo, -12.0 + _venue_db, _rng.randf_range(0.95, 1.03)))
 
 
 func block() -> void:
@@ -292,6 +299,43 @@ func _synth_oooh() -> PackedFloat32Array:
 			v += sin(ph) + 0.45 * sin(ph * 2.0) + 0.2 * sin(ph * 3.0)
 		lp = lerpf(lp, v, 0.12)
 		var env := minf(t / 0.22, 1.0) * clampf((1.5 - t) / 0.6, 0.0, 1.0)
+		out[i] = lp * env
+		peak = maxf(peak, absf(out[i]))
+	for i in length:
+		out[i] = out[i] / maxf(peak, 0.001) * 0.8
+	return out
+
+
+## A crowd booing: many low, rough "booo" voices, held and then dying away.
+func _synth_boo() -> PackedFloat32Array:
+	var length := int(RATE * 2.2)
+	var out := PackedFloat32Array()
+	out.resize(length)
+	var voices := 20
+	var freqs: Array[float] = []
+	var phases: Array[float] = []
+	var wobble: Array[float] = []
+	var starts: Array[float] = []
+	for v in voices:
+		freqs.append(_rng.randf_range(95.0, 175.0))
+		phases.append(_rng.randf() * TAU)
+		wobble.append(_rng.randf_range(3.0, 5.5))
+		starts.append(_rng.randf_range(0.0, 0.25))
+	var lp := 0.0
+	var peak := 0.0
+	for i in length:
+		var t := float(i) / RATE
+		var v := 0.0
+		for k in voices:
+			if t < starts[k]:
+				continue
+			var f: float = freqs[k] * (1.0 + 0.02 * sin(TAU * wobble[k] * t))
+			phases[k] += TAU * f / RATE
+			var ph: float = phases[k]
+			v += sin(ph) + 0.35 * sin(ph * 2.0) + 0.12 * sin(ph * 3.0)
+		v += _rng.randf_range(-1.0, 1.0) * 1.2   # Breath and rasp.
+		lp = lerpf(lp, v, 0.08)
+		var env := minf(t / 0.3, 1.0) * clampf((2.2 - t) / 0.9, 0.0, 1.0)
 		out[i] = lp * env
 		peak = maxf(peak, absf(out[i]))
 	for i in length:

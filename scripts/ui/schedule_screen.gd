@@ -223,6 +223,10 @@ func _offer(b: BoxerData) -> void:
 	var h := _season.head_to_head(_career.boxer, b)
 	var h2h := "HEAD TO HEAD: " + _series_for_you(h)
 	var h2h_colour := Palette.UI_TEXT if h[0] + h[1] + h[2] > 0 else Palette.UI_TEXT_DIM
+	if Rivalries.is_rivalry(_season, _career.boxer, b):
+		var extra := roundi((Rivalries.purse_factor(_season, _career.boxer, b) - 1.0) * 100.0)
+		h2h += "  -  GRUDGE MATCH, PURSES UP %d%%" % extra
+		h2h_colour = Palette.UI_GOLD
 	box.add_child(UiTheme.place(UiTheme.label(h2h, UiTheme.BODY, h2h_colour, HORIZONTAL_ALIGNMENT_CENTER), 0, OFFER_H2H_Y, OFFER_W, UiTheme.ROW_H))
 	var row_w := OFFER_BUTTON.x * 5 + PAD * 4
 	var x0 := (OFFER_W - row_w) / 2.0

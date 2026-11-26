@@ -4,6 +4,21 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.48
+
+* Rivalries and hype (`scripts/world/rivalries.gd`). Two men who have
+  fought build up bad blood (more for a close decision or a draw,
+  knockdowns, a title fight and every rematch; it fades by half over 18
+  months), worked out from their fights so saves are unchanged. Enough of
+  it makes their next fight a grudge match: a purse up to 50% bigger (the
+  schedule's offer says so), a bigger venue, a "BAD BLOOD" story in the
+  paper the month before with their series and trash talk, GRUDGE MATCH
+  and a TRASH TALK row on the tale of the tape, and a crowd that boos the
+  villain (the man who leads their series) when he walks out, lands a big
+  punch or scores a knockdown - a new synthesized boo, and "BOOO!" over
+  his head. (TODO 14)
+* Screenshots updated for the new names (0.1.47).
+
 ## 0.1.47
 
 * Names: every country has many more first names and surnames (24 - 56

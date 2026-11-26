@@ -14,6 +14,9 @@ extends RefCounted
 ##     leads the paper unless there is a title fight or a feature, and
 ##     otherwise comes straight after the main story. If his fight was for
 ##     a title, the title story is his.
+##   * Build-up to next month's hottest grudge match (Rivalries), the
+##     player's first: "BAD BLOOD: COTE V SMITH II", with their series, the
+##     trash talk and the purse. It comes after the main story and his.
 ##   * Side notes: anyone in the player's division (Season.player_division)
 ##     who moved up the rankings, then retirements and new faces.
 ##
@@ -164,6 +167,13 @@ static func write(season: Season, month: int, rng: RandomNumberGenerator) -> Dic
 		if lead != null:
 			stories.append(_with_series(_lead_story(lead, rng), lead, season))
 			covered.append(lead)
+
+	# Next month's grudge match.
+	var grudge := _grudge_match(season, month + 1)
+	if grudge != null:
+		var at := mini(2, stories.size())
+		stories.insert(at, _grudge_story(grudge, season, rng))
+		covered.insert(at, null)
 	if not stories.is_empty():
 		paper["headline"] = stories[0]["title"]
 		paper["standfirst"] = stories[0]["text"]
@@ -287,6 +297,40 @@ static func _feature_story(f: Fixture, rng: RandomNumberGenerator) -> Dictionary
 		text += " IN THE END NOTHING COULD SEPARATE THEM: A %s." % _draw_kind(f)
 	text += " " + _excitement_line(f, rng)
 	return {"title": title, "text": text}
+
+
+## The hottest grudge match booked for [param month] (the player's if he
+## has one), or null.
+static func _grudge_match(season: Season, month: int) -> Fixture:
+	var best: Fixture = null
+	var best_heat := 0.0
+	for f in season.fixtures_in(month):
+		if f.is_done():
+			continue
+		var h := Rivalries.heat(season, f.red, f.blue)
+		if h < Rivalries.RIVALRY_HEAT:
+			continue
+		if season.player != null and f.involves(season.player):
+			return f
+		if h > best_heat:
+			best_heat = h
+			best = f
+	return best
+
+
+## "BAD BLOOD: COTE V SMITH II" - who, where, their series, what they said
+## and the purse.
+static func _grudge_story(f: Fixture, season: Season, rng: RandomNumberGenerator) -> Dictionary:
+	var h := season.head_to_head(f.red, f.blue)
+	var meeting := h[0] + h[1] + h[2] + 1
+	var title := "BAD BLOOD: %s V %s %s" % [f.red.last_name.to_upper(), f.blue.last_name.to_upper(), Rivalries.numeral(meeting)]
+	var what := "FOR THE IBC %s TITLE" % _division(f) if f.title else "OVER %d ROUNDS" % f.rounds
+	var text := "THE %s RIVALS MEET AGAIN NEXT MONTH AT THE %s, %s. %s." % [_division(f), _venue(f), what, Season.series_text(f.red, f.blue, h)]
+	text += " %s: \"%s\" %s: \"%s\"" % [_full(f.red), Rivalries.trash_talk(season, f.red, f.blue, rng),
+			_full(f.blue), Rivalries.trash_talk(season, f.blue, f.red, rng)]
+	text += " THE HYPE HAS THE PURSE UP TO %s." % Purse.money_text(f.purse)
+	var mine := season.player != null and f.involves(season.player)
+	return {"title": title, "text": text, "player": mine}
 
 
 ## The player's finished fight this month, or null.

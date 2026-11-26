@@ -8,7 +8,6 @@ Effort: **XS** under an hour, **S** a few hours, **M** about a day,
 | #  | Item | Effort | From | Notes |
 |----|------|--------|------|-------|
 | 10 | End of a career: retirement for the player's boxer, with a career summary | M | Left over | Today he never retires; skills fade from 32. A RETIRE option (and a forced one at 39) with his record, titles, earnings and best wins. |
-| 14 | Rivalries and hype | M | Idea | Beat a man (or lose to him) and a rivalry builds: press-conference trash talk, a bigger crowd and purse for the rematch, newspaper build-up, and the crowd booing the villain. |
 | 16 | Style balance below world class: Sluggers and Brawlers beat every careful style at skill 60 or lower | M | Found | Found with `tools/style_matrix.gd` in 0.1.44: at skill 60 a Slugger wins 88% of its fights and a Brawler 71%, a Boxer 44%, Counter and Evasive 24 - 28% (at skill 85 every style is 42 - 59%). Their toughness and power bonuses count for more when defence is poor. Matters early in a career, when the player's boxer (a Boxer by default) is at that level. Best done with 19. |
 | 19 | Rebalance the divisions: easier at the bottom, harder at the top | M | Requested | The men at the bottom of each division (where a new boxer starts) are too strong to beat early on: roll their skills lower. Lift the top few a little so a title is a harder climb. Re-check with `tools/trial_career.gd` (time to contender and champion) and keep 16 in mind - part of the early difficulty is the style gap. |
 | 11 | Technical decisions and no-contests (fights stopped early by cuts or clashes of heads) | L | Left over | Needs cuts first (see 13). |
@@ -32,3 +31,4 @@ Effort: **XS** under an hour, **S** a few hours, **M** about a day,
 | 6  | Style balance: the Boxer style was weakest at the top level | M | 0.1.44 |
 | 17 | Fight offer reply: both answers at full size, the details on their own lines | XS | 0.1.46 |
 | 20 | Fewer repeated first names (24 - 56 per country, none repeated in a division) | S | 0.1.47 |
+| 14 | Rivalries and hype: grudge matches, bigger purses and venues, build-up, trash talk, boos | M | 0.1.48 |
