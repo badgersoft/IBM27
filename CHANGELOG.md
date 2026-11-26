@@ -4,6 +4,12 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.52
+
+* To-do list renumbered: the five open items are now 1 - 5, easiest first
+  (earlier changelog entries use the old numbers), and the finished ones
+  are listed by build.
+
 ## 0.1.51
 
 * Division balance: easier at the bottom, harder at the top. (TODO 19)
