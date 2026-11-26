@@ -361,7 +361,7 @@ func finish_month() -> Dictionary:
 		for b in table.boxers.duplicate():
 			var next := booking(b)
 			var in_camp: bool = b.last_fight_month == month or (next != null and next.month - month <= 1)
-			Training.month(b, in_camp, b.is_player)
+			Training.month(b, in_camp, b.is_player, table.index_of(b) <= Training.TOP_PLACES)
 			if posmod(month, 12) == b.birth_month:
 				b.age += 1
 			if next == null and not b.is_player and _retires(b):

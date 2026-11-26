@@ -8,7 +8,6 @@ Effort: **XS** under an hour, **S** a few hours, **M** about a day,
 | #  | Item | Effort | From | Notes |
 |----|------|--------|------|-------|
 | 10 | End of a career: retirement for the player's boxer, with a career summary | M | Left over | Today he never retires; skills fade from 32. A RETIRE option (and a forced one at 39) with his record, titles, earnings and best wins. |
-| 19 | Rebalance the divisions: easier at the bottom, harder at the top | M | Requested | The men at the bottom of each division (where a new boxer starts) are too strong to beat early on: roll their skills lower. Lift the top few a little so a title is a harder climb. Re-check with `tools/trial_career.gd` (time to contender and champion) and keep 16 in mind - part of the early difficulty is the style gap. |
 | 11 | Technical decisions and no-contests (fights stopped early by cuts or clashes of heads) | L | Left over | Needs cuts first (see 13). |
 | 13 | Cuts and injuries | L | Idea | Cuts that open and bleed during a fight, a cutman between rounds, and a doctor who can stop it (a TKO). Bad nights can leave an injury that keeps him out for weeks or months, so a hard fight has a real cost. |
 | 15 | Moving between divisions | L | Idea | Move up or down a weight class mid-career: a weight cut that drains stamina, or carrying power up against bigger men. Titles in two divisions are a legacy goal. |
@@ -32,3 +31,4 @@ Effort: **XS** under an hour, **S** a few hours, **M** about a day,
 | 20 | Fewer repeated first names (24 - 56 per country, none repeated in a division) | S | 0.1.47 |
 | 14 | Rivalries and hype: grudge matches, bigger purses and venues, build-up, trash talk, boos | M | 0.1.48 |
 | 16 | Style balance below world class: every style 44 - 58% at skill 45 and 60 | M | 0.1.49 |
+| 19 | Rebalance the divisions: easier at the bottom, harder at the top | M | 0.1.51 |

@@ -4,6 +4,27 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.51
+
+* Division balance: easier at the bottom, harder at the top. (TODO 19)
+  * Each division starts spread out by ability: its best man about 74
+    overall and its worst about 42, each keeping his own strengths and
+    weaknesses (BoxerGenerator.SPREAD_*). Before, everyone was rolled
+    around 60 and the weakest man was 53 - 55, well above a new boxer
+    (about 45). Now places 21 - 30 average 46 - 48 at the start.
+  * The prospects who replace retired men arrive raw (about 46 overall,
+    was about 60) and grow from there, so the bottom of a division stays
+    beatable: in trial careers places 21 - 30 average 51 - 58 after seven
+    to ten years (was 59 - 69).
+  * The champion and the top five train like men in the best gyms (1.8
+    times the gains, and still climbing until a skill reaches 70 rather
+    than 60; Training.TOP_*), so the top keeps pace with a well-trained
+    player: the top five average 79 - 85 after seven to ten years (was
+    76 - 80). The player's boxer reached the title in four trial careers
+    (months 69 - 81), with more defeats on the way than before.
+* `tools/trial_career.gd --field`: prints the strength of his division each
+  year (the champion, places 1-5, 6-10, 11-20, 21-30 and the weakest man).
+
 ## 0.1.50
 
 * Screenshots updated for the 0.1.49 style changes.

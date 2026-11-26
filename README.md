@@ -422,9 +422,18 @@ The season starts in January 2027 and runs a month at a time:
 * **Month end.** Everyone trains (harder in camp) and gets older. Young men
   still improve, men in their prime hold steady, and from 32 skills start
   to fade, speed first. The better a skill already is, the less a month
-  adds to it, so most men level off in the 70s and only the naturally
-  gifted are world class. Men over 34 may retire (at 39 they always do), and
-  a young prospect takes each one's place at the bottom of his division.
+  adds to it, so most men level off in the 70s. The champion and the top
+  five train like men in the best gyms (nearly twice the gains, and still
+  climbing into the 80s), so the top of a division keeps getting better
+  and the title is a hard climb. Men over 34 may retire (at 39 they always
+  do), and a raw young prospect (about 46 overall) takes each one's place
+  at the bottom of his division.
+
+  Each division starts spread out by ability: its best man about 74
+  overall (the monsters more), its worst about 42, so a new career's boxer
+  (about 45) can win his first fights. In trial careers
+  (`tools/trial_career.gd --field`) the top five reach 79 - 85 by the
+  later years, while the bottom ten stay in the 50s.
   Then **READ THE PAPER**.
 
 **The newspaper**, THE RINGSIDE GAZETTE, comes out every month. Its main

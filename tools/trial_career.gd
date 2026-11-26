@@ -17,6 +17,10 @@ extends SceneTree
 ##   --months=<n>         longest career to play (default 180, 15 years)
 ##   --seed=<n>           first career's seed (default 1)
 ##   --yearly             also print his overall and ranking each year
+##   --field              also print how strong his division is each year
+##                        (average overall of the champion, places 1-5,
+##                        6-10, 11-20, 21-30 and the weakest man), from the
+##                        start; plays every month (implies --yearly)
 ##   --whole-world        also fight the other two divisions' fights (by
 ##                        default they are called off: they can't affect
 ##                        his career, and skipping them is three times as
@@ -44,6 +48,7 @@ const TRIES_PER_WEEK := 3
 
 var _gs: Node
 var _manager := 0   # 0 ambitious, 1 casual
+var _field := false
 
 
 func _initialize() -> void:
@@ -67,6 +72,7 @@ func _initialize() -> void:
 			"months": months = int(kv[1])
 			"seed": seed_value = int(kv[1])
 			"yearly": yearly = true
+			"field": _field = true
 	print("TRIAL CAREERS: %d x %s, %s, %s manager, up to %d months" % [careers,
 			Divisions.get_division(division)["name"], BoxerData.STYLE_NAMES[style],
 			"casual" if _manager == 1 else "ambitious", months])
@@ -95,6 +101,9 @@ func _career(seed_value: int, division: int, style: int, months: int, yearly: bo
 	career._rng.seed = seed_value
 	var season: Season = _gs.season
 	var out := {"contender": -1, "champion": -1}
+	yearly = yearly or _field
+	if _field:
+		_print_field(season.rankings_of(b), b, 0)
 	for m in months:
 		for week in PlayerCareer.WEEKS_PER_MONTH:
 			_week(career, season)
@@ -114,6 +123,8 @@ func _career(seed_value: int, division: int, style: int, months: int, yearly: bo
 		if yearly and (m + 1) % 12 == 0:
 			print("    year %2d  age %d  overall %d  %-8s %s  %s" % [int((m + 1) / 12.0), b.age, b.overall(),
 					table.rank_text(b), b.record(), Purse.money_text(career.money)])
+		if _field and (m + 1) % 12 == 0:
+			_print_field(season.rankings_of(b), b, int((m + 1) / 12.0))
 		if out["champion"] >= 0 and not yearly:
 			break
 	out["record"] = b.record()
@@ -183,6 +194,25 @@ func _weakest_session(b: BoxerData) -> int:
 			lowest = value
 			best = i
 	return best
+
+
+## "FIELD year 3: champion 84 | 1-5 81 | 6-10 76 | 11-20 69 | 21-30 55 | weakest 44 | him 61 (NO. 17)"
+func _print_field(table: Rankings, me: BoxerData, year: int) -> void:
+	var avg := func(from: int, to: int) -> float:
+		var total := 0.0
+		var n := 0
+		for i in range(from, mini(to, table.size())):
+			if table.boxers[i] != me:
+				total += table.boxers[i].overall()
+				n += 1
+		return total / maxf(n, 1.0)
+	var weakest := 99
+	for other in table.boxers:
+		if other != me:
+			weakest = mini(weakest, other.overall())
+	var champ := table.champion.overall() if table.champion != null else 0
+	print("    FIELD year %2d: champion %d | 1-5 %.0f | 6-10 %.0f | 11-20 %.0f | 21-30 %.0f | weakest %d | him %d (%s)" % [
+			year, champ, avg.call(1, 6), avg.call(6, 11), avg.call(11, 21), avg.call(21, 31), weakest, me.overall(), table.rank_text(me)])
 
 
 func _summary(results: Array[Dictionary]) -> void:

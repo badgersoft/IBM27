@@ -76,6 +76,20 @@ const PLAYER_DIVISION_START: Array[Dictionary] = [
 ]
 ## Chance a new prospect already has a nickname.
 const PROSPECT_NICKNAME := 0.3
+## A full division (SPREAD_FROM men or more) is spread out by ability: its
+## best man is made about SPREAD_TOP overall and its worst about
+## SPREAD_BOTTOM (give or take SPREAD_NOISE), keeping each man's strengths
+## and weaknesses - so the men a new career starts among can be beaten and
+## the champion is a long way above. Before, every man was rolled around
+## 60 and the worst came out near 50, above a new boxer.
+const SPREAD_FROM := 20
+const SPREAD_TOP := 74.0
+const SPREAD_BOTTOM := 42.0
+const SPREAD_NOISE := 3.0
+## A prospect replacing a retired man arrives raw, about this overall (give
+## or take PROSPECT_NOISE), and grows from there (Training).
+const PROSPECT_OVERALL := 46.0
+const PROSPECT_NOISE := 4.0
 
 var _rng := RandomNumberGenerator.new()
 var _world: Dictionary = {}
@@ -114,9 +128,33 @@ func generate_roster(count: int, division: Divisions.Id = Divisions.Id.MIDDLEWEI
 		roster.append(boxer)
 
 	_assign_showboats(roster)
+	_spread(roster)
 	_assign_specials(roster)
 	_assign_nicknames(roster, avoid_nicknames)
 	return roster
+
+
+## Spreads a full division out by ability (see SPREAD_TOP): the man with
+## the n-th best overall is moved to his place on a straight line from
+## SPREAD_TOP down to SPREAD_BOTTOM, and gets a record to match.
+func _spread(roster: Array[BoxerData]) -> void:
+	if roster.size() < SPREAD_FROM:
+		return
+	var order := roster.duplicate()
+	order.sort_custom(func(x: BoxerData, y: BoxerData) -> bool: return x.overall() > y.overall())
+	for i in order.size():
+		var place := float(i) / float(order.size() - 1)
+		var target := lerpf(SPREAD_TOP, SPREAD_BOTTOM, place) + _rng.randf_range(-SPREAD_NOISE, SPREAD_NOISE)
+		_set_overall(order[i], target)
+		_roll_record(order[i])
+
+
+## Moves every one of [param b]'s six skills by the same amount so his
+## overall comes out at about [param target] (his profile stays the same).
+func _set_overall(b: BoxerData, target: float) -> void:
+	var shift := roundi(target - b.overall())
+	for skill in ["power", "speed", "stamina", "chin", "strength", "intelligence"]:
+		b.set(skill, clampi(int(b.get(skill)) + shift, 20, 97))
 
 
 ## Builds a single random boxer. Trunk colours already in [param avoid_trunks]
@@ -171,6 +209,7 @@ func generate_prospect(division: Divisions.Id, avoid_names: Array[String],
 			break
 		b = generate_boxer([], division)
 	_fresh_first_name(b, avoid_first)
+	_set_overall(b, PROSPECT_OVERALL + _rng.randf_range(-PROSPECT_NOISE, PROSPECT_NOISE))
 	b.age = _rng.randi_range(19, 22)
 	b.wins = _rng.randi_range(0, 3)
 	b.losses = 0
