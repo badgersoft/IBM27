@@ -49,6 +49,11 @@ const OFFER_NAME_Y := 216
 const OFFER_STAKE_Y := 240
 const OFFER_RULE_Y := 264
 const OFFER_OK_Y := 304
+## The reply (HE SAYS YES! / HE SAYS NO): his name, then up to three lines,
+## all at full size.
+const REPLY_NAME_Y := 96
+const REPLY_LINE_Y := 144
+const REPLY_LINE_STEP := 32
 const OFFER_NAMES: Array[String] = ["LOW", "LOWER", "USUAL", "HIGHER", "HIGH"]
 
 var _frame: Control
@@ -255,13 +260,25 @@ static func _series_for_you(h: Array[int]) -> String:
 
 
 func _make_offer(b: BoxerData, offer: int) -> void:
+	var purse: int = _career.purse_offers(_season, b)[offer]
 	var f := _career.challenge(_season, b, offer)
 	_close_popup()
 	var box := _make_popup("HE SAYS YES!" if f != null else "HE SAYS NO")
-	var text := _career.news[0] if not _career.news.is_empty() else ""
-	var line := UiTheme.label(text, UiTheme.BODY, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
-	UiTheme.fit(line, OFFER_W - PAD * 2)
-	box.add_child(UiTheme.place(line, PAD, 128, OFFER_W - PAD * 2, UiTheme.ROW_H))
+	box.add_child(UiTheme.place(UiTheme.label(b.display_name().to_upper(), UiTheme.LARGE, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER),
+			PAD, REPLY_NAME_Y, OFFER_W - PAD * 2, UiTheme.LARGE))
+	# [text, colour] for each line under his name.
+	var lines := []
+	if f != null:
+		var what := "IBC %s TITLE" % Divisions.division_name(f.division).to_upper() if f.title else "%d ROUNDS" % f.rounds
+		lines.append(["END OF %s  -  %s  -  %s" % [Season.date_text(f.month), what, Venues.venue_name(f.venue).to_upper()], Palette.UI_TEXT])
+		lines.append(["PURSE %s  -  YOUR STAKE %s, PAID NOW" % [Purse.money_text(f.purse), Purse.money_text(_career.fight_stake)], Palette.UI_GOLD])
+		lines.append(["HEAD TO HEAD: " + _series_for_you(_season.head_to_head(_career.boxer, b)), Palette.UI_TEXT_DIM])
+	else:
+		lines.append(["TURNED DOWN YOUR OFFER OF %s." % Purse.money_text(purse), Palette.UI_TEXT])
+		lines.append(["TRY ANOTHER MAN - HE WON'T TALK AGAIN THIS WEEK.", Palette.UI_TEXT_DIM])
+	for i in lines.size():
+		box.add_child(UiTheme.place(UiTheme.label(lines[i][0], UiTheme.BODY, lines[i][1], HORIZONTAL_ALIGNMENT_CENTER),
+				PAD, REPLY_LINE_Y + i * REPLY_LINE_STEP, OFFER_W - PAD * 2, UiTheme.ROW_H))
 	_popup_button("OK", (OFFER_W - 256) / 2.0, OFFER_OK_Y, func() -> void:
 		_close_popup()
 		_refresh()).grab_focus()

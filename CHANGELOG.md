@@ -4,6 +4,16 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.46
+
+* Arranging a fight: the reply to an offer (HE SAYS YES! / HE SAYS NO) is
+  now all at full size. It used to be one line of news shrunk to fit, so
+  the long "fight arranged" line came out smaller than "turned down". Now
+  it shows his name, then on separate lines when and where the fight is
+  (or that it is for the title), the purse and your stake, and the head to
+  head; or the offer he turned down and that he won't talk again this
+  week. (TODO 17)
+
 ## 0.1.45
 
 * To-do list: four new items (17 - 20: the fight offer reply's text size,
