@@ -4,6 +4,17 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.56
+
+* The career page, redesigned to look cleaner and more modern: the menu
+  is a column of quiet buttons down the left, with NEXT WEEK (or FIGHT
+  NIGHT) as a gold button at its foot; the boxer's panel has his portrait
+  and name with six tiles (OVERALL, RANKING and his level, RECORD and his
+  knockouts, HEALTH, MONEY and his earnings, SPONSOR and any offers); his
+  skills are bars with this week's gains; the training panel shows his gym
+  and rent and the latest three lines of news (was one); and the panels
+  have quiet borders, gold kept for what matters.
+
 ## 0.1.55
 
 * The Fixtures screen is now a fight-night board: a column for each

@@ -523,11 +523,16 @@ or DELETE it (after an are-you-sure).
 
 **The career page** has the date across the top in large letters (WEEK 2
 OF JANUARY 2027, with the weeks to fight night on the right, or FIGHT
-NIGHT in the month's last week), then the boxer and his overall rating,
-ranking, level, record, health, money, earnings, sponsor and the week's
-rent, his next fight, the men offering him a fight, his six skills (with
-what this week's training added in green), and the latest news. Time moves
-a **week** at a time (NEXT WEEK), four weeks to a month:
+NIGHT in the month's last week) and the menu down the left (SCHEDULE,
+FIXTURES, FACILITIES, BOXERS, NEWS, SAVE, MAIN MENU, and NEXT WEEK in gold
+at the foot). Beside them: the boxer (his portrait, name, nickname,
+division and style, and six tiles - OVERALL, RANKING with his level,
+RECORD with his knockouts, HEALTH, MONEY with what he has earned, and
+SPONSOR), his next fight, the men offering him a fight, and this week's
+training: his six skills as bars (with what this week's session added in
+green), the five sessions, his gym and rent, and the latest three lines
+of news. Time moves a **week** at a time (NEXT WEEK), four weeks to a
+month:
 
 * **Training**: once a week choose WEIGHTS (toughness, some chin), SPEED
   (speed, some ring sense), STAMINA (stamina, some recovery), PUNCHING
