@@ -4,6 +4,20 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.54
+
+* Fewer fights a month: each division's fight night has room for three
+  fights (Matchmaker.MONTH_FIGHTS; the player's own comes on top), so a
+  month has 9 (10 with the player's) instead of 10 - 18 (13 on average).
+  A boxer now fights two or three times a year. When more men want a fight
+  than there is room for, a champion whose defence is due goes first, then
+  whoever has waited longest. In three trial careers the player's
+  middleweight became champion in months 67, 82 and 128.
+* To-do list: seven new ideas (a commentary ticker, popularity and fans,
+  mandatory challengers, a weigh-in and press conference, training camp
+  focus, ring walks, a Hall of Fame), and the open list renumbered easiest
+  first.
+
 ## 0.1.53
 
 * Special punches (TODO 3): the OVERHAND RIGHT (looped over the top of the

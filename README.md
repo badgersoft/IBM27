@@ -416,11 +416,13 @@ The season starts in January 2027 and runs a month at a time:
 * **Arranging fights.** At the start of each month the managers arrange
   fights for two months on: that is the boxer's **training camp**, during
   which he trains 50% harder (more improvement in his skills). A boxer can
-  have a new fight arranged a month after his last one, and must have one
-  arranged by two months after it. So fights are three or four months
-  apart, everyone fights three or four times a year, and about a quarter
-  of all the boxers fight in any month. A boxer can only be matched with
-  someone who isn't already booked and is past that month's recovery.
+  have a new fight arranged a month after his last one. Each division's
+  fight night has room for three fights (the player's own comes on top),
+  so a month has about 9 fights - 7 to 10 with the player's - and a boxer
+  fights two or three times a year. When more men want a fight than there
+  is room for, a champion whose defence is due goes first, then whoever
+  has waited longest. A boxer can only be matched with someone who isn't
+  already booked and is past that month's recovery.
 * **Who can fight whom.** In his own division, someone no more than 4
   places above him or 6 below. In the division above, only its bottom two
   available men. In the division below, only its top three available men.

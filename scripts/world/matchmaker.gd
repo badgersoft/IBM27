@@ -7,10 +7,13 @@ extends RefCounted
 ##     boxer's training camp. It takes place at the end of the month.
 ##   * A boxer can have a new fight arranged a month after his last one
 ##     (RECOVERY_MONTHS), so fights are at least three months apart.
-##   * Arranging one by two months after his last fight (LATEST_GAP) is a
-##     must, so everyone fights at least every four months: three or four
-##     fights a year, with about a quarter of all boxers fighting in any
-##     month.
+##   * Each division has room for MONTH_FIGHTS fights a month (the
+##     player's own fight comes on top), so a fight night has 7 - 10 fights
+##     and a boxer fights two or three times a year. When there is more
+##     demand than room, a champion whose defence is due goes first, then
+##     the men who have waited longest since their last fight.
+##   * A man is "due" a fight LATEST_GAP months after his last one: he
+##     always looks for one then (others only now and then).
 ##
 ## Who looks for a fight: a boxer who is due one always; otherwise his
 ## manager might wait a month (LOOK_CHANCE by type).
@@ -41,6 +44,7 @@ extends RefCounted
 const CAMP_MONTHS := 2
 const RECOVERY_MONTHS := 1
 const LATEST_GAP := 2
+const MONTH_FIGHTS := 3
 const ABOVE := 4
 const BELOW := 6
 const UP_DIVISION_BOTTOM := 2
@@ -115,9 +119,18 @@ func arrange(month: int) -> Array[Fixture]:
 				others.append(b)
 	_shuffle(due)
 	_shuffle(others)
+	# Champions due a defence first, then whoever has waited longest.
+	due.sort_custom(func(x: BoxerData, y: BoxerData) -> bool:
+		var xc := _rankings[x.division].is_champion(x)
+		var yc := _rankings[y.division].is_champion(y)
+		if xc != yc:
+			return xc
+		return x.last_fight_month < y.last_fight_month)
 	for b in due + others:
 		if not _available(b, month):
 			continue   # Taken by an earlier booking this month.
+		if not _has_room(b.division, fight_month):
+			continue   # His division's fight night is full.
 		var urgent := _is_due(b, month)
 		if not urgent and _rng.randf() >= LOOK_CHANCE[b.manager.type]:
 			continue
@@ -125,6 +138,16 @@ func arrange(month: int) -> Array[Fixture]:
 		if opponent != null:
 			made.append(_book(b, opponent, month, fight_month, false))
 	return made
+
+
+## True while [param division]'s fight night in [param fight_month] has
+## room for another fight (MONTH_FIGHTS; the player's own doesn't count).
+func _has_room(division: int, fight_month: int) -> bool:
+	var count := 0
+	for f in _season.fixtures_in(fight_month):
+		if f.division == division and not (f.red.is_player or f.blue.is_player):
+			count += 1
+	return count < MONTH_FIGHTS
 
 
 ## A boxer free to have a fight arranged in [param month].
