@@ -17,23 +17,31 @@ extends Control
 ##   BOOKED       fights arranged for the months after, with their month.
 ##   LAST MONTH   last month's results.
 ##
-## Layout (1280 x 800 frame):
+## Layout (1280 x 800 frame): the fight-night board, a column of FightCards
+## for each division (its fights, the player's first; scrolls if there are
+## more than fit, as on BOOKED).
 ##   y  16  FIXTURES - JAN 2027            [PAPER] [PLAY MONTH] [BACK]
-##   y  80  [THIS MONTH][BOOKED][LAST MONTH]          [<] 1 - 10 OF 14 [>]
-##   y 120  FixtureTable (1248 x 664)
+##   y  80  [THIS MONTH][BOOKED][LAST MONTH]                  hint
+##   y 136  LIGHTWEIGHT        MIDDLEWEIGHT        HEAVYWEIGHT
+##   y 176  [card]             [card]              [card]
+##          [card]             [card]              [card]  ...
 
 enum Tab { THIS_MONTH, BOOKED, LAST_MONTH }
 
 const FRAME_SIZE := Vector2(1280, 800)
-const TABLE_POS := Vector2(16, 120)
 const TAB_Y := 80
+const TAB_X := 16
 const TAB_SIZE := Vector2(256, 40)
 const TAB_GAP := 16
 const TAB_NAMES: Array[String] = ["THIS MONTH", "BOOKED", "LAST MONTH"]
-const PAGER_X := 832
-const PAGER_BUTTON_W := 96
-const PAGER_LABEL_W := 208
+const HINT_X := 832
 const BUTTON_H := 48
+## The board: a column per division, lightest first.
+const COLUMN_X: Array[int] = [16, 440, 864]
+const COLUMN_HEAD_Y := 136
+const CARDS_Y := 176
+const CARDS_H := 608
+const CARD_GAP := 16
 const HINT := "CHOOSE A FIGHT TO WATCH IT, OR PLAY MONTH TO HAVE THEM ALL FOUGHT"
 const HINT_YOUR_FIGHT := "YOUR FIGHT IS ON THE CARD - FIGHT IT FIRST, THEN PLAY MONTH FOR THE REST"
 const HINT_NOT_YET := "THE FIGHTS ARE ON FIGHT NIGHT, THE LAST WEEK OF THE MONTH"
@@ -41,13 +49,9 @@ const HINT_DONE := "THE MONTH IS OVER - READ ALL ABOUT IT IN THE PAPER"
 
 var _frame: Control
 var _title: Label
-var _table: FixtureTable
+var _board: Control
 var _tabs: Array[Button] = []
 var _tab: Tab = Tab.THIS_MONTH
-var _page := 0
-var _page_label: Label
-var _prev: Button
-var _next: Button
 var _play: Button
 var _paper: Button
 var _back: Button
@@ -84,21 +88,19 @@ func _ready() -> void:
 	_paper = _button("PAPER", 688, 16, 160, BUTTON_H, _open_paper)
 
 	for i in TAB_NAMES.size():
-		var tab := _button(TAB_NAMES[i], TABLE_POS.x + i * (TAB_SIZE.x + TAB_GAP), TAB_Y, TAB_SIZE.x, TAB_SIZE.y, _select.bind(i))
+		var tab := _button(TAB_NAMES[i], TAB_X + i * (TAB_SIZE.x + TAB_GAP), TAB_Y, TAB_SIZE.x, TAB_SIZE.y, _select.bind(i))
 		_tabs.append(tab)
-	_prev = _button("<", PAGER_X, TAB_Y, PAGER_BUTTON_W, TAB_SIZE.y, _turn.bind(-1))
-	_page_label = UiTheme.label("", UiTheme.BODY, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
-	var label_x := PAGER_X + PAGER_BUTTON_W + 16
-	_frame.add_child(UiTheme.place(_page_label, label_x, TAB_Y + (TAB_SIZE.y - UiTheme.ROW_H) / 2.0, PAGER_LABEL_W, UiTheme.ROW_H))
-	_next = _button(">", label_x + PAGER_LABEL_W + 16, TAB_Y, PAGER_BUTTON_W, TAB_SIZE.y, _turn.bind(1))
-
-	_table = FixtureTable.new()
-	_table.position = TABLE_POS
-	_table.row_pressed.connect(_watch)
-	_frame.add_child(_table)
-	# The hint sits in the table's top margin, above the column captions.
+	# The hint, two lines on the right of the tabs.
 	_hint = UiTheme.label(HINT, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_RIGHT)
-	_frame.add_child(UiTheme.place(_hint, TABLE_POS.x + 24, TABLE_POS.y + 10, FixtureTable.W - 48, UiTheme.CAPTION))
+	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_hint.clip_text = false
+	_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_hint.add_theme_constant_override("line_spacing", 6)
+	_frame.add_child(UiTheme.place(_hint, HINT_X, TAB_Y, FRAME_SIZE.x - 16 - HINT_X, TAB_SIZE.y))
+
+	_board = Control.new()
+	_board.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_frame.add_child(UiTheme.place(_board, 0, 0, FRAME_SIZE.x, FRAME_SIZE.y))
 
 	_select(int(GameState.options.get("tab", Tab.THIS_MONTH)))
 	# Back from the ring with the last fight of the night done.
@@ -156,18 +158,62 @@ func _list() -> Array[Fixture]:
 
 func _select(tab: int) -> void:
 	_tab = clampi(tab, 0, TAB_NAMES.size() - 1) as Tab
-	_page = 0
 	for i in _tabs.size():
 		_style_tab(_tabs[i], i == _tab)
 	_refresh()
 
 
-func _turn(dir: int) -> void:
-	var count := FixtureTable.page_count(_list().size())
-	var page := clampi(_page + dir, 0, count - 1)
-	if page != _page:
-		_page = page
-		_refresh()
+## The board: for each division its name and number of fights, then its
+## fights as cards (the player's first), scrolling if they don't all fit.
+func _build_board(list: Array[Fixture], empty: String) -> void:
+	for child in _board.get_children():
+		child.queue_free()
+	var season := GameState.season
+	var clickable := _tab == Tab.THIS_MONTH and not _playing and _fight_night()
+	var me := season.player
+	for d in Divisions.count():
+		var x: float = COLUMN_X[d]
+		var mine: Array[Fixture] = []
+		for f in list:
+			if f.division == d:
+				mine.append(f)
+		mine.sort_custom(func(a: Fixture, b: Fixture) -> bool:
+			var am := me != null and a.involves(me)
+			var bm := me != null and b.involves(me)
+			if am != bm:
+				return am
+			if a.month != b.month:
+				return a.month < b.month
+			if a.title != b.title:
+				return a.title
+			return _best_place(a) < _best_place(b))
+		var head := UiTheme.label(Divisions.division_name(d).to_upper(), UiTheme.LARGE, Palette.UI_GOLD)
+		_board.add_child(UiTheme.place(head, x, COLUMN_HEAD_Y, FightCard.W, UiTheme.LARGE))
+		var count := "%d FIGHT%s" % [mine.size(), "" if mine.size() == 1 else "S"]
+		_board.add_child(UiTheme.place(UiTheme.label(count, UiTheme.CAPTION, Palette.UI_TEXT_DIM, HORIZONTAL_ALIGNMENT_RIGHT),
+				x, COLUMN_HEAD_Y + 10, FightCard.W, UiTheme.CAPTION))
+		var scroll := ScrollContainer.new()
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.follow_focus = true
+		_board.add_child(UiTheme.place(scroll, x, CARDS_Y, FightCard.W + 8, CARDS_H))
+		var column := VBoxContainer.new()
+		column.add_theme_constant_override("separation", CARD_GAP)
+		scroll.add_child(column)
+		if mine.is_empty():
+			var none := UiTheme.label(empty, UiTheme.BODY, Palette.UI_TEXT_DIM)
+			none.custom_minimum_size = Vector2(FightCard.W, UiTheme.ROW_H)
+			column.add_child(none)
+		for f in mine:
+			var card := FightCard.new(f, GameState.rankings, clickable, _tab == Tab.BOOKED, me != null and f.involves(me))
+			card.pressed.connect(_watch)
+			column.add_child(card)
+
+
+## The better-ranked man's place (for the order of a division's fights).
+static func _best_place(f: Fixture) -> int:
+	var a := GameState.rankings[f.red.division].index_of(f.red)
+	var b := GameState.rankings[f.blue.division].index_of(f.blue)
+	return mini(a if a >= 0 else 99, b if b >= 0 else 99)
 
 
 func _refresh() -> void:
@@ -177,12 +223,7 @@ func _refresh() -> void:
 	var empty := "NO FIGHTS ARRANGED"
 	if _tab == Tab.LAST_MONTH:
 		empty = "NO FIGHTS LAST MONTH"
-	_table.show_page(list, _page, GameState.rankings, _tab == Tab.THIS_MONTH and not _playing and _fight_night(), _tab == Tab.BOOKED, empty)
-	var count := FixtureTable.page_count(list.size())
-	var first := _page * FixtureTable.PAGE_SIZE
-	_page_label.text = "%d - %d OF %d" % [mini(first + 1, list.size()), mini(first + FixtureTable.PAGE_SIZE, list.size()), list.size()]
-	_prev.disabled = _page == 0
-	_next.disabled = _page >= count - 1
+	_build_board(list, empty)
 	_paper.disabled = season.papers.is_empty() or _playing
 	_play.remove_theme_color_override("font_color")
 	_play.disabled = false

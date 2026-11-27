@@ -436,9 +436,12 @@ The season starts in January 2027 and runs a month at a time:
   least once a year. If a champion retires the title is vacant, and the
   two best contenders fight for it as soon as both are free (until then
   neither takes another fight).
-* **Fight night** is the end of the month. The **Fixtures** screen lists
-  the month's fights (division, each man's ranking and record, rounds and
-  purse, with the belt for a title fight). Choose one to **watch** it in
+* **Fight night** is the end of the month. The **Fixtures** screen is a
+  fight-night board: a column for each division, each fight a card (the
+  rounds and venue, each corner's ranking, name and record, the purse;
+  once fought the winner in gold, the excitement rating and the result as
+  a badge, red for a stoppage). Title fights and the player's own fight
+  have a gold border, with the belt or YOUR FIGHT. Choose one to **watch** it in
   the ring, or **PLAY MONTH** to have the rest fought. Every fight is a
   full FightSim fight, exactly as a watched one runs, simulated on a
   worker thread so the screen keeps moving as each result comes in. BOOKED

@@ -4,6 +4,20 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.55
+
+* The Fixtures screen is now a fight-night board: a column for each
+  division (lightest first, with how many fights it has), each fight a
+  card (FightCard) instead of a row of a table. A card has the rounds and
+  venue (and the month, on BOOKED) along the top, each corner on its own
+  line with a red or blue mark, his ranking, name and record, and the
+  purse along the bottom; once fought, the winner is gold and the loser
+  dim, with the excitement rating ("8.7/10") and the result as a badge -
+  red for a knockout or stoppage. Title fights and the player's fight have
+  a gold border (the belt, or YOUR FIGHT), and his fight comes first in its
+  column. With 9 - 10 fights a month everything is on one screen (no more
+  pages); BOOKED scrolls down each column.
+
 ## 0.1.54
 
 * Fewer fights a month: each division's fight night has room for three
