@@ -1,51 +1,94 @@
 extends Control
-## The monthly newspaper, THE RINGSIDE GAZETTE (written by Newspaper).
+## The monthly newspaper, THE RINGSIDE GAZETTE (written by Newspaper), drawn
+## as a newspaper: dark ink on an off-white sheet.
 ##
-##   FRONT PAGE  the headline and its story, then the other stories (more
-##               title fights, and features on the great fights) down the
-##               left; IN BRIEF down the right: rankings climbers in the
+##   FRONT PAGE  the masthead between double rules (issue number, date and
+##               price), the headline, a sepia "photo" of the main fight
+##               beside its story, and the round-up; down the side column
+##               the other stories (more title fights, features, the build-up
+##               to a grudge match) and IN BRIEF: rankings climbers in the
 ##               player's division, retirements and new faces.
-##   RESULTS     every fight of the month, with its excitement rating.
+##   RESULTS     every fight of the month: winner, loser, how and when, the
+##               purse and its excitement rating.
 ##
-## In a career the player's own fight has a story with YOUR FIGHT over it,
-## and his name is picked out in gold wherever the paper mentions him.
+## In a career the player's own fight has a story marked YOUR FIGHT, and his
+## name is picked out in red ink wherever the paper mentions him.
 ##
 ## Layout (1280 x 800 frame):
-##   y   8  THE RINGSIDE GAZETTE (48 px, centred)
-##   y  56  dateline (about midway between the masthead and the tabs)
-##   y  80  [FRONT PAGE][RESULTS]   [<] 1 - 10 OF 14 [>]       [CONTINUE]
-##   y 120  page panel (1248 x 664)
+##   y  16  [FRONT PAGE][RESULTS]                                [CONTINUE]
+##   y  72  the sheet (1248 x 712):
+##            THE RINGSIDE GAZETTE
+##            ====== NO. 3 ======= MARCH 2027 ======= 25 CENTS ======
+##            HEADLINE                               | SIDE STORIES
+##            [photo] story                          |
+##            ROUND-UP                               | IN BRIEF
 ##
-## CONTINUE goes back to the Fixtures screen.
+## CONTINUE goes back to the Fixtures screen (or the career page).
 
 const FRAME_SIZE := Vector2(1280, 800)
-const PAGE := Rect2(16, 120, 1248, 664)
-const DATELINE_Y := 56
-const TAB_Y := 80
+const SHEET := Rect2(16, 72, 1248, 712)
+const TAB_Y := 16
 const TAB_SIZE := Vector2(256, 40)
 const TAB_GAP := 16
 const PAD := 16
-## Front page columns, inside the page panel.
+## Paper and ink.
+const PAPER := Color("efe6cf")
+const PAPER_SHADE := Color("e2d6b8")
+const INK := Color("1e1b17")
+const INK_DIM := Color("5e564a")
+const INK_RED := Color("9a1f1f")      ## The player's name, and YOUR FIGHT.
+## The masthead and dateline.
+const MASTHEAD_Y := 12
+const RULE_Y := 72
+const DATELINE_Y := 80
+const DOUBLE_RULE_Y := 104
+const PRICE := "25 CENTS"
+## The front page: the main column (headline, photo and story, round-up) and
+## the side column, with a rule between.
+const BODY_Y := 120
 const MAIN_W := 792
-const BRIEF_X := 840
-const BRIEF_W := 392
+const SIDE_X := 840
+const SIDE_W := 392
+const PHOTO_VIEW := Vector2i(180, 100)
+const PHOTO_SCALE := 2
 const STORY_GAP := 24
 ## Extra space between wrapped lines, so a paragraph doesn't read as a block.
 const LINE_SPACING := 8
-## The results pager (shown on the RESULTS page only), after the tabs.
-const PAGER_X := 560
-const PAGER_BUTTON_W := 96
-const PAGER_LABEL_W := 208
+## The results page: [caption, x, width, alignment].
+const RESULT_COLUMNS := [
+	["DIV",      16,  48, HORIZONTAL_ALIGNMENT_LEFT],
+	["WINNER",   80, 320, HORIZONTAL_ALIGNMENT_LEFT],
+	["",        400,  48, HORIZONTAL_ALIGNMENT_CENTER],
+	["LOSER",   456, 320, HORIZONTAL_ALIGNMENT_LEFT],
+	["RESULT",  784, 128, HORIZONTAL_ALIGNMENT_CENTER],
+	["RDS",     920,  64, HORIZONTAL_ALIGNMENT_RIGHT],
+	["PURSE",  1000, 112, HORIZONTAL_ALIGNMENT_RIGHT],
+	["RATING", 1128,  88, HORIZONTAL_ALIGNMENT_RIGHT],
+]
+const RESULTS_Y := 128
+## The front page's round-up shows this many lines (the rest are on
+## RESULTS), fewer (ROUNDUP_SHORT) under a long lead story: one over
+## LONG_STORY_LINES lines beside the photo.
+const ROUNDUP_SHOWN := 6
+const ROUNDUP_SHORT := 4
+const LONG_STORY_LINES := 9
+const RESULT_ROW_H := 52
+const DIVISION_SHORT: Array[String] = ["LW", "MW", "HW"]
+## The photo: greyed, then warmed to sepia.
+const SEPIA_SHADER := """
+shader_type canvas_item;
+void fragment() {
+	vec4 c = texture(TEXTURE, UV);
+	float g = dot(c.rgb, vec3(0.30, 0.59, 0.11));
+	COLOR = vec4(vec3(g * 1.07, g * 0.94, g * 0.74) * 0.92 + vec3(0.05, 0.04, 0.02), c.a);
+}
+"""
 
 var _frame: Control
-var _page: Control
+var _sheet: Control
 var _tabs: Array[Button] = []
 var _paper: Dictionary = {}
 var _results: Array[Fixture] = []
-var _results_page := 0
-var _pager: Control
-var _page_label: Label
-var _pager_buttons: Array[Button] = []
 
 
 func _ready() -> void:
@@ -65,38 +108,25 @@ func _ready() -> void:
 	add_child(_frame)
 
 	var papers := GameState.season.papers
+	var index := clampi(GameState.paper_index, 0, maxi(papers.size() - 1, 0))
 	if not papers.is_empty():
-		_paper = papers[clampi(GameState.paper_index, 0, papers.size() - 1)]
+		_paper = papers[index]
 	_results.assign(_paper.get("results", []))
-
-	var masthead := UiTheme.label(Newspaper.NAME, UiTheme.HUGE, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
-	_frame.add_child(UiTheme.place(masthead, 0, 8, FRAME_SIZE.x, UiTheme.HUGE))
-	var dateline := "%s  -  MONTHLY EDITION  -  ALL THE IBC RESULTS INSIDE" % _paper.get("date", "")
-	_frame.add_child(UiTheme.place(UiTheme.label(dateline, UiTheme.CAPTION, Palette.UI_GOLD, HORIZONTAL_ALIGNMENT_CENTER), 0, DATELINE_Y, FRAME_SIZE.x, UiTheme.CAPTION))
 
 	for i in 2:
 		var tab := Button.new()
 		tab.text = ["FRONT PAGE", "RESULTS"][i]
 		tab.focus_mode = Control.FOCUS_ALL
-		UiTheme.place(tab, PAGE.position.x + i * (TAB_SIZE.x + TAB_GAP), TAB_Y, TAB_SIZE.x, TAB_SIZE.y)
+		UiTheme.place(tab, SHEET.position.x + i * (TAB_SIZE.x + TAB_GAP), TAB_Y, TAB_SIZE.x, TAB_SIZE.y)
 		tab.pressed.connect(_show.bind(i))
 		_frame.add_child(tab)
 		_tabs.append(tab)
 	var go_on := Button.new()
 	go_on.text = "CONTINUE"
 	go_on.focus_mode = Control.FOCUS_ALL
-	UiTheme.place(go_on, PAGE.end.x - 256, TAB_Y, 256, TAB_SIZE.y)
+	UiTheme.place(go_on, SHEET.end.x - 256, TAB_Y, 256, TAB_SIZE.y)
 	go_on.pressed.connect(_continue)
 	_frame.add_child(go_on)
-
-	_pager = Control.new()
-	_pager.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_frame.add_child(UiTheme.place(_pager, 0, 0, FRAME_SIZE.x, FRAME_SIZE.y))
-	_pager_button("<", PAGER_X, -1)
-	_page_label = UiTheme.label("", UiTheme.BODY, Palette.UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
-	var label_x := PAGER_X + PAGER_BUTTON_W + 16
-	_pager.add_child(UiTheme.place(_page_label, label_x, TAB_Y + (TAB_SIZE.y - UiTheme.ROW_H) / 2.0, PAGER_LABEL_W, UiTheme.ROW_H))
-	_pager_button(">", label_x + PAGER_LABEL_W + 16, 1)
 
 	_show(int(GameState.options.get("tab", 0)))
 	go_on.grab_focus()
@@ -124,89 +154,261 @@ func _continue() -> void:
 	get_tree().change_scene_to_file("res://scenes/fixtures.tscn")
 
 
-func _pager_button(text: String, x: float, dir: int) -> void:
-	var b := Button.new()
-	b.text = text
-	b.focus_mode = Control.FOCUS_ALL
-	UiTheme.place(b, x, TAB_Y, PAGER_BUTTON_W, TAB_SIZE.y)
-	b.pressed.connect(_turn.bind(dir))
-	_pager.add_child(b)
-	_pager_buttons.append(b)
-
-
-func _turn(dir: int) -> void:
-	var page := clampi(_results_page + dir, 0, FixtureTable.page_count(_results.size()) - 1)
-	if page != _results_page:
-		_results_page = page
-		_show(1)
-
-
+## Shows the front page (0) or the results (1) on a fresh sheet.
 func _show(which: int) -> void:
 	for i in _tabs.size():
 		_style_tab(_tabs[i], i == which)
-	if _page != null:
-		_page.queue_free()
-	_pager.visible = which == 1
+	if _sheet != null:
+		_sheet.queue_free()
+	_sheet = Control.new()
+	_sheet.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_frame.add_child(UiTheme.place(_sheet, SHEET.position.x, SHEET.position.y, SHEET.size.x, SHEET.size.y))
+	_sheet.add_child(UiTheme.block(Color(0, 0, 0, 0.5), 6, 6, SHEET.size.x, SHEET.size.y))   # Shadow.
+	_sheet.add_child(UiTheme.panel(0, 0, SHEET.size.x, SHEET.size.y, PAPER, PAPER_SHADE, 2))
+	_build_masthead()
 	if which == 1:
-		var table := FixtureTable.new()
-		table.position = PAGE.position
-		table.show_page(_results, _results_page, GameState.rankings, false, false, "NO FIGHTS THIS MONTH")
-		var first := _results_page * FixtureTable.PAGE_SIZE
-		_page_label.text = "%d - %d OF %d" % [mini(first + 1, _results.size()), mini(first + FixtureTable.PAGE_SIZE, _results.size()), _results.size()]
-		_pager_buttons[0].disabled = _results_page == 0
-		_pager_buttons[1].disabled = _results_page >= FixtureTable.page_count(_results.size()) - 1
-		_page = table
-		_frame.add_child(table)
-		return
-	_page = Control.new()
-	_page.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_frame.add_child(UiTheme.place(_page, PAGE.position.x, PAGE.position.y, PAGE.size.x, PAGE.size.y))
-	_page.add_child(UiTheme.panel(0, 0, PAGE.size.x, PAGE.size.y))
-	_build_front_page()
+		_build_results()
+	else:
+		_build_front_page()
 
+
+## THE RINGSIDE GAZETTE, then the issue number, date and price between rules.
+func _build_masthead() -> void:
+	var w := SHEET.size.x
+	_sheet.add_child(UiTheme.place(UiTheme.label(Newspaper.NAME, UiTheme.HUGE, INK, HORIZONTAL_ALIGNMENT_CENTER), 0, MASTHEAD_Y, w, UiTheme.HUGE))
+	_sheet.add_child(UiTheme.block(INK, PAD, RULE_Y, w - PAD * 2, 2))
+	var issue := GameState.season.papers.find(_paper) + 1
+	var parts := [["NO. %d" % maxi(issue, 1), HORIZONTAL_ALIGNMENT_LEFT],
+			[str(_paper.get("date", "")), HORIZONTAL_ALIGNMENT_CENTER], [PRICE, HORIZONTAL_ALIGNMENT_RIGHT]]
+	for p in parts:
+		_sheet.add_child(UiTheme.place(UiTheme.label(p[0], UiTheme.BODY, INK, p[1]), PAD, DATELINE_Y, w - PAD * 2, UiTheme.ROW_H))
+	_sheet.add_child(UiTheme.block(INK, PAD, DOUBLE_RULE_Y, w - PAD * 2, 3))
+	_sheet.add_child(UiTheme.block(INK, PAD, DOUBLE_RULE_Y + 6, w - PAD * 2, 1))
+
+
+# ============================================================================
+#  Front page
+# ============================================================================
 
 func _build_front_page() -> void:
-	var main := _column(PAD, PAD, MAIN_W, PAGE.size.y - PAD * 2)
+	var height := SHEET.size.y - BODY_Y - PAD
+	# The main column: headline, photo and story, round-up.
+	var main := _column(PAD, BODY_Y, MAIN_W, height)
 	if _paper.get("headline_player", false):
-		main.add_child(_your_fight())
-	main.add_child(_text(_paper.get("headline", ""), UiTheme.TITLE, Palette.UI_GOLD, MAIN_W))
-	var extra := _add_body(main, _paper.get("standfirst", ""), _paper.get("headline_player", false), MAIN_W)
-	for story in _paper.get("stories", []):
-		main.add_child(_gap(STORY_GAP - extra))
-		main.add_child(_rule(MAIN_W))
-		main.add_child(_gap(STORY_GAP - 8))
-		if story.get("player", false):
-			main.add_child(_your_fight())
-		main.add_child(_text(story["title"], UiTheme.LARGE, Palette.UI_GOLD, MAIN_W))
-		extra = _add_body(main, story["text"], story.get("player", false), MAIN_W)
+		main.add_child(_text("YOUR FIGHT", UiTheme.CAPTION, INK_RED, MAIN_W))
+	main.add_child(_text(_paper.get("headline", ""), UiTheme.TITLE, INK, MAIN_W))
+	var lead := HBoxContainer.new()
+	lead.add_theme_constant_override("separation", PAD * 2)
+	var photo := _photo()
+	var story_w := MAIN_W
+	if photo != null:
+		lead.add_child(photo)
+		story_w = MAIN_W - PHOTO_VIEW.x * PHOTO_SCALE - PAD * 2
+	var standfirst := VBoxContainer.new()
+	standfirst.custom_minimum_size.x = story_w
+	_add_body(standfirst, _paper.get("standfirst", ""), _paper.get("headline_player", false), story_w)
+	lead.add_child(standfirst)
+	main.add_child(lead)
 	var roundup: Array = _paper.get("roundup", [])
 	if not roundup.is_empty():
-		main.add_child(_gap(STORY_GAP - extra))
-		main.add_child(_rule(MAIN_W))
-		main.add_child(_gap(STORY_GAP - 8))
-		main.add_child(_text("ROUND-UP", UiTheme.LARGE, Palette.UI_GOLD, MAIN_W))
-		for line in roundup:
-			main.add_child(_text(line, UiTheme.BODY, Palette.UI_TEXT, MAIN_W))
+		main.add_child(_gap(8))
+		main.add_child(_rule(MAIN_W, 2))
+		main.add_child(_text("THE ROUND-UP", UiTheme.LARGE, INK, MAIN_W))
+		var story_lines := ceili(str(_paper.get("standfirst", "")).length() / floorf(story_w / UiTheme.BODY))
+		var lines := mini(roundup.size(), ROUNDUP_SHORT if story_lines > LONG_STORY_LINES else ROUNDUP_SHOWN)
+		main.add_child(_text("\n".join(roundup.slice(0, lines)), UiTheme.BODY, INK, MAIN_W))
+		if roundup.size() > lines:
+			main.add_child(_text("MORE RESULTS INSIDE.", UiTheme.CAPTION, INK_DIM, MAIN_W))
 
-	# A rule between the columns, then IN BRIEF.
-	_page.add_child(UiTheme.block(Color(Palette.UI_TEXT_DIM, 0.4), BRIEF_X - PAD - 1, PAD, 1, PAGE.size.y - PAD * 2))
-	_page.add_child(UiTheme.place(UiTheme.label("IN BRIEF", UiTheme.CAPTION, Palette.UI_GOLD), BRIEF_X, 10, 240, UiTheme.CAPTION))
-	var brief := _column(BRIEF_X, 32, BRIEF_W, PAGE.size.y - 32 - PAD)
+	# The rule between the columns, then the side column.
+	_sheet.add_child(UiTheme.block(INK, SIDE_X - PAD - 1, BODY_Y, 1, height))
+	var side := _column(SIDE_X, BODY_Y, SIDE_W, height)
+	var stories: Array = _paper.get("stories", [])
+	for i in stories.size():
+		var story: Dictionary = stories[i]
+		if i > 0:
+			side.add_child(_gap(8))
+			side.add_child(_rule(SIDE_W, 1))
+		if story.get("player", false):
+			side.add_child(_text("YOUR FIGHT", UiTheme.CAPTION, INK_RED, SIDE_W))
+		side.add_child(_text(story["title"], UiTheme.LARGE, INK, SIDE_W))
+		_add_body(side, story["text"], story.get("player", false), SIDE_W)
+	if not stories.is_empty():
+		side.add_child(_gap(8))
+		side.add_child(_rule(SIDE_W, 2))
+	side.add_child(_text("IN BRIEF", UiTheme.LARGE, INK, SIDE_W))
 	var notes: Array = _paper.get("notes", [])
 	if notes.is_empty():
 		notes = ["NOTHING ELSE TO REPORT THIS MONTH."]
-	var under := 0
 	for i in notes.size():
 		if i > 0:
-			brief.add_child(_gap(PAD - under))
-		under = _add_body(brief, notes[i], false, BRIEF_W)
+			side.add_child(_rule(SIDE_W, 1, 0.25))
+		_add_body(side, notes[i], false, SIDE_W)
 
 
-## A scrolling column of text blocks inside the page.
+## The front-page photo of the main fight (the paper's "photo": the winner
+## with his arms up and the loser hanging his head, two men who drew, or
+## two rivals squaring up before a grudge match), in sepia, with a caption.
+## Null if there is nobody to show.
+func _photo() -> Control:
+	var data: Dictionary = _paper.get("photo", {})
+	if data.is_empty():
+		var lead := Newspaper._lead_fight(_results)
+		if lead == null:
+			return null
+		data = Newspaper.photo_of(lead)
+	var a := _find_boxer(int(data["a"]))
+	var b := _find_boxer(int(data["b"]))
+	if a == null or b == null:
+		return null
+	var kind: String = data.get("kind", "win")
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	var viewport := SubViewport.new()
+	viewport.size = PHOTO_VIEW
+	viewport.disable_3d = true
+	viewport.transparent_bg = false
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	viewport.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+	box.add_child(viewport)
+	# A plain backdrop: the crowd in shadow, the ropes, the canvas.
+	var backdrop := ColorRect.new()
+	backdrop.color = Color("3a3d4a")
+	backdrop.size = Vector2(PHOTO_VIEW)
+	viewport.add_child(backdrop)
+	for i in 3:
+		var rope := ColorRect.new()
+		rope.color = Color("c8c8c8")
+		rope.position = Vector2(0, 34 + i * 12)
+		rope.size = Vector2(PHOTO_VIEW.x, 1)
+		viewport.add_child(rope)
+	var canvas := ColorRect.new()
+	canvas.color = Color("9a9a9a")
+	canvas.position = Vector2(0, PHOTO_VIEW.y - 16)
+	canvas.size = Vector2(PHOTO_VIEW.x, 16)
+	viewport.add_child(canvas)
+	var anims := ["victory", "dejected"]
+	if kind == "draw":
+		anims = ["ready", "ready"]
+	elif kind == "faceoff":
+		anims = ["guard", "guard"]
+	_photo_rig(viewport, a, Vector2(62, PHOTO_VIEW.y - 8), 1, anims[0], 0)
+	_photo_rig(viewport, b, Vector2(118, PHOTO_VIEW.y - 8), -1, anims[1], 1)
+	var picture := TextureRect.new()
+	picture.texture = viewport.get_texture()
+	picture.custom_minimum_size = Vector2(PHOTO_VIEW * PHOTO_SCALE)
+	picture.stretch_mode = TextureRect.STRETCH_SCALE
+	picture.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	var shader := Shader.new()
+	shader.code = SEPIA_SHADER
+	var material := ShaderMaterial.new()
+	material.shader = shader
+	picture.material = material
+	var framed := PanelContainer.new()
+	framed.add_theme_stylebox_override("panel", UiTheme.box(PAPER, INK, 2, 4))
+	framed.add_child(picture)
+	box.add_child(framed)
+	var caption := "%s (LEFT) CELEBRATES HIS WIN OVER %s" % [a.last_name.to_upper(), b.last_name.to_upper()]
+	if kind == "draw":
+		caption = "%s AND %s: NOTHING IN IT" % [a.last_name.to_upper(), b.last_name.to_upper()]
+	elif kind == "faceoff":
+		caption = "%s AND %s FACE OFF" % [a.last_name.to_upper(), b.last_name.to_upper()]
+	box.add_child(_text(caption, UiTheme.CAPTION, INK_DIM, PHOTO_VIEW.x * PHOTO_SCALE + 8))
+	return box
+
+
+func _photo_rig(viewport: SubViewport, b: BoxerData, feet: Vector2, facing: int, anim: String, corner: int) -> void:
+	var rig := BoxerRig.new()
+	viewport.add_child(rig)
+	rig.setup(b, corner)
+	rig.position = feet
+	rig.facing = facing
+	rig.snap_to(anim)
+	rig.set_process(false)   # Frozen, like a photograph.
+	var steps: Array = BoxerPoses.ANIMS[anim]["steps"]
+	rig._pose = BoxerPoses.get_pose(steps[0][0]).duplicate()
+	rig.queue_redraw()
+
+
+## The boxer with [param id], ranked or retired, or null.
+static func _find_boxer(id: int) -> BoxerData:
+	for table in GameState.rankings:
+		for b in table.boxers:
+			if b.id == id:
+				return b
+	for b in GameState.season.retired:
+		if b.id == id:
+			return b
+	return null
+
+
+# ============================================================================
+#  Results
+# ============================================================================
+
+## Every fight of the month: WINNER bt LOSER (or DREW WITH), how, rounds,
+## purse and rating; the player's fight in red ink.
+func _build_results() -> void:
+	var w := SHEET.size.x
+	_sheet.add_child(UiTheme.place(UiTheme.label("THIS MONTH'S RESULTS", UiTheme.LARGE, INK), PAD, BODY_Y, 640, UiTheme.LARGE))
+	for col in RESULT_COLUMNS:
+		_sheet.add_child(UiTheme.place(UiTheme.label(col[0], UiTheme.CAPTION, INK_DIM, col[3]), col[1], RESULTS_Y + 28, col[2], UiTheme.CAPTION))
+	_sheet.add_child(UiTheme.block(INK, PAD, RESULTS_Y + 40, w - PAD * 2, 2))
+	if _results.is_empty():
+		_sheet.add_child(UiTheme.place(UiTheme.label("NO FIGHTS THIS MONTH", UiTheme.BODY, INK_DIM), PAD, RESULTS_Y + 56, 640, UiTheme.ROW_H))
+		return
+	var player := GameState.season.player
+	var list := _results.duplicate()
+	list.sort_custom(func(x: Fixture, y: Fixture) -> bool:
+		if x.title != y.title:
+			return x.title
+		return x.division > y.division)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_sheet.add_child(UiTheme.place(scroll, 0, RESULTS_Y + 48, w, SHEET.size.y - RESULTS_Y - 48 - PAD))
+	var rows := Control.new()
+	rows.custom_minimum_size = Vector2(w - 16, list.size() * RESULT_ROW_H)
+	scroll.add_child(rows)
+	for i in list.size():
+		var f: Fixture = list[i]
+		var y := i * RESULT_ROW_H
+		if i % 2 == 1:
+			rows.add_child(UiTheme.block(Color(PAPER_SHADE, 0.6), PAD, y, w - PAD * 2, RESULT_ROW_H))
+		var mine := player != null and f.involves(player)
+		var ink := INK_RED if mine else INK
+		var winner := f.winner()
+		var first := winner if winner != null else f.red
+		var second := f.opponent_of(first)
+		var values := [DIVISION_SHORT[f.division], first.display_name().to_upper(), "DREW" if winner == null else "BT",
+				second.display_name().to_upper(), f.result_text() if f.is_done() else "-", str(f.rounds),
+				Purse.money_text(f.purse), "%.1f" % f.excitement if f.is_done() else ""]
+		var colours := [INK_DIM, ink, INK_DIM, INK_DIM if winner != null and not mine else ink, ink, INK, INK, INK]
+		for c in RESULT_COLUMNS.size():
+			var col: Array = RESULT_COLUMNS[c]
+			var cell := UiTheme.label(values[c], UiTheme.BODY, colours[c], col[3])
+			cell.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+			rows.add_child(UiTheme.place(cell, col[1], y + 8, col[2], UiTheme.ROW_H))
+		# Under the names: title fight, and the kind of result.
+		var under := "IBC %s TITLE" % Divisions.division_name(f.division).to_upper() if f.title else ""
+		rows.add_child(UiTheme.place(UiTheme.label(under, UiTheme.CAPTION, INK_RED if f.title else INK_DIM), RESULT_COLUMNS[1][1], y + 32, 320, UiTheme.CAPTION))
+		var res: Array = RESULT_COLUMNS[4]
+		rows.add_child(UiTheme.place(UiTheme.label(f.verdict_text(), UiTheme.CAPTION, INK_DIM, HORIZONTAL_ALIGNMENT_CENTER), res[1], y + 32, res[2], UiTheme.CAPTION))
+
+
+# ============================================================================
+#  Type
+# ============================================================================
+
+## A scrolling column of type inside the sheet.
 func _column(x: float, y: float, w: float, h: float) -> VBoxContainer:
 	var scroll := ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_page.add_child(UiTheme.place(scroll, x, y, w, h))
+	_sheet.add_child(UiTheme.place(scroll, x, y, w + 8, h))
+	# A thin ink scroll bar, for the odd column that runs long.
+	var bar := scroll.get_v_scroll_bar()
+	bar.add_theme_stylebox_override("scroll", UiTheme.box(PAPER_SHADE, PAPER_SHADE, 0))
+	for state in ["grabber", "grabber_highlight", "grabber_pressed"]:
+		bar.add_theme_stylebox_override(state, UiTheme.box(INK_DIM, INK_DIM, 0))
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 8)
 	column.custom_minimum_size.x = w
@@ -214,7 +416,7 @@ func _column(x: float, y: float, w: float, h: float) -> VBoxContainer:
 	return column
 
 
-## A wrapping block of text [param width] wide.
+## A wrapping block of type [param width] wide.
 static func _text(text: String, size: int, colour: Color, width: float) -> Label:
 	var l := UiTheme.label(text, size, colour)
 	l.clip_text = false
@@ -225,23 +427,16 @@ static func _text(text: String, size: int, colour: Color, width: float) -> Label
 	return l
 
 
-## The tag over the player's own story.
-static func _your_fight() -> Label:
-	return UiTheme.label("YOUR FIGHT", UiTheme.CAPTION, Palette.UI_GOLD)
-
-
-## Adds a wrapping block of body text [param width] wide to [param column],
-## with the player's name in gold (in his own story, [param his], his
-## surname too). Returns the extra space a highlighted block leaves under
-## itself (a rich text block ends with a line gap a plain one doesn't), to
-## take off the next gap.
-func _add_body(column: Control, text: String, his: bool, width: float) -> int:
+## Adds a wrapping block of body type [param width] wide to [param column],
+## with the player's name in red ink (in his own story, [param his], his
+## surname too).
+func _add_body(column: Control, text: String, his: bool, width: float) -> void:
 	var player := GameState.season.player if GameState.season != null else null
 	var name := player.display_name().to_upper() if player != null else ""
 	var surname := player.last_name.to_upper() if player != null else ""
 	if player == null or not (text.contains(name) or (his and text.contains(surname))):
-		column.add_child(_text(text, UiTheme.BODY, Palette.UI_TEXT, width))
-		return 0
+		column.add_child(_text(text, UiTheme.BODY, INK, width))
+		return
 	var l := RichTextLabel.new()
 	l.bbcode_enabled = true
 	l.fit_content = true
@@ -251,21 +446,20 @@ func _add_body(column: Control, text: String, his: bool, width: float) -> int:
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.add_theme_font_override("normal_font", UiTheme.FONT)
 	l.add_theme_font_size_override("normal_font_size", UiTheme.BODY)
-	l.add_theme_color_override("default_color", Palette.UI_TEXT)
+	l.add_theme_color_override("default_color", INK)
 	l.add_theme_constant_override("line_separation", LINE_SPACING)
-	var gold := "[color=#%s]%%s[/color]" % Palette.UI_GOLD.to_html(false)
+	var red := "[color=#%s]%%s[/color]" % INK_RED.to_html(false)
 	var shown := text.replace("[", "[lb]").replace(name, "\u0001")
 	if his:
-		shown = shown.replace(surname, gold % surname)
-	l.text = shown.replace("\u0001", gold % name)
+		shown = shown.replace(surname, red % surname)
+	l.text = shown.replace("\u0001", red % name)
 	column.add_child(l)
-	return LINE_SPACING
 
 
-## A thin dividing line in a column.
-static func _rule(width: float) -> ColorRect:
-	var line := UiTheme.block(Color(Palette.UI_TEXT_DIM, 0.4), 0, 0, width, 1)
-	line.custom_minimum_size = Vector2(width, 1)
+## A rule across a column.
+static func _rule(width: float, thickness: int = 1, alpha: float = 1.0) -> ColorRect:
+	var line := UiTheme.block(Color(INK, alpha), 0, 0, width, thickness)
+	line.custom_minimum_size = Vector2(width, thickness)
 	return line
 
 

@@ -464,7 +464,14 @@ The season starts in January 2027 and runs a month at a time:
   later years, while the bottom ten stay in the 50s.
   Then **READ THE PAPER**.
 
-**The newspaper**, THE RINGSIDE GAZETTE, comes out every month. Its main
+**The newspaper**, THE RINGSIDE GAZETTE, comes out every month, printed in
+dark ink on an off-white sheet: the masthead between double rules (issue
+number, date and price), the headline, a sepia "photo" of the main fight
+beside its story (the winner with his arms up and the loser hanging his
+head; two men who drew; or two rivals squaring up before a grudge match),
+the round-up underneath, and the other stories and IN BRIEF down a side
+column. RESULTS is a printed results table (WINNER BT LOSER, how, rounds,
+purse, rating). Its main
 headline is a title fight, a new champion first and then a successful
 defence (any other title fights get stories underneath). A professional
 fight rated 9 or more out of 10, with a top-ten man (or the champion) in

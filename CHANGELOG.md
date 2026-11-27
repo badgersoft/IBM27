@@ -4,6 +4,23 @@ Every build bumps the last number of the version while the game is a
 prototype. The version lives in `project.godot` (`application/config/version`)
 and is shown on the main menu.
 
+## 0.1.57
+
+* The newspaper looks like a newspaper: dark ink on an off-white sheet,
+  with a shadow, laid over the screen. THE RINGSIDE GAZETTE masthead sits
+  between double rules with the issue number, date and price. The front
+  page has the headline, a sepia "photo" of the main fight (the winner with
+  his arms up and the loser hanging his head; two men who drew; two rivals
+  squaring up before a grudge match - drawn with the game's own boxers)
+  beside its story, and the round-up as a printed list (six lines, four
+  under a long story; the rest are inside). The other stories and IN BRIEF
+  run down a side column. The player's name is in red ink, and YOUR FIGHT
+  over his story. RESULTS is a printed table: WINNER BT LOSER, the result
+  and its kind, rounds, purse and rating, title fights marked, on one page.
+  The paper now records who is in its photo (older papers pick their main
+  fight).
+* FixtureTable, no longer used, is gone.
+
 ## 0.1.56
 
 * The career page, redesigned to look cleaner and more modern: the menu

@@ -42,3 +42,7 @@ earlier builds use the old numbers.
 | Style balance below world class: every style 44 - 58% at skill 45 and 60 | M | 0.1.49 |
 | Rebalance the divisions: easier at the bottom, harder at the top | M | 0.1.51 |
 | Special punches: the overhand right and the windmill, for a few boxers | L | 0.1.53 |
+| Fewer fights a month: three per division (9, or 10 with the player's) | S | 0.1.54 |
+| The Fixtures screen as a fight-night board of cards | M | 0.1.55 |
+| The career page redesigned: menu column, tiles, skill bars | M | 0.1.56 |
+| The newspaper looks like a newspaper: ink on paper, masthead, photo, columns | M | 0.1.57 |

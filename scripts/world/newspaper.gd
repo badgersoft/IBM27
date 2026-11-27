@@ -30,9 +30,10 @@ extends RefCounted
 ## has the full verdict.
 ##
 ## Returns {"month", "date", "headline", "standfirst", "headline_player"
-## (true if the main story is the player's fight), "stories": [{"title",
-## "text", "player"}], "roundup": [String], "notes": [String], "results":
-## [Fixture]}. Everything is upper case, like the rest of the game's text.
+## (true if the main story is the player's fight), "photo" (who is in the
+## front-page photo: photo_of), "stories": [{"title", "text", "player"}],
+## "roundup": [String], "notes": [String], "results": [Fixture]}.
+## Everything is upper case, like the rest of the game's text.
 
 const NAME := "THE RINGSIDE GAZETTE"
 ## A feature needs this excitement rating, in a professional fight with a
@@ -179,6 +180,10 @@ static func write(season: Season, month: int, rng: RandomNumberGenerator) -> Dic
 		paper["standfirst"] = stories[0]["text"]
 		paper["headline_player"] = stories[0].get("player", false)
 		paper["stories"] = stories.slice(1, 1 + MAX_STORIES)
+		if covered[0] != null:
+			paper["photo"] = photo_of(covered[0])
+		elif grudge != null:
+			paper["photo"] = photo_of(grudge)
 
 	covered.resize(mini(covered.size(), 1 + MAX_STORIES))
 	paper["roundup"] = _roundup(results, covered, season)
@@ -297,6 +302,18 @@ static func _feature_story(f: Fixture, rng: RandomNumberGenerator) -> Dictionary
 		text += " IN THE END NOTHING COULD SEPARATE THEM: A %s." % _draw_kind(f)
 	text += " " + _excitement_line(f, rng)
 	return {"title": title, "text": text}
+
+
+## Who is in the front-page photo of [param f], as plain data (it is saved
+## with the paper): {"a", "b" (boxer ids, the winner first), "kind": "win",
+## "draw", or "faceoff" for a fight still to come}.
+static func photo_of(f: Fixture) -> Dictionary:
+	if not f.is_done():
+		return {"a": f.red.id, "b": f.blue.id, "kind": "faceoff"}
+	var w := f.winner()
+	if w == null:
+		return {"a": f.red.id, "b": f.blue.id, "kind": "draw"}
+	return {"a": w.id, "b": f.opponent_of(w).id, "kind": "win"}
 
 
 ## The hottest grudge match booked for [param month] (the player's if he
